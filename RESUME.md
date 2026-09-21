@@ -76,14 +76,51 @@ Built beyond the template:
   shows a visible error message instead of crashing when the backend is
   not running.
 - Home page (/) links into /stocks.
+- /chart — step 1 of the TradingView integration plan (see below).
 
 Note: frontend/AGENTS.md (written by next dev, not by this session) warns
 that Next.js 16 has breaking API/convention changes vs older training
 data — it was consulted (node_modules/next/dist/docs/) before writing the
 pages above, e.g. to confirm params is still a Promise in dynamic routes.
 
-Not built yet: candlestick chart, indicators on the chart, auth pages,
-watchlist/portfolio/order/backtest UI.
+Not built yet: a chart wired to our own /market/bars data, indicators on
+the chart, auth pages, watchlist/portfolio/order/backtest UI.
+
+TradingView integration, step 1 (src/components/TradingViewWidget.tsx,
+/chart page) — DONE. charting-library-integration.md describes the
+self-hosted Charting Library, which needs TradingView's GitHub-gated
+access approval (a human has to request it, not something this session
+can do). As a first, actionable step instead, this embeds TradingView's
+public "Advanced Chart" widget (https://www.tradingview.com/widget/advanced-chart/,
+free, no approval needed, just a script tag) showing BITSTAMP:BTCUSD.
+
+Verified 2026-09-21 via the Next.js dev server in the browser pane:
+
+- Hit a real bug and fixed it: the effect originally cleared and rebuilt
+  the widget's DOM on every run, which under React Strict Mode's dev-only
+  double effect invocation detached TradingView's script node mid-flight
+  and crashed inside their code (Cannot read properties of null (reading
+  querySelector), because document.currentScript.parentElement was null
+  on the detached node). Fixed by making the effect idempotent (skip if
+  the container already has content) instead of clearing/rebuilding.
+- After the fix: a fresh page load in a new tab showed the widget's
+  toolbar (symbol search, timeframe buttons, indicators button) render
+  correctly with no console errors, and the accessibility tree showed an
+  "advanced chart TradingView widget" iframe node, confirming TradingView's
+  script executed and mounted its widget.
+- NOT fully verified: the chart canvas itself stayed blank with zero OHLC
+  values (O0 H0 L0 C0) in this environment's sandboxed preview browser --
+  most likely that browser can't reach TradingView's real-time data
+  backend (a network/sandbox limitation, not a code bug, since the UI
+  shell that TradingView's own JS renders loaded correctly). Re-check in
+  an ordinary browser with normal internet access before trusting this
+  further.
+
+Explicitly not started: the actual licensed integration
+(TVDatafeedAdapter implementing IDatafeedChartApi/IExternalDatafeed
+against our own /api/v1/market/bars, per charting-library-integration.md)
+-- that needs the self-hosted Charting Library files, which needs
+TradingView's approval first. See Future work below.
 
 Docker (docker-compose.yml, backend/Dockerfile, frontend/Dockerfile,
 DOCKER.md) — DONE, see above. docker compose up --build runs the full V1
@@ -144,7 +181,9 @@ Roughly in priority order for reaching a demoable V1 MVP
   charting-library-integration.md — needs the (free but access-gated)
   library files from TradingView GitHub approval process before
   TVDatafeedAdapter can be built; kick off that request early since
-  approval is not instant.
+  approval is not instant. Step 1 (a proof-of-concept BTC chart using
+  TradingView's separate public embed widget, not this library) is done
+  -- see the Done section above.
 - Real-time WebSocket price feed (ws.Hub) — nothing here yet; V1
   GET /market/bars is pull-only.
 - Everything in Version 2+ (screener, heatmap, Strategy Builder, Replay
