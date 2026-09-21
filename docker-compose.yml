@@ -1,0 +1,24 @@
+# Runs the V1 MVP demo: Go backend + Next.js frontend, both built from
+# source. No database yet (see RESUME.md) -- the backend keeps its
+# in-memory state for the life of the container, so it resets on restart.
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      JWT_SECRET: dev-secret-change-me
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # backend:8080 is this compose network's internal DNS name for the
+        # backend service -- not reachable as such from the host.
+        NEXT_PUBLIC_API_BASE_URL: http://backend:8080
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
