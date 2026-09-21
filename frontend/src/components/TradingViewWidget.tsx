@@ -64,9 +64,8 @@ export default function TradingViewWidget({ symbol = "BITSTAMP:BTCUSD", theme = 
 
   return (
     <div
-      className="tradingview-widget-container"
+      className="tradingview-widget-container h-[600px] min-h-[300px] w-full resize-y overflow-auto"
       ref={container}
-      style={{ height: "600px", width: "100%" }}
     />
   );
 }

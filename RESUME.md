@@ -180,6 +180,19 @@ wrapped value text ran straight into "P/E"'s value with no gap
 (confirmed visually in the browser pane, not just in code review).
 Fixed by adding gap-x-6.
 
+Chart panels are now user-resizable (StockChart.tsx, TradingViewWidget.tsx)
+-- DONE. Both chart containers use native CSS `resize: vertical`
+(Tailwind's resize-y + overflow-auto + a min-height), which draws a
+drag handle in the bottom-right corner. No custom drag-handling code
+needed: lightweight-charts' autoSize and TradingView's own autosize
+widget option both already watch their container's size (ResizeObserver
+under the hood) and redraw to fit, so dragging the native handle just
+works. Verified by actually dragging the handle in the browser pane on
+both /chart (TradingView widget) and /stocks/[symbol] (StockChart) --
+confirmed via getBoundingClientRect() that the container's height
+changed and the chart canvas redrew to fill the new size with no
+stretching artifacts, not just that the drag gesture completed.
+
 TradingView integration, step 1 (src/components/TradingViewWidget.tsx,
 /chart page) — DONE. charting-library-integration.md describes the
 self-hosted Charting Library, which needs TradingView's GitHub-gated
