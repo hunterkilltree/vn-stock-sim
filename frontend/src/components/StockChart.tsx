@@ -13,6 +13,8 @@ import type { Bar, IndicatorPoint } from "@/lib/api";
 type Props = {
   bars: Bar[];
   sma20?: IndicatorPoint[];
+  theme?: "light" | "dark";
+  heightClassName?: string;
 };
 
 // Renders bars fetched server-side (see stocks/[symbol]/page.tsx) with
@@ -23,7 +25,7 @@ type Props = {
 // the browser cannot resolve the "backend" hostname (that only exists on
 // the Compose-internal network), so client-side fetches to the API would
 // fail there even though server-side fetches work fine.
-export default function StockChart({ bars, sma20 }: Props) {
+export default function StockChart({ bars, sma20, theme = "light", heightClassName }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
 
@@ -31,15 +33,19 @@ export default function StockChart({ bars, sma20 }: Props) {
     const el = container.current;
     if (!el || chartRef.current) return;
 
+    const dark = theme === "dark";
     const chart = createChart(el, {
       autoSize: true,
-      layout: { textColor: "#374151", background: { color: "transparent" } },
-      grid: {
-        vertLines: { color: "#f3f4f6" },
-        horzLines: { color: "#f3f4f6" },
+      layout: {
+        textColor: dark ? "#a3a3a3" : "#374151",
+        background: { color: "transparent" },
       },
-      timeScale: { timeVisible: false, borderColor: "#e5e7eb" },
-      rightPriceScale: { borderColor: "#e5e7eb" },
+      grid: {
+        vertLines: { color: dark ? "#262626" : "#f3f4f6" },
+        horzLines: { color: dark ? "#262626" : "#f3f4f6" },
+      },
+      timeScale: { timeVisible: false, borderColor: dark ? "#404040" : "#e5e7eb" },
+      rightPriceScale: { borderColor: dark ? "#404040" : "#e5e7eb" },
     });
     chartRef.current = chart;
 
@@ -74,7 +80,12 @@ export default function StockChart({ bars, sma20 }: Props) {
       chart.remove();
       chartRef.current = null;
     };
-  }, [bars, sma20]);
+  }, [bars, sma20, theme]);
 
-  return <div ref={container} style={{ height: "400px", width: "100%" }} />;
+  return (
+    <div
+      ref={container}
+      className={`${heightClassName ?? "h-[400px] lg:h-[480px]"} w-full min-h-[200px] resize-y overflow-auto`}
+    />
+  );
 }

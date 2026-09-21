@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Design language follows luxalgo.com (fetched and inspected 2026-09-21,
+   see RESUME.md): a clean monochrome neutral palette -- white background,
+   near-black text, fully pill-shaped buttons -- with dark near-black
+   cards specifically for chart/product-preview panels. Not their exact
+   (licensed) "Aeonik" font; Geist is a similar-feeling free alternative. */
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -12,15 +17,8 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
 }
