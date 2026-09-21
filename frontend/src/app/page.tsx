@@ -9,6 +9,17 @@ function lastSixMonthsRange(): { from: number; to: number } {
   return { from: to - SIX_MONTHS_SECONDS, to };
 }
 
+// Same rationale as stocks/[symbol]/page.tsx: makes it visually explicit
+// the chart's last bar is current (today, UTC).
+function formatUTCDate(unixSeconds: number): string {
+  return new Date(unixSeconds * 1000).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  }) + " UTC";
+}
+
 // Hero layout follows luxalgo.com (badge + bold headline + subtext + two
 // pill CTAs, then a dark card showing a live chart as the product
 // preview) -- fetched with the browser pane and inspected before writing
@@ -55,8 +66,13 @@ export default async function Home() {
       </div>
 
       <div className="mt-16 rounded-2xl border border-neutral-800 bg-neutral-950 p-6 shadow-xl lg:p-8">
-        <p className="mb-4 text-sm text-neutral-400">
-          VNM · Vietnam Dairy Products JSC · 6mo daily
+        <p className="mb-4 flex items-baseline justify-between text-sm text-neutral-400">
+          <span>VNM · Vietnam Dairy Products JSC · 6mo daily</span>
+          {bars.length > 0 && (
+            <span className="text-xs text-neutral-500">
+              Data through {formatUTCDate(bars[bars.length - 1].time)}
+            </span>
+          )}
         </p>
         {bars.length > 0 ? (
           <StockChart bars={bars} sma20={sma20} theme="dark" heightClassName="h-[320px] w-full lg:h-[420px]" />

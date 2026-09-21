@@ -16,6 +16,19 @@ function lastSixMonthsRange(): { from: number; to: number } {
   return { from: to - SIX_MONTHS_SECONDS, to };
 }
 
+// Makes it visually explicit that the chart's last bar is current (as of
+// today, UTC) rather than something the user has to infer from the x-axis
+// labels, which only show month names (see StockChart.tsx's
+// timeVisible: false) -- not obviously "today" at a glance.
+function formatUTCDate(unixSeconds: number): string {
+  return new Date(unixSeconds * 1000).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  }) + " UTC";
+}
+
 export default async function StockDetailPage({ params }: Props) {
   const { symbol } = await params;
   let detail;
@@ -106,6 +119,11 @@ export default async function StockDetailPage({ params }: Props) {
             <h2 className="text-sm font-medium text-neutral-300">
               Price (6mo, daily) <span className="ml-2 text-blue-400">— SMA(20)</span>
             </h2>
+            {bars.length > 0 && (
+              <span className="text-xs text-neutral-500">
+                Data through {formatUTCDate(bars[bars.length - 1].time)}
+              </span>
+            )}
           </div>
           {bars.length > 0 ? (
             <StockChart bars={bars} sma20={sma20} theme="dark" />
