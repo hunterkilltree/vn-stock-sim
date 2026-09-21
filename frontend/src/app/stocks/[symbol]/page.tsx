@@ -44,57 +44,64 @@ export default async function StockDetailPage({ params }: Props) {
   const changeColor = detail.change >= 0 ? "text-green-600" : "text-red-600";
 
   return (
-    <main className="mx-auto max-w-2xl p-8">
-      <p className="text-sm text-gray-500">{detail.exchange} · {detail.sector}</p>
-      <h1 className="mb-1 text-3xl font-semibold">{detail.symbol}</h1>
-      <p className="mb-6 text-gray-600">{detail.companyName}</p>
+    <main className="mx-auto w-full max-w-6xl p-8 lg:p-12">
+      {/* Single column on small screens; on lg+ the info panel becomes a
+          fixed-width sidebar next to a wide chart, instead of everything
+          squeezed into one narrow centered column. */}
+      <div className="lg:grid lg:grid-cols-[340px_1fr] lg:items-start lg:gap-12">
+        <div>
+          <p className="text-sm text-gray-500">{detail.exchange} · {detail.sector}</p>
+          <h1 className="mb-1 text-3xl font-semibold lg:text-4xl">{detail.symbol}</h1>
+          <p className="mb-6 text-gray-600">{detail.companyName}</p>
 
-      <div className="mb-8 flex items-baseline gap-3">
-        <span className="text-4xl font-semibold">{detail.lastPrice.toLocaleString("vi-VN")}</span>
-        <span className={`text-lg font-medium ${changeColor}`}>
-          {detail.change >= 0 ? "+" : ""}
-          {detail.change.toLocaleString("vi-VN")} ({detail.changePercent.toFixed(2)}%)
-        </span>
-      </div>
+          <div className="mb-8 flex items-baseline gap-3">
+            <span className="text-4xl font-semibold">{detail.lastPrice.toLocaleString("vi-VN")}</span>
+            <span className={`text-lg font-medium ${changeColor}`}>
+              {detail.change >= 0 ? "+" : ""}
+              {detail.change.toLocaleString("vi-VN")} ({detail.changePercent.toFixed(2)}%)
+            </span>
+          </div>
 
-      <dl className="grid grid-cols-2 gap-4 text-sm">
-        <div>
-          <dt className="text-gray-500">Market Cap</dt>
-          <dd className="font-medium">{detail.marketCap.toLocaleString("vi-VN")} VND</dd>
+          <dl className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <dt className="text-gray-500">Market Cap</dt>
+              <dd className="font-medium">{detail.marketCap.toLocaleString("vi-VN")} VND</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">P/E</dt>
+              <dd className="font-medium">{detail.peRatio}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">P/B</dt>
+              <dd className="font-medium">{detail.pbRatio}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">EPS</dt>
+              <dd className="font-medium">{detail.eps.toLocaleString("vi-VN")}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">Dividend Yield</dt>
+              <dd className="font-medium">{detail.dividendYield}%</dd>
+            </div>
+          </dl>
         </div>
-        <div>
-          <dt className="text-gray-500">P/E</dt>
-          <dd className="font-medium">{detail.peRatio}</dd>
-        </div>
-        <div>
-          <dt className="text-gray-500">P/B</dt>
-          <dd className="font-medium">{detail.pbRatio}</dd>
-        </div>
-        <div>
-          <dt className="text-gray-500">EPS</dt>
-          <dd className="font-medium">{detail.eps.toLocaleString("vi-VN")}</dd>
-        </div>
-        <div>
-          <dt className="text-gray-500">Dividend Yield</dt>
-          <dd className="font-medium">{detail.dividendYield}%</dd>
-        </div>
-      </dl>
 
-      <div className="mt-8">
-        <div className="mb-2 flex items-baseline justify-between">
-          <h2 className="text-sm font-medium text-gray-700">
-            Price (6mo, daily) <span className="ml-2 text-blue-600">— SMA(20)</span>
-          </h2>
+        <div className="mt-8 lg:mt-0">
+          <div className="mb-2 flex items-baseline justify-between">
+            <h2 className="text-sm font-medium text-gray-700">
+              Price (6mo, daily) <span className="ml-2 text-blue-600">— SMA(20)</span>
+            </h2>
+          </div>
+          {bars.length > 0 ? (
+            <StockChart bars={bars} sma20={sma20} />
+          ) : (
+            <p className="text-sm text-gray-400">
+              Chart data unavailable right now — the backend may be starting up or
+              unreachable. Indicators beyond SMA/EMA are not implemented yet, see
+              RESUME.md.
+            </p>
+          )}
         </div>
-        {bars.length > 0 ? (
-          <StockChart bars={bars} sma20={sma20} />
-        ) : (
-          <p className="text-sm text-gray-400">
-            Chart data unavailable right now — the backend may be starting up or
-            unreachable. Indicators beyond SMA/EMA are not implemented yet, see
-            RESUME.md.
-          </p>
-        )}
       </div>
     </main>
   );

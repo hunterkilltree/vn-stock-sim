@@ -9,7 +9,7 @@ export const metadata = { title: "Chart — VN Stock Sim" };
 // custom Datafeed (charting-library-integration.md).
 export default function ChartPage() {
   return (
-    <main className="mx-auto max-w-5xl p-8">
+    <main className="mx-auto w-full max-w-5xl p-8 lg:p-12">
       <h1 className="mb-4 text-2xl font-semibold">TradingView Chart (proof of concept)</h1>
       <p className="mb-6 text-sm text-gray-500">
         BTC/USD via TradingView&apos;s public Advanced Chart widget. This proves the chart

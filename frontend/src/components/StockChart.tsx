@@ -76,5 +76,5 @@ export default function StockChart({ bars, sma20 }: Props) {
     };
   }, [bars, sma20]);
 
-  return <div ref={container} style={{ height: "400px", width: "100%" }} />;
+  return <div ref={container} className="h-[400px] w-full lg:h-[480px]" />;
 }

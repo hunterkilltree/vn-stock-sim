@@ -118,6 +118,25 @@ assumes) -- fixed by moving it into a plain helper function.
 Not built yet: indicators beyond SMA/EMA on the chart (RSI, MACD,
 Bollinger, VWAP), auth pages, watchlist/portfolio/order/backtest UI.
 
+Bug found and fixed 2026-09-21: every page under /stocks and /chart used
+`<main className="mx-auto max-w-XX p-8">` directly inside the root
+layout's `<body className="flex flex-col">`. Because auto margins
+disable flexbox's default stretch behavior for the cross axis, `main`'s
+width collapsed to shrink-to-fit its content (confirmed via computed
+styles: ~412px) instead of filling up to its max-width -- so on a large
+monitor the whole app rendered as a narrow, off-looking column with huge
+empty margins on both sides, even though it was technically centered.
+Fixed by adding `w-full` alongside `mx-auto max-w-*` on all three pages.
+While fixing this, also widened the max-widths (/stocks: 3xl -> 5xl;
+/stocks/[symbol]: 2xl -> 6xl; /chart: kept 5xl but now actually fills
+it) and gave /stocks/[symbol] a real two-column layout at the lg
+breakpoint (info sidebar + wide chart) instead of one long centered
+column, and made the chart itself taller on lg screens
+(StockChart.tsx: h-[400px] lg:h-[480px]). Verified visually in the
+browser pane at 1920x1080 (all three pages now use the available width
+correctly) and at 375x812 mobile (still stacks into one readable
+column, no regression).
+
 TradingView integration, step 1 (src/components/TradingViewWidget.tsx,
 /chart page) — DONE. charting-library-integration.md describes the
 self-hosted Charting Library, which needs TradingView's GitHub-gated
