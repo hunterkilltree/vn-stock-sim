@@ -15,7 +15,7 @@ When asked to implement more of VN Stock Sim, treat the docs as the design to fo
 ## Running it
 
 - **Local dev (hot reload):** see RUNNING.md — `go run ./cmd/api` in `backend/` (port 8080), `npm run dev` in `frontend/` (port 3000).
-- **One-command demo:** see DOCKER.md — `docker compose up --build`.
+- **One-command demo:** see DOCKER.md — `./run.sh` (wraps `docker compose up --build`).
 - **Current status, what's verified vs. not, what's deferred:** RESUME.md — read this before assuming any given feature works or is missing.
 
 Build/lint/test commands:
