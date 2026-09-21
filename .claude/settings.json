@@ -1,0 +1,20 @@
+{
+  "enabledPlugins": {
+    "ecc@ecc": true,
+    "ui-design@claude-code-workflows": true
+  },
+  "extraKnownMarketplaces": {
+    "ecc": {
+      "source": {
+        "source": "github",
+        "repo": "affaan-m/ecc"
+      }
+    },
+    "claude-code-workflows": {
+      "source": {
+        "source": "github",
+        "repo": "wshobson/agents"
+      }
+    }
+  }
+}
