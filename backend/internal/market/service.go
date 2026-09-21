@@ -1,5 +1,7 @@
 package market
 
+import "time"
+
 // Service holds market-data rules (V1: none beyond delegation — caching,
 // gap-filling, and session-hours clipping are noted as future work in
 // RESUME.md, matching charting-library-integration.md section 7).
@@ -69,4 +71,22 @@ func ema(bars []Bar, period int) []IndicatorPoint {
 		out = append(out, IndicatorPoint{Time: b.Time, Value: round2(prev)})
 	}
 	return out
+}
+
+// LatestClose returns the most recent two daily closes for sym, so
+// callers (symbol.Service, for its quote fields) can derive a live
+// last price/change instead of carrying a separately-seeded static
+// value that can drift arbitrarily far from what the chart actually
+// shows -- see RESUME.md for the bug this fixes. ok is false if fewer
+// than two bars are available.
+func (s *Service) LatestClose(sym string) (today, yesterday float64, ok bool) {
+	to := time.Now().Unix()
+	from := to - 10*24*60*60 // 10 days is comfortably more than 2 daily bars
+	bars := s.data.GetBars(sym, "1D", from, to)
+	if len(bars) < 2 {
+		return 0, 0, false
+	}
+	last := bars[len(bars)-1]
+	prev := bars[len(bars)-2]
+	return last.Close, prev.Close, true
 }

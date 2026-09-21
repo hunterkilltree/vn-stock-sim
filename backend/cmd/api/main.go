@@ -15,6 +15,7 @@ import (
 
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/auth"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/backtest"
+	"github.com/hunterkilltree/vn-stock-sim/backend/internal/insight"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/market"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/order"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/portfolio"
@@ -26,11 +27,15 @@ func main() {
 	cfg := config.Load()
 	tokens := authtoken.NewIssuer(cfg.JWTSecret, 24*time.Hour)
 
-	symbolProvider := symbol.NewMockProvider()
-	symbolSvc := symbol.NewService(symbolProvider)
-
 	marketProvider := market.NewMockProvider()
 	marketSvc := market.NewService(marketProvider)
+
+	// symbol.Service depends on marketSvc (via QuotePort) so a symbol's
+	// lastPrice/change/changePercent are derived from the same bars the
+	// chart renders, instead of an independently-seeded value that could
+	// drift arbitrarily far from what the chart actually shows.
+	symbolProvider := symbol.NewMockProvider()
+	symbolSvc := symbol.NewService(symbolProvider, marketSvc)
 
 	authSvc := auth.NewService(auth.NewMemoryStore(), tokens)
 	watchlistSvc := watchlist.NewService(watchlist.NewMemoryStore(), symbolSvc)
@@ -38,6 +43,7 @@ func main() {
 	portfolioSvc := portfolio.NewService(portfolioStore, symbolSvc)
 	orderSvc := order.NewService(order.NewMemoryStore(), portfolioStore, symbolSvc)
 	backtestSvc := backtest.NewService(backtest.NewMemoryStore(), marketSvc)
+	insightSvc := insight.NewService(symbolSvc, marketSvc)
 
 	router := gin.Default()
 	v1 := router.Group("/api/v1")
@@ -49,6 +55,7 @@ func main() {
 	portfolio.RegisterRoutes(v1, portfolioSvc, tokens)
 	order.RegisterRoutes(v1, orderSvc, tokens)
 	backtest.RegisterRoutes(v1, backtestSvc, tokens)
+	insight.RegisterRoutes(v1, insightSvc)
 
 	log.Printf("VN Stock Sim API listening on :%s", cfg.Port)
 	if err := router.Run(":" + cfg.Port); err != nil {

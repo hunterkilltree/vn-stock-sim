@@ -85,3 +85,23 @@ export function getIndicator(
   const qs = `symbol=${encodeURIComponent(symbol)}&resolution=${encodeURIComponent(resolution)}&indicator=${indicator}&period=${period}&from=${from}&to=${to}`;
   return apiFetch<{ data: IndicatorPoint[] }>(`/api/v1/market/indicators?${qs}`);
 }
+
+export type InsightSignal = {
+  label: string;
+  detail: string;
+  direction: "bullish" | "bearish" | "neutral";
+};
+
+export type Insight = {
+  symbol: string;
+  summary: string;
+  signals: InsightSignal[];
+  // "rule-based" today; see RESUME.md -- a real LLM call needs an API key
+  // and has a real per-call cost, a decision left to the user.
+  source: string;
+  generatedAt: string;
+};
+
+export function getInsight(symbol: string): Promise<Insight> {
+  return apiFetch<Insight>(`/api/v1/symbols/${encodeURIComponent(symbol)}/insight`);
+}

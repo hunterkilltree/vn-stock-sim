@@ -54,7 +54,7 @@ export default async function Home() {
         </div>
       </div>
 
-      <div className="mt-16 overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-950 p-6 shadow-xl lg:p-8">
+      <div className="mt-16 rounded-2xl border border-neutral-800 bg-neutral-950 p-6 shadow-xl lg:p-8">
         <p className="mb-4 text-sm text-neutral-400">
           VNM · Vietnam Dairy Products JSC · 6mo daily
         </p>

@@ -85,7 +85,7 @@ export default function StockChart({ bars, sma20, theme = "light", heightClassNa
   return (
     <div
       ref={container}
-      className={`${heightClassName ?? "h-[400px] lg:h-[480px]"} w-full min-h-[200px] resize-y overflow-auto`}
+      className={`${heightClassName ?? "h-[400px] lg:h-[480px]"} w-full min-h-[200px] min-w-[240px] resize overflow-auto`}
     />
   );
 }
