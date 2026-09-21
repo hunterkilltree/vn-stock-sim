@@ -29,7 +29,11 @@ type Paged<T> = {
   meta: { page: number; pageSize: number; totalItems: number; totalPages: number };
 };
 
-async function apiFetch<T>(path: string): Promise<T> {
+async function apiFetch<T>(path: string, opts?: { token?: string }): Promise<T> {
+  const headers: HeadersInit = {};
+  if (opts?.token) {
+    headers.Authorization = `Bearer ${opts.token}`;
+  }
   const res = await fetch(`${API_BASE_URL}${path}`, {
     // no-store, not next: { revalidate }: revalidate let Next.js
     // statically prerender /stocks at `next build` time, which in Docker
@@ -38,6 +42,7 @@ async function apiFetch<T>(path: string): Promise<T> {
     // self-healing after the first background ISR revalidation. no-store
     // forces this route to render per-request instead (see RESUME.md).
     cache: "no-store",
+    headers,
   });
   if (!res.ok) {
     throw new Error(`API ${path} failed: ${res.status} ${res.statusText}`);
@@ -104,4 +109,16 @@ export type Insight = {
 
 export function getInsight(symbol: string): Promise<Insight> {
   return apiFetch<Insight>(`/api/v1/symbols/${encodeURIComponent(symbol)}/insight`);
+}
+
+export type User = {
+  id: string;
+  email: string;
+  displayName: string;
+};
+
+// GET /auth/me, authenticated. Used by session.ts to re-verify a stored
+// token is still valid rather than trusting a locally-decoded JWT.
+export function getMe(token: string): Promise<User> {
+  return apiFetch<User>("/api/v1/auth/me", { token });
 }

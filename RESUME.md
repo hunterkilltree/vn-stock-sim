@@ -316,6 +316,50 @@ in the browser pane on both pages, and inside the built Docker image
 (the "Data through Sep 21, 2026 UTC" string is present in the served
 HTML/RSC payload).
 
+Auth pages (register/login/logout), 2026-09-21 -- DONE. The backend
+already had auth (POST /auth/register, /auth/login, GET /auth/me) --
+this wires the frontend to it:
+
+- The JWT lives in an httpOnly cookie (frontend/src/lib/session.ts,
+  cookie name vss_token), never exposed to client-side JS. Every
+  authenticated call happens server-side, same pattern the rest of the
+  app already uses for data fetching. secure: false on the cookie
+  because this demo runs over plain HTTP everywhere (no TLS configured
+  in docker-compose.yml) -- flip to true behind a real HTTPS
+  deployment; noted directly in the code, not just here.
+- frontend/src/lib/authActions.ts -- Server Actions (loginAction,
+  registerAction, logoutAction) using useActionState's
+  (prevState, formData) signature. Not routed through api.ts's
+  apiFetch: these need the raw { code, message } error body on
+  failure to show a real message on the form (e.g. "invalid email or
+  password"), which apiFetch's generic thrown Error doesn't preserve.
+- /login and /register pages (Client Components, useActionState +
+  React 19's built-in pending state -- confirmed this is still the
+  right pattern for Next.js 16 against the bundled docs, not assumed).
+- Navbar.tsx is now async and reads the session (GET /auth/me,
+  re-verified against the backend on every request rather than trusting
+  a locally-decoded JWT -- V1 has no token revocation, so this is the
+  only way to notice an expired/invalid cookie) to show either
+  "Log In / Sign Up" or the user's display name + "Log Out". Because
+  Navbar is in the root layout and reads cookies(), every route is now
+  dynamically rendered (confirmed via next build's route table: even
+  /chart, previously static, is now "Dynamic") -- expected and fine,
+  every page already depends on live backend data anyway.
+- api.ts's apiFetch gained an optional token option (used by the new
+  getMe) for the Authorization: Bearer header the rest of V1's
+  authenticated endpoints (watchlist/portfolio/order/backtest) will
+  need next.
+
+Verified end to end in the browser pane, not just by reading the code:
+registered a real account, got redirected to /stocks with the Navbar
+showing the display name; logged out, Navbar reverted to
+Log In/Sign Up; logged back in with the same credentials, redirected
+correctly; tried logging in with a wrong password and confirmed the
+"invalid email or password" error renders inline on the form. Checked
+mobile width too (form fields stack, nav collapses cleanly). Also
+confirmed POST /api/v1/auth/register works end to end inside the
+actual built Docker image via curl (not just the dev server).
+
 TradingView integration, step 1 (src/components/TradingViewWidget.tsx,
 /chart page) — DONE. charting-library-integration.md describes the
 self-hosted Charting Library, which needs TradingView's GitHub-gated
@@ -373,11 +417,12 @@ Roughly in priority order for reaching a demoable V1 MVP
 (vn-stock-sim-version-highlights.md, Version 1 section):
 
 1. Build out the remaining V1 frontend pages against the backend (the
-   stock browser slice and the candlestick chart above are done):
-   - Auth pages (register/login), storing the bearer token and attaching
-     it to authenticated requests.
+   stock browser slice, the candlestick chart, and auth above are done):
    - Watchlist table, portfolio summary/positions, paper trade order
-     form, trade history, and a basic backtest form+result view.
+     form, trade history, and a basic backtest form+result view. All of
+     these need session.getSessionToken() attached as the Authorization
+     header (see the auth section above for the pattern -- api.ts's
+     apiFetch already accepts a token option, added for GET /auth/me).
 2. Wire a real Postgres database behind auth, watchlist, portfolio, and
    order (currently all in-memory MemoryStores that reset on restart).
    Each store already sits behind a small interface-shaped API (not
