@@ -1,0 +1,332 @@
+## Important rule
+- Every anwser have to begin with the "Hi boss".
+
+# ============================================================
+# StockTym — Cursor Rules
+# Stack: Spring Boot · Next.js · PostgreSQL · Kafka · Keycloak
+#         Grafana · n8n · Docker · Kubernetes · Nginx
+# Target: 100,000 Concurrent Requests · Self-Hosted
+# ============================================================
+
+## GENERAL PRINCIPLES
+- Always write production-grade, clean, and maintainable code
+- Follow SOLID principles and clean architecture patterns
+- Prefer explicit over implicit — no magic, no ambiguity
+- Every public method, class, and API endpoint must be documented
+- Never expose secrets, credentials, or internal stack traces to clients
+- Always handle errors explicitly — no silent failures
+- Write code that is observable: logs, metrics, and traces are first-class
+
+---
+
+## BACKEND — JAVA + SPRING BOOT
+
+### Project Structure
+- Follow layered architecture: `controller → service → repository → entity`
+- Package by feature, not by layer:
+  ```
+  com.stocktym
+  ├── auth/
+  ├── market/
+  ├── order/
+  ├── portfolio/
+  ├── notification/
+  └── shared/
+  ```
+
+### Code Style
+- Use Java 21+ features: records, sealed classes, pattern matching, virtual threads
+- Prefer `@Service`, `@Repository`, `@RestController` — never use `@Component` for business logic
+- Always use constructor injection — never `@Autowired` on fields
+- DTOs must be Java Records for request/response objects
+- Use `Optional<T>` properly — never call `.get()` without `.isPresent()` check
+- All service methods must declare checked exceptions explicitly
+
+### API Design
+- Follow RESTful conventions strictly:
+  - `GET /api/v1/orders` — list
+  - `POST /api/v1/orders` — create
+  - `GET /api/v1/orders/{id}` — get by id
+  - `PUT /api/v1/orders/{id}` — full update
+  - `PATCH /api/v1/orders/{id}` — partial update
+  - `DELETE /api/v1/orders/{id}` — delete
+- Always version APIs: `/api/v1/`, `/api/v2/`
+- Return `ResponseEntity<ApiResponse<T>>` for all endpoints
+- Use `@Valid` on all request bodies — never skip validation
+- Use `ProblemDetail` (RFC 7807) for error responses
+
+### Performance (100k RPS)
+- Use Spring WebFlux (reactive) for high-throughput endpoints
+- Use virtual threads (`spring.threads.virtual.enabled=true`) for blocking I/O
+- Always use async where possible: `@Async`, `CompletableFuture`, or reactive pipelines
+- Never block the event loop in WebFlux — use `Schedulers.boundedElastic()` for blocking calls
+- Paginate all list endpoints — never return unbounded collections
+- Use `@Cacheable` with Redis for read-heavy endpoints
+
+### Security
+- Never trust client input — validate and sanitize everything
+- Use Keycloak JWT tokens — validate with Spring Security OAuth2 Resource Server
+- Always check `@PreAuthorize` on sensitive endpoints
+- Never log passwords, tokens, PII, or financial data
+- Use `@Transactional(readOnly = true)` for read operations
+
+### Database Access
+- Use Spring Data JPA for standard CRUD
+- Use JPQL or Criteria API — avoid native SQL unless absolutely necessary
+- Always use `@Transactional` on service methods that write to DB
+- Never use `FetchType.EAGER` — always `LAZY` with explicit joins
+- Use database migrations with **Flyway** — no schema auto-update in production
+- Migrations live in `src/main/resources/db/migration/V{version}__{description}.sql`
+
+### Kafka
+- Producers: use `KafkaTemplate<String, Object>` with JSON serialization
+- Consumers: always use `@KafkaListener` with explicit consumer group IDs
+- Use dead-letter topics (DLT) for failed messages
+- Always commit offsets manually — never auto-commit in production
+- Topic naming convention: `stocktym.{domain}.{event}` e.g. `stocktym.order.created`
+
+### Observability
+- Expose Spring Boot Actuator at `/actuator` — restrict to internal network only
+- Use Micrometer for metrics — expose Prometheus endpoint at `/actuator/prometheus`
+- Use structured logging with `logback-spring.xml` in JSON format
+- Include `traceId` and `spanId` in every log line (use Spring Cloud Sleuth or Micrometer Tracing)
+- Log levels: ERROR for failures, WARN for degraded states, INFO for business events, DEBUG for dev only
+
+### Testing
+- Unit test all service methods — mock repositories and external services
+- Use `@SpringBootTest` sparingly — prefer slice tests (`@WebMvcTest`, `@DataJpaTest`)
+- Integration tests use **Testcontainers** for PostgreSQL and Kafka
+- Aim for 80%+ coverage on service and domain layers
+- Use `@WithMockUser` or `@WithMockJwt` for security tests
+
+---
+
+## FRONTEND — NEXT.JS
+
+### Project Structure
+```
+src/
+├── app/                  # App Router pages
+├── components/
+│   ├── ui/               # Base design system components
+│   └── features/         # Feature-specific components
+├── hooks/                # Custom React hooks
+├── lib/                  # Utilities, API clients
+├── store/                # Zustand or Redux state
+└── types/                # TypeScript types and interfaces
+```
+
+### Code Style
+- Use TypeScript strictly — `strict: true` in `tsconfig.json`, no `any`
+- Use functional components only — no class components
+- Use named exports for components — no default exports except pages
+- Always define prop types with TypeScript interfaces, not inline
+- Use `const` arrow functions for components:
+  ```ts
+  export const OrderCard = ({ order }: OrderCardProps) => { ... }
+  ```
+
+### Data Fetching
+- Use React Server Components (RSC) for data fetching where possible
+- Use `fetch` with `next: { revalidate }` for static/cached data
+- Use **React Query (TanStack Query)** for client-side data fetching and caching
+- Never fetch data inside `useEffect` — use React Query hooks instead
+- Use **Axios** with interceptors for authenticated API calls to Spring Boot
+
+### Authentication
+- Integrate with Keycloak using `next-auth` or `@keycloak-js`
+- Store tokens in HTTP-only cookies — never in `localStorage`
+- Refresh tokens silently using the Keycloak adapter
+- Protect routes using Next.js middleware (`middleware.ts`)
+
+### State Management
+- Use **Zustand** for global client state
+- Use React Query cache as the primary server state — do not duplicate in Zustand
+- Keep component state local with `useState` unless sharing is necessary
+- Never store derived state — compute it on the fly
+
+### Performance
+- Use `next/image` for all images — never raw `<img>` tags
+- Use `next/font` for all fonts
+- Code-split heavy components with `dynamic(() => import(...), { ssr: false })`
+- Use `React.memo`, `useMemo`, `useCallback` only when profiler shows a real bottleneck
+- Prefer Server Components over Client Components for static UI
+
+### Styling
+- Use **Tailwind CSS** utility classes
+- Follow the StockTym design system tokens (colors, spacing, radius, typography)
+- No inline styles except for dynamic values
+- Dark theme only — `bg-[#080C14]` base, `#00D4FF` primary accent
+
+### Error Handling
+- Use Error Boundaries for component-level errors
+- Always handle loading, error, and empty states explicitly
+- Show user-friendly messages — never expose raw API errors to the UI
+
+---
+
+## DATABASE — POSTGRESQL
+
+### Schema Conventions
+- Table names: `snake_case` plural (e.g. `stock_orders`, `user_portfolios`)
+- Column names: `snake_case`
+- Primary keys: `id UUID DEFAULT gen_random_uuid()`
+- Always include: `created_at TIMESTAMPTZ DEFAULT NOW()`, `updated_at TIMESTAMPTZ`
+- Use `TIMESTAMPTZ` (not `TIMESTAMP`) — always store UTC
+- Foreign keys must have explicit `ON DELETE` behavior defined
+
+### Migrations (Flyway)
+- File naming: `V1__create_orders_table.sql`, `V2__add_index_orders_ticker.sql`
+- Never modify an existing migration — always create a new one
+- Always test migrations on a staging DB before production
+- Include rollback scripts for every migration
+
+### Performance
+- Add indexes on all foreign keys and frequently filtered columns
+- Use `EXPLAIN ANALYZE` before deploying any complex query
+- Use connection pooling via **PgBouncer** (transaction mode for high concurrency)
+- Partition large tables (e.g. `stock_prices`) by date range
+- Use `JSONB` for semi-structured data — never `TEXT` for structured content
+
+### Security
+- Use separate DB users per service with least-privilege access
+- Never use the `postgres` superuser in application code
+- Always use parameterized queries — never string interpolation
+
+---
+
+## AUTHENTICATION — KEYCLOAK
+
+- Use Keycloak as the single source of truth for identity
+- Realm naming: `stocktym-prod`, `stocktym-dev`
+- Client types: `confidential` for Spring Boot, `public` for Next.js SPA
+- Always validate JWT signature, expiry, and audience (`aud`) on the backend
+- Use Keycloak roles for authorization — map to Spring Security authorities
+- Enable brute-force protection and account lockout policies
+- Use Keycloak events for audit logging of login/logout/failures
+
+---
+
+## MESSAGE QUEUE — KAFKA
+
+### Topic Conventions
+- Format: `stocktym.{domain}.{event-type}`
+- Examples:
+  - `stocktym.order.created`
+  - `stocktym.order.filled`
+  - `stocktym.market.price-updated`
+  - `stocktym.notification.triggered`
+- Use KRaft mode — no Zookeeper
+- Minimum 3 partitions per topic for parallelism
+- Set retention: 7 days for business events, 1 day for high-frequency market data
+
+### Producer Rules
+- Always set `acks=all` for financial events — never `acks=0` or `acks=1`
+- Use idempotent producers (`enable.idempotence=true`)
+- Set `retries=3` with exponential backoff
+
+### Consumer Rules
+- Always set explicit `group.id` per consumer service
+- Use manual offset commit after successful processing
+- Route failed messages to `stocktym.{domain}.{event}.DLT` after 3 retries
+- Monitor consumer lag via Grafana
+
+---
+
+## WORKFLOW AUTOMATION — N8N
+
+- Use n8n for non-critical async workflows only (alerts, reports, notifications)
+- Never use n8n for financial transaction processing — keep that in Spring Boot
+- Back n8n with PostgreSQL (same instance, separate schema `n8n`)
+- Export all workflows as JSON and commit to version control
+- Use n8n credentials store — never hardcode API keys in workflow nodes
+
+---
+
+## MONITORING — GRAFANA
+
+- Every service must expose a `/metrics` (Prometheus format) endpoint
+- Standard dashboards required for each service:
+  - **Spring Boot**: request rate, error rate, latency (p50/p95/p99), JVM heap
+  - **PostgreSQL**: connections, query time, replication lag
+  - **Kafka**: consumer lag, message rate, topic partition offsets
+  - **Nginx**: requests/sec, error rate, upstream latency
+  - **K8s**: pod CPU/memory, HPA scaling events
+- Alert rules:
+  - Error rate > 1% → WARNING
+  - Error rate > 5% → CRITICAL
+  - p99 latency > 500ms → WARNING
+  - Kafka consumer lag > 10k → WARNING
+  - Pod memory > 80% → WARNING
+
+---
+
+## INFRASTRUCTURE — DOCKER + KUBERNETES
+
+### Docker
+- Use multi-stage builds for Spring Boot and Next.js images
+- Base images: `eclipse-temurin:21-jre-alpine` for Java, `node:20-alpine` for Node
+- Never run containers as root — use `USER appuser`
+- Tag images with git SHA: `stocktym/api:${GIT_SHA}`
+- Always define resource limits in container specs
+- Use `.dockerignore` to exclude `node_modules`, `.git`, `target/`
+
+### Kubernetes (K3s)
+- Use namespaces per environment: `stocktym-prod`, `stocktym-staging`
+- Every deployment must have:
+  - `readinessProbe` and `livenessProbe`
+  - Resource `requests` and `limits`
+  - `HorizontalPodAutoscaler` configured
+  - `PodDisruptionBudget` for critical services
+- Use `ConfigMap` for non-secret config, `Secret` for credentials
+- Never hardcode env vars in manifests — always reference ConfigMap/Secret
+- Use `RollingUpdate` strategy — never `Recreate` in production
+
+### Nginx
+- Nginx is the single entry point — all traffic routes through it
+- Enable gzip compression for all text responses
+- Set `proxy_pass` with upstream health checks
+- Rate limit: `limit_req_zone` per IP — max 1000 req/s per client
+- Always enforce HTTPS — redirect all HTTP → HTTPS
+- Set security headers:
+  - `X-Frame-Options: DENY`
+  - `X-Content-Type-Options: nosniff`
+  - `Strict-Transport-Security: max-age=31536000`
+
+---
+
+## GIT & WORKFLOW
+
+### Branch Strategy
+- `main` — production only, protected branch
+- `develop` — integration branch
+- `feature/{ticket-id}-{description}` — feature branches
+- `hotfix/{ticket-id}-{description}` — hotfix branches
+
+### Commit Convention (Conventional Commits)
+```
+feat(order): add limit order execution endpoint
+fix(auth): correct JWT expiry validation
+chore(docker): update base image to temurin-21
+perf(db): add index on orders.ticker column
+docs(api): update OpenAPI spec for portfolio endpoints
+```
+
+### PR Rules
+- Every PR must have: description, linked ticket, test evidence
+- Minimum 1 reviewer approval before merge
+- CI must pass: build, lint, unit tests, integration tests
+- No PR merges on Fridays or before holidays
+
+---
+
+## SECURITY CHECKLIST (always verify)
+- [ ] No secrets in source code or Docker images
+- [ ] All endpoints protected by Keycloak JWT
+- [ ] Input validation on all API boundaries
+- [ ] SQL injection impossible (parameterized queries only)
+- [ ] Rate limiting configured in Nginx
+- [ ] HTTPS enforced everywhere
+- [ ] DB users have least-privilege permissions
+- [ ] Sensitive logs are masked (tokens, passwords, card numbers)
+- [ ] Dependencies scanned for CVEs (`mvn dependency-check`, `npm audit`)
