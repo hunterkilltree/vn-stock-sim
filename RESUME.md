@@ -93,14 +93,30 @@ docker compose build --no-cache + ./run.sh -d + an immediate curl (no
 delay) against /stocks and /stocks/VNM -- both returned real data on the
 very first request.
 - /chart — step 1 of the TradingView integration plan (see below).
+- /stocks/[symbol] now renders a real candlestick chart
+  (src/components/StockChart.tsx, using the lightweight-charts npm
+  package -- deliberately not TradingView's own product, see the
+  TradingView section below) with a 20-period SMA line overlay, for the
+  last 6 months of daily bars. Data is fetched server-side in the page
+  component (GET /market/bars and /market/indicators?indicator=sma) and
+  passed to the chart as props, not fetched client-side -- the browser
+  cannot resolve the "backend" hostname used inside Docker Compose, so a
+  client-side fetch would fail there even though the server-side one
+  works. If the chart fetch fails, the page still renders (price/
+  fundamentals come from a separate, independent fetch) with a plain
+  text fallback instead of a broken chart.
 
 Note: frontend/AGENTS.md (written by next dev, not by this session) warns
 that Next.js 16 has breaking API/convention changes vs older training
 data — it was consulted (node_modules/next/dist/docs/) before writing the
 pages above, e.g. to confirm params is still a Promise in dynamic routes.
+Also hit and worked around eslint-config-next's new react-hooks/purity
+rule, which flags Date.now() called directly in a component body (even a
+Server Component, which isn't re-rendered the way the rule's rationale
+assumes) -- fixed by moving it into a plain helper function.
 
-Not built yet: a chart wired to our own /market/bars data, indicators on
-the chart, auth pages, watchlist/portfolio/order/backtest UI.
+Not built yet: indicators beyond SMA/EMA on the chart (RSI, MACD,
+Bollinger, VWAP), auth pages, watchlist/portfolio/order/backtest UI.
 
 TradingView integration, step 1 (src/components/TradingViewWidget.tsx,
 /chart page) — DONE. charting-library-integration.md describes the
@@ -159,13 +175,7 @@ Roughly in priority order for reaching a demoable V1 MVP
 (vn-stock-sim-version-highlights.md, Version 1 section):
 
 1. Build out the remaining V1 frontend pages against the backend (the
-   stock browser slice above is the first one done):
-   - Candlestick chart on the stock detail page — start with a plain
-     chart lib (e.g. lightweight-charts) reading GET /market/bars; defer
-     the full TradingView Charting Library integration
-     (charting-library-integration.md) until access is requested/granted
-     (see Future work below) — a simpler chart is enough to prove the V1
-     loop end-to-end.
+   stock browser slice and the candlestick chart above are done):
    - Auth pages (register/login), storing the bearer token and attaching
      it to authenticated requests.
    - Watchlist table, portfolio summary/positions, paper trade order

@@ -1,7 +1,19 @@
 import { notFound } from "next/navigation";
-import { getSymbolDetail } from "@/lib/api";
+import { getSymbolDetail, getBars, getIndicator, type Bar, type IndicatorPoint } from "@/lib/api";
+import StockChart from "@/components/StockChart";
 
 type Props = { params: Promise<{ symbol: string }> };
+
+const SIX_MONTHS_SECONDS = 180 * 24 * 60 * 60;
+
+// Pulled out of the component body: eslint-config-next's react-hooks/purity
+// rule flags Date.now() called directly inside a component/hook, even
+// though this is a Server Component that only ever runs once per request,
+// not re-rendered like a Client Component.
+function lastSixMonthsRange(): { from: number; to: number } {
+  const to = Math.floor(Date.now() / 1000);
+  return { from: to - SIX_MONTHS_SECONDS, to };
+}
 
 export default async function StockDetailPage({ params }: Props) {
   const { symbol } = await params;
@@ -10,6 +22,23 @@ export default async function StockDetailPage({ params }: Props) {
     detail = await getSymbolDetail(symbol);
   } catch {
     notFound();
+  }
+
+  // Fetched separately from the detail lookup above: a chart data outage
+  // shouldn't take down the whole page when the price/fundamentals load
+  // fine, so failures here degrade to an empty chart instead of notFound().
+  let bars: Bar[] = [];
+  let sma20: IndicatorPoint[] = [];
+  try {
+    const { from, to } = lastSixMonthsRange();
+    const [barsRes, smaRes] = await Promise.all([
+      getBars(symbol, "1D", from, to),
+      getIndicator(symbol, "1D", "sma", 20, from, to),
+    ]);
+    bars = barsRes.data;
+    sma20 = smaRes.data;
+  } catch {
+    // leave bars/sma20 empty; the chart section below handles this.
   }
 
   const changeColor = detail.change >= 0 ? "text-green-600" : "text-red-600";
@@ -51,9 +80,22 @@ export default async function StockDetailPage({ params }: Props) {
         </div>
       </dl>
 
-      <p className="mt-8 text-sm text-gray-400">
-        Candlestick chart + indicators not built yet — see RESUME.md plan step 2.
-      </p>
+      <div className="mt-8">
+        <div className="mb-2 flex items-baseline justify-between">
+          <h2 className="text-sm font-medium text-gray-700">
+            Price (6mo, daily) <span className="ml-2 text-blue-600">— SMA(20)</span>
+          </h2>
+        </div>
+        {bars.length > 0 ? (
+          <StockChart bars={bars} sma20={sma20} />
+        ) : (
+          <p className="text-sm text-gray-400">
+            Chart data unavailable right now — the backend may be starting up or
+            unreachable. Indicators beyond SMA/EMA are not implemented yet, see
+            RESUME.md.
+          </p>
+        )}
+      </div>
     </main>
   );
 }
