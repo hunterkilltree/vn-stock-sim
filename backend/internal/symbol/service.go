@@ -1,11 +1,23 @@
 package symbol
 
-type Service struct {
-	provider Provider
+// QuotePort is the small interface Service depends on to derive a live
+// last price/change instead of carrying its own separately-seeded
+// static value. Satisfied by *market.Service. Kept as primitive types
+// (not market.Bar) so this package has no import dependency on market --
+// only main.go wires the two together.
+type QuotePort interface {
+	// LatestClose returns the most recent two closes for sym; ok is
+	// false if the quote source doesn't have enough data.
+	LatestClose(sym string) (today, yesterday float64, ok bool)
 }
 
-func NewService(provider Provider) *Service {
-	return &Service{provider: provider}
+type Service struct {
+	provider Provider
+	quotes   QuotePort
+}
+
+func NewService(provider Provider, quotes QuotePort) *Service {
+	return &Service{provider: provider, quotes: quotes}
 }
 
 func (s *Service) Search(query, exchange string, page, pageSize int) ([]Symbol, int) {
@@ -22,6 +34,26 @@ func (s *Service) Search(query, exchange string, page, pageSize int) ([]Symbol, 
 	return all[start:end], total
 }
 
+// Detail returns fundamentals from the provider (company/exchange/sector/
+// tickSize/marketCap/peRatio/pbRatio/eps/dividendYield) with the price
+// fields (lastPrice/change/changePercent) overridden from the quote
+// source when available. Without this override those two were entirely
+// independent mock values -- the provider's seeded lastPrice had no
+// relationship to what the chart (backed by market data) actually
+// showed as the latest close, which is the bug this fixes. The
+// provider's seeded price fields remain as a fallback if the quote
+// source has no data for this symbol.
 func (s *Service) Detail(sym string) (Detail, bool) {
-	return s.provider.Detail(sym)
+	detail, ok := s.provider.Detail(sym)
+	if !ok {
+		return Detail{}, false
+	}
+	if today, yesterday, ok := s.quotes.LatestClose(detail.Symbol.Symbol); ok {
+		detail.LastPrice = today
+		detail.Change = today - yesterday
+		if yesterday != 0 {
+			detail.ChangePercent = detail.Change / yesterday * 100
+		}
+	}
+	return detail, true
 }

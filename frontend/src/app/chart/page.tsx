@@ -18,7 +18,7 @@ export default function ChartPage() {
         proves the chart renders end-to-end before wiring the licensed Charting Library +
         custom Datafeed against our own VN symbol data — see RESUME.md.
       </p>
-      <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-950 p-6">
+      <div className="rounded-2xl border border-neutral-800 bg-neutral-950 p-6">
         <TradingViewWidget symbol="BITSTAMP:BTCUSD" theme="dark" />
       </div>
     </main>

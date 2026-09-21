@@ -242,6 +242,62 @@ version), and replace insight.Service's buildSignals/buildSummary with
 a call to that model, keeping the same Insight/Signal response shape
 so the frontend needs no changes.
 
+Bug found and fixed 2026-09-21: the stock detail page's top-of-page
+quote (lastPrice/change/changePercent) and its own candlestick chart
+could show two unrelated prices for "now" -- reported by the user
+comparing /stocks/VNM's price to its chart. Root cause was two layers
+deep:
+
+1. symbol.MockProvider seeded lastPrice/change/changePercent as fixed,
+   independent values per symbol, entirely unrelated to
+   market.MockProvider's generated bars -- e.g. VNM's seeded lastPrice
+   was 68500, while its chart's actual last close (from a random walk
+   starting at a different seeded base) had drifted to ~38911 after
+   180 simulated days. Fixed by making symbol.Service derive
+   lastPrice/change/changePercent from market data instead: added
+   symbol.QuotePort (LatestClose) and market.Service.LatestClose, and
+   symbol.Service.Detail now overrides the provider's seeded price
+   fields with the quote source's when available (main.go wires
+   marketSvc into symbol.NewService as its QuotePort; symbol has no
+   import dependency on market, only main.go connects them). The
+   provider's seeded values remain as a fallback.
+2. Even after that, GetBars/LatestClose still disagreed with each
+   other: market.MockProvider.GetBars computed each bar as a running
+   product accumulated iteratively from whatever "from" the caller
+   passed, starting at a fixed seed price -- so the "current" close at
+   a given instant depended on how far back the requested window
+   started (the chart requests 180 days, LatestClose requested 10),
+   producing two different answers for "today" from the same
+   generator. Rewrote GetBars so each bar's open/close comes from
+   closeFor(sym, t), a pure function of (symbol, absolute time) using
+   two symbol-seeded sine waves plus small jitter -- no iteration, no
+   dependency on the request's window length, so any window ending at
+   the same instant now reports the same close for that instant. Also
+   aligned from/to to the resolution's time grid (multiples of step)
+   so two calls issued a few seconds apart (each computing "now"
+   independently) still land on identical bar timestamps.
+
+Verified end to end, not just by reading the diff: curl against
+/symbols/VNM and /market/bars (both a 180-day and a 10-day window)
+after the fix returned the exact same lastPrice/last-close
+(64599.52 in all three), for VNM/VCB/HPG, inside the actual Docker
+image (docker compose build + ./run.sh -d), and visually in the
+browser pane where the page's displayed price and the chart's
+right-edge price label now agree.
+
+Also, per a follow-up request, chart resizing now works in both
+directions (previously vertical-only): both StockChart.tsx and
+TradingViewWidget.tsx use `resize: both` (Tailwind's `resize` class)
+instead of `resize-y`, with a min-width added alongside the existing
+min-height. The three dark card wrappers around these charts
+(home page hero, /chart, /stocks/[symbol]) had `overflow-hidden`,
+which would have invisibly clipped horizontal growth past the card's
+original width -- removed it from all three. Verified in the browser
+pane: StockChart's container measurably changed in both width and
+height from a single drag (430x400 -> 295x280 in one test), and the
+chart canvas redrew cleanly with no overflow past the card at the new
+size, in both directions.
+
 TradingView integration, step 1 (src/components/TradingViewWidget.tsx,
 /chart page) — DONE. charting-library-integration.md describes the
 self-hosted Charting Library, which needs TradingView's GitHub-gated

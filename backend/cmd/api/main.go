@@ -27,11 +27,15 @@ func main() {
 	cfg := config.Load()
 	tokens := authtoken.NewIssuer(cfg.JWTSecret, 24*time.Hour)
 
-	symbolProvider := symbol.NewMockProvider()
-	symbolSvc := symbol.NewService(symbolProvider)
-
 	marketProvider := market.NewMockProvider()
 	marketSvc := market.NewService(marketProvider)
+
+	// symbol.Service depends on marketSvc (via QuotePort) so a symbol's
+	// lastPrice/change/changePercent are derived from the same bars the
+	// chart renders, instead of an independently-seeded value that could
+	// drift arbitrarily far from what the chart actually shows.
+	symbolProvider := symbol.NewMockProvider()
+	symbolSvc := symbol.NewService(symbolProvider, marketSvc)
 
 	authSvc := auth.NewService(auth.NewMemoryStore(), tokens)
 	watchlistSvc := watchlist.NewService(watchlist.NewMemoryStore(), symbolSvc)

@@ -101,7 +101,7 @@ export default async function StockDetailPage({ params }: Props) {
           </dl>
         </div>
 
-        <div className="mt-8 overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-950 p-6 lg:mt-0">
+        <div className="mt-8 rounded-2xl border border-neutral-800 bg-neutral-950 p-6 lg:mt-0">
           <div className="mb-4 flex items-baseline justify-between">
             <h2 className="text-sm font-medium text-neutral-300">
               Price (6mo, daily) <span className="ml-2 text-blue-400">— SMA(20)</span>
