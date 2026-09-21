@@ -298,6 +298,24 @@ height from a single drag (430x400 -> 295x280 in one test), and the
 chart canvas redrew cleanly with no overflow past the card at the new
 size, in both directions.
 
+Follow-up 2026-09-21: user asked for confirmation that chart data
+reaches "now" in UTC. It already did (verified: daily bars align down
+to the start of the current UTC day, so the last bar is always dated
+today -- confirmed via curl showing 2026-09-21T00:00:00 as the last
+bar for a "now" of 2026-09-21 15:58 UTC), but nothing in the UI made
+that visible -- the x-axis only shows month labels
+(StockChart.tsx: timeVisible: false), so there was no way to tell at a
+glance that the rightmost bar was actually current rather than stale.
+Added a small "Data through <date> UTC" caption (computed from the
+last bar's own timestamp, not a separate "now" call, so it can never
+drift from what the chart is actually showing) next to both chart
+panels that use StockChart.tsx (the stock detail page and the home
+page hero preview) -- not added to /chart, which is TradingView's own
+live widget and already shows real-time data with its own UI. Verified
+in the browser pane on both pages, and inside the built Docker image
+(the "Data through Sep 21, 2026 UTC" string is present in the served
+HTML/RSC payload).
+
 TradingView integration, step 1 (src/components/TradingViewWidget.tsx,
 /chart page) — DONE. charting-library-integration.md describes the
 self-hosted Charting Library, which needs TradingView's GitHub-gated
