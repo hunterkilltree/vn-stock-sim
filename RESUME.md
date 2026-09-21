@@ -5,7 +5,8 @@ what is deferred, so a future session (human or Claude Code) can pick this
 up without re-deriving context. See CLAUDE.md for the repo orientation and
 the design docs (vn-stock-sim-summary.md, vn-stock-sim-version-highlights.md,
 api-spec.md, charting-library-integration.md) for the full spec. See
-DOCKER.md for how to run the whole thing as a demo.
+RUNNING.md to run backend + frontend locally with hot reload, or
+DOCKER.md for a one-command demo.
 
 Last updated: 2026-09-21.
 
