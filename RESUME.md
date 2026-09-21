@@ -77,6 +77,21 @@ Built beyond the template:
   shows a visible error message instead of crashing when the backend is
   not running.
 - Home page (/) links into /stocks.
+
+Bug found and fixed 2026-09-21: the API client's fetch used
+next: { revalidate: 10 }, which let Next.js statically prerender /stocks
+at `next build` time. In Docker, the frontend image builds before the
+backend container exists, so that build-time fetch always failed and
+baked the "could not reach the API" error page into the image -- it only
+self-healed after the first background ISR revalidation succeeded once
+the backend was actually running (up to 10s, or longer if nobody hit the
+page to trigger a revalidation). Fixed by switching to cache: "no-store"
+in src/lib/api.ts, which forces /stocks to render per-request instead of
+at build time (confirmed via the next build route table: /stocks changed
+from "○ Static" to "ƒ Dynamic"). Verified with a fresh
+docker compose build --no-cache + ./run.sh -d + an immediate curl (no
+delay) against /stocks and /stocks/VNM -- both returned real data on the
+very first request.
 - /chart — step 1 of the TradingView integration plan (see below).
 
 Note: frontend/AGENTS.md (written by next dev, not by this session) warns
