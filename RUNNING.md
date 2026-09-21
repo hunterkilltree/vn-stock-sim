@@ -1,6 +1,6 @@
 # Running VN Stock Sim locally (without Docker)
 
-For a one-command demo instead, see DOCKER.md (`docker compose up --build`).
+For a one-command demo instead, see DOCKER.md (`./run.sh`).
 This doc is for day-to-day development: running the backend and frontend
 directly on your machine, with hot reload.
 

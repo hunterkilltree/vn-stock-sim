@@ -1,17 +1,29 @@
 # Running the V1 demo in Docker
 
 ```bash
-docker compose up --build
+./run.sh
 ```
+
+`run.sh` is a thin wrapper around `docker compose up --build` that checks
+Docker is installed and the daemon is running first, so failures are
+clearer than the raw Docker error. Equivalent to running
+`docker compose up --build` directly, if you would rather not use it.
+
+Options:
+
+- `./run.sh -d` -- build and run detached, then return control to your
+  shell (any extra args are passed through to `docker compose up`).
+- `./run.sh down` -- stop and remove the containers.
+- Plain `./run.sh` -- runs in the foreground; Ctrl+C stops both containers.
 
 Then open:
 
 - Frontend: http://localhost:3000 (stock browser at /stocks)
 - Backend API: http://localhost:8080/api/v1/symbols
 
-Stop with `docker compose down` (add `-v` if you ever add volumes later --
-there are none yet, everything is in-memory and resets on restart, see
-RESUME.md).
+Stop with `./run.sh down` (or `docker compose down`; add `-v` if you ever
+add volumes later -- there are none yet, everything is in-memory and
+resets on restart, see RESUME.md).
 
 Two services, both built from source, no database yet:
 
