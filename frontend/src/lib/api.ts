@@ -53,3 +53,35 @@ export function searchSymbols(query = ""): Promise<Paged<Symbol>> {
 export function getSymbolDetail(symbol: string): Promise<SymbolDetail> {
   return apiFetch<SymbolDetail>(`/api/v1/symbols/${encodeURIComponent(symbol)}`);
 }
+
+export type Bar = {
+  time: number; // unix seconds, matches lightweight-charts' UTCTimestamp
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+};
+
+export type IndicatorPoint = {
+  time: number;
+  value: number;
+};
+
+// from/to are unix seconds, per api-spec.md's GET /market/bars contract.
+export function getBars(symbol: string, resolution: string, from: number, to: number): Promise<{ data: Bar[] }> {
+  const qs = `symbol=${encodeURIComponent(symbol)}&resolution=${encodeURIComponent(resolution)}&from=${from}&to=${to}`;
+  return apiFetch<{ data: Bar[] }>(`/api/v1/market/bars?${qs}`);
+}
+
+export function getIndicator(
+  symbol: string,
+  resolution: string,
+  indicator: string,
+  period: number,
+  from: number,
+  to: number,
+): Promise<{ data: IndicatorPoint[] }> {
+  const qs = `symbol=${encodeURIComponent(symbol)}&resolution=${encodeURIComponent(resolution)}&indicator=${indicator}&period=${period}&from=${from}&to=${to}`;
+  return apiFetch<{ data: IndicatorPoint[] }>(`/api/v1/market/indicators?${qs}`);
+}
