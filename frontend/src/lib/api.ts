@@ -31,9 +31,13 @@ type Paged<T> = {
 
 async function apiFetch<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${path}`, {
-    // The backend has no real-time push yet (RESUME.md), so short revalidation
-    // is a reasonable default for V1 rather than fully static or no-store.
-    next: { revalidate: 10 },
+    // no-store, not next: { revalidate }: revalidate let Next.js
+    // statically prerender /stocks at `next build` time, which in Docker
+    // means fetching before the backend container exists -- that build-time
+    // fetch always failed and baked the error page into the image, only
+    // self-healing after the first background ISR revalidation. no-store
+    // forces this route to render per-request instead (see RESUME.md).
+    cache: "no-store",
   });
   if (!res.ok) {
     throw new Error(`API ${path} failed: ${res.status} ${res.statusText}`);
