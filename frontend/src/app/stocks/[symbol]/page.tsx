@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
-import { getSymbolDetail, getBars, getIndicator, type Bar, type IndicatorPoint } from "@/lib/api";
+import { getSymbolDetail, getBars, getIndicator, getInsight, type Bar, type IndicatorPoint, type Insight } from "@/lib/api";
 import StockChart from "@/components/StockChart";
+import AIInsightCard from "@/components/AIInsightCard";
 
 type Props = { params: Promise<{ symbol: string }> };
 
@@ -39,6 +40,16 @@ export default async function StockDetailPage({ params }: Props) {
     sma20 = smaRes.data;
   } catch {
     // leave bars/sma20 empty; the chart section below handles this.
+  }
+
+  // Also independent: the insight panel degrades to nothing (not an
+  // error) if the backend can't produce one, rather than blocking the
+  // rest of the page.
+  let insight: Insight | null = null;
+  try {
+    insight = await getInsight(symbol);
+  } catch {
+    // leave insight null; the section below just doesn't render.
   }
 
   const changeColor = detail.change >= 0 ? "text-green-600" : "text-red-600";
@@ -107,6 +118,12 @@ export default async function StockDetailPage({ params }: Props) {
           )}
         </div>
       </div>
+
+      {insight && (
+        <div className="mt-8">
+          <AIInsightCard insight={insight} />
+        </div>
+      )}
     </main>
   );
 }
