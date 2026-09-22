@@ -16,7 +16,39 @@ func RegisterRoutes(v1 *gin.RouterGroup, svc *Service) {
 	group := v1.Group("/market")
 	group.GET("/bars", barsHandler(svc))
 	group.GET("/indicators", indicatorsHandler(svc))
+	group.GET("/indices", indicesHandler(svc))
+	group.GET("/orderbook", orderBookHandler(svc))
 	v1.GET("/time", timeHandler())
+}
+
+// indicesHandler returns all four tracked indices (Main.dc.html's index
+// cards) in one call -- the frontend always needs all of them together,
+// so there's no per-index query param.
+func indicesHandler(svc *Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		out := make([]IndexSnapshot, 0, len(Indices))
+		for _, name := range Indices {
+			out = append(out, svc.GetIndex(name))
+		}
+		c.JSON(http.StatusOK, gin.H{"data": out})
+	}
+}
+
+func orderBookHandler(svc *Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		sym := c.Query("symbol")
+		if sym == "" {
+			httpx.ValidationError(c, "symbol is required", nil)
+			return
+		}
+		today, _, ok := svc.LatestClose(sym)
+		if !ok {
+			httpx.Error(c, http.StatusNotFound, "not_found", "no quote data for this symbol")
+			return
+		}
+		bids, asks := svc.GetOrderBook(sym, today)
+		c.JSON(http.StatusOK, gin.H{"data": gin.H{"bids": bids, "asks": asks}})
+	}
 }
 
 func barsHandler(svc *Service) gin.HandlerFunc {

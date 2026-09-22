@@ -17,6 +17,14 @@ func (s *Service) GetBars(sym, resolution string, from, to int64) []Bar {
 	return s.data.GetBars(sym, resolution, from, to)
 }
 
+func (s *Service) GetIndex(name string) IndexSnapshot {
+	return s.data.GetIndex(name)
+}
+
+func (s *Service) GetOrderBook(sym string, lastPrice float64) (bids, asks []PriceLevel) {
+	return s.data.GetOrderBook(sym, lastPrice)
+}
+
 // GetIndicator computes a basic SMA/EMA/RSI over the underlying bars. Only
 // "sma" and "ema" are implemented for V1; others return an empty slice
 // until the full indicator library lands (see RESUME.md).

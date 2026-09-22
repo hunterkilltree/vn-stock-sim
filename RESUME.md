@@ -480,7 +480,95 @@ compose up -d`, then curl against /, /stocks, /stocks/VNM, /chart, and
 /login all returned HTTP 200, /stocks' HTML contained the expected
 SidebarNav labels (Market/Portfolio/Replay/Quant/Settings) and the
 "Soon" pill text, and GET /api/v1/symbols returned real mock data from
-the backend container.
+the backend container. Merged as PR #13.
+
+**Phase B (backend data model rework) -- DONE.** Plan: phase-b.md.
+Backend-only, no frontend changes (that's Phase C/D). All new/changed
+endpoints are under the existing Handler-to-Service-to-Adapter layering;
+no vendor/database wiring changed.
+
+- `portfolio` package reworked from one account per user to real
+  multi-portfolio storage: `Portfolio{id, userId, name, market,
+  startingCapital, currency, createdAt}`, `MemoryStore` now keyed by
+  portfolio ID with a `byUser` index for listing. `Service` gained
+  `DefaultPortfolioID(userID)`, which lazily opens a "Danh muc chinh"
+  stock portfolio (100,000,000 VND) the first time it's asked for a
+  given user -- the old single-portfolio `ensure()` behavior, now
+  sitting on top of the multi-portfolio store, so the existing
+  `GET /portfolio` / `/portfolio/positions` routes work unchanged. New:
+  `POST /api/v1/portfolios`, `GET /api/v1/portfolios`,
+  `GET /api/v1/portfolios/:id`, plus `.../summary` and `.../positions`
+  (added beyond the original phase-b.md file list, during verification,
+  once it became clear there was no way to curl-confirm two portfolios'
+  balances stay isolated without a per-ID summary endpoint).
+- `order` gained `portfolioId` (optional on the request, resolved via
+  `DefaultPortfolioID` when omitted) and two new order types, `atc` and
+  `stop`, alongside the existing `market`/`limit` (LO/MP/ATC/Stop from
+  Detail.dc.html's order ticket) -- like `limit` today, `atc`/`stop` are
+  accepted and stored `"queued"`, not actually filled (no real matching
+  engine yet, unchanged from before). `Order` gained `fee` -- 0.15% of
+  notional value, computed only on an actual (`market`) fill.
+  `watchlist` was deliberately NOT threaded with a portfolioId, a
+  documented deviation from FULL-APP-PLAN.md's literal wording (see
+  phase-b.md decision 2): the design canvas shows no per-portfolio
+  watchlist anywhere, so it stayed user-scoped.
+- `symbol.Detail` gained `reference`/`ceiling`/`floor` -- the real
+  HOSE (+-7%)/HNX (+-10%)/UPCOM (+-15%) daily price-band rules, derived
+  from the previous close (already available via the existing
+  `QuotePort.LatestClose`) and rounded to the nearest 100 VND tick.
+- `market` gained `GetIndex` (VN-Index/VN30/HNX-Index/UPCOM-Index, same
+  deterministic sine-wave-plus-jitter technique as the existing bar
+  generator -- a pure function of (name, t), reproducible across calls)
+  behind `GET /api/v1/market/indices`, and `GetOrderBook` (6 levels each
+  side, deterministic in (symbol, lastPrice, time.Now().Unix())) behind
+  `GET /api/v1/market/orderbook?symbol=`. The order book uses a
+  hardcoded 100 VND tick step rather than a real per-symbol lookup,
+  since `market` has no import dependency on `symbol` by design
+  (CLAUDE.md's layering rule) and every current mock symbol's tickSize
+  happens to be 100 anyway -- documented simplification, see phase-b.md
+  decision 3, revisit if a differently-ticked symbol is ever added.
+- New `internal/screener` package (`GetSectorHeatmap`, `GetTopMovers`),
+  depending only on `symbol.Service`'s existing public `Search`/`Detail`
+  methods (no new method added to `symbol`) -- backs
+  `GET /api/v1/market/heatmap` and `GET /api/v1/market/movers?
+  direction=up|down`.
+
+Verified, not just read -- all via curl against the real Docker image
+(`docker compose build && docker compose up -d`, no local Go install on
+this machine, same as every prior backend phase):
+
+- `go build ./... && go vet ./...` clean inside a `golang:1.22-alpine`
+  container.
+- Registered a user, curled `GET /portfolio` twice -- identical default
+  portfolio and cash balance both times (lazy-create is idempotent).
+- Created two more portfolios via `POST /portfolios` (one stock, one
+  crypto/USDT) -- `GET /portfolios` listed all three. Bought VNM against
+  the default portfolio (`POST /orders` with `portfolioId`) and confirmed
+  via the new `.../summary` endpoints that its cash balance dropped by
+  the fill cost while a second, untouched portfolio's cash stayed exactly
+  at its starting capital -- real isolation, not just two IDs sharing
+  state.
+- `GET /market/indices` called twice a few seconds apart returned byte-
+  identical values for all four indices (deliberately re-checked the
+  same regression class as the 2026-09-21 stock-price-consistency bug --
+  not reintroduced here).
+- `GET /market/heatmap` grouped all 5 mock symbols into their correct 4
+  sectors with correct average change%; `GET /market/movers?
+  direction=up` and `...=down` both correctly sorted.
+- `GET /market/orderbook?symbol=VNM` returned 6 levels each side spaced
+  exactly 100 VND apart, byte-identical across two calls moments apart.
+- `GET /symbols/:symbol` for all 5 mock symbols: confirmed
+  `floor < reference < ceiling`, and specifically checked the band math
+  by hand for VNM (HOSE, reference 64599.52 -> ceiling 69100/floor
+  60100, matching +-7% rounded to the nearest 100) and SHB (HNX,
+  reference 55172.99 -> ceiling 60700/floor 49700, matching +-10%).
+- Placed a `market` order and confirmed `fee` equals 0.15% of
+  `filledPrice * quantity` (by hand: 63240.57 * 100 * 0.0015 = 9486.08,
+  matching the existing truncating `round2` helper's convention); placed
+  one `atc` and one `stop` order and confirmed both came back
+  `status: "queued"`, `fee: 0`.
+
+Branch: phase-b-backend-data-model (off master, after PR #13 merged).
 
 ---
 

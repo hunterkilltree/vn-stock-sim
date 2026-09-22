@@ -14,53 +14,71 @@ var ErrInsufficientShares = portfolio.ErrInsufficientShares
 var ErrNotFound = errors.New("order not found")
 
 type Ledger interface {
-	ApplyFill(userID, sym, side string, quantity int64, price float64) error
+	ApplyFill(portfolioID, sym, side string, quantity int64, price float64) error
 }
 
 type QuotePort interface {
 	Detail(sym string) (symbol.Detail, bool)
 }
 
-type Service struct {
-	store   *MemoryStore
-	ledger  Ledger
-	quotes  QuotePort
+// PortfolioResolver lets Service resolve a request's optional
+// portfolioId to a real portfolio -- satisfied by *portfolio.Service.
+// See phase-b.md decision 1.
+type PortfolioResolver interface {
+	DefaultPortfolioID(userID string) string
 }
 
-func NewService(store *MemoryStore, ledger Ledger, quotes QuotePort) *Service {
-	return &Service{store: store, ledger: ledger, quotes: quotes}
+type Service struct {
+	store      *MemoryStore
+	ledger     Ledger
+	quotes     QuotePort
+	portfolios PortfolioResolver
+}
+
+func NewService(store *MemoryStore, ledger Ledger, quotes QuotePort, portfolios PortfolioResolver) *Service {
+	return &Service{store: store, ledger: ledger, quotes: quotes, portfolios: portfolios}
 }
 
 // Create places an order. V1 only fills "market" orders immediately
-// against the current mock quote (paper trading); "limit" orders are
-// accepted and stored as "queued" — matching against future price moves
-// is not implemented yet (see RESUME.md future work).
+// against the current mock quote (paper trading); "limit"/"atc"/"stop"
+// orders are accepted and stored as "queued" — matching against future
+// price moves is not implemented yet (see RESUME.md future work).
 func (s *Service) Create(userID string, req createRequest) (Order, error) {
 	detail, ok := s.quotes.Detail(req.Symbol)
 	if !ok {
 		return Order{}, ErrSymbolNotFound
 	}
+	portfolioID := req.PortfolioID
+	if portfolioID == "" {
+		portfolioID = s.portfolios.DefaultPortfolioID(userID)
+	}
 	now := time.Now()
 	o := Order{
-		Symbol:    detail.Symbol.Symbol,
-		Side:      req.Side,
-		Type:      req.Type,
-		Quantity:  req.Quantity,
-		CreatedAt: formatTime(now),
+		PortfolioID: portfolioID,
+		Symbol:      detail.Symbol.Symbol,
+		Side:        req.Side,
+		Type:        req.Type,
+		Quantity:    req.Quantity,
+		CreatedAt:   formatTime(now),
 	}
 
-	if req.Type == "limit" {
+	if req.Type != "market" {
 		o.Status = "queued"
 		return s.store.Append(userID, o), nil
 	}
 
-	if err := s.ledger.ApplyFill(userID, detail.Symbol.Symbol, req.Side, req.Quantity, detail.LastPrice); err != nil {
+	if err := s.ledger.ApplyFill(portfolioID, detail.Symbol.Symbol, req.Side, req.Quantity, detail.LastPrice); err != nil {
 		return Order{}, err
 	}
 	o.Status = "filled"
 	o.FilledPrice = detail.LastPrice
+	o.Fee = round2(detail.LastPrice * float64(req.Quantity) * FeeRate)
 	o.FilledAt = formatTime(now)
 	return s.store.Append(userID, o), nil
+}
+
+func round2(v float64) float64 {
+	return float64(int64(v*100)) / 100
 }
 
 func (s *Service) List(userID string) []Order {

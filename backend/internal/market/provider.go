@@ -9,6 +9,8 @@ import "math"
 // implementing the same interface.
 type MarketDataProvider interface {
 	GetBars(sym, resolution string, from, to int64) []Bar
+	GetIndex(name string) IndexSnapshot
+	GetOrderBook(sym string, lastPrice float64) (bids, asks []PriceLevel)
 }
 
 type MockProvider struct{}

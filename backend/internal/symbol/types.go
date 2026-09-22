@@ -20,4 +20,13 @@ type Detail struct {
 	PBRatio       float64 `json:"pbRatio"`
 	EPS           float64 `json:"eps"`
 	DividendYield float64 `json:"dividendYield"`
+	// Reference (tham chieu), Ceiling (tran), and Floor (san) are the real
+	// HOSE/HNX/UPCOM daily price-band rules, derived from the previous
+	// close by a fixed percentage band per exchange -- see
+	// priceBandPercent in service.go. Populated only when the quote
+	// source has data (same condition as LastPrice/Change below); zero
+	// otherwise.
+	Reference float64 `json:"reference"`
+	Ceiling   float64 `json:"ceiling"`
+	Floor     float64 `json:"floor"`
 }
