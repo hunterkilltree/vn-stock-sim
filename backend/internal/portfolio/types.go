@@ -1,5 +1,20 @@
 package portfolio
 
+// Portfolio is one named paper-trading account a user owns. A user can
+// hold several (Account-Menu.dc.html shows switching between a main
+// stock portfolio, a strategy-test portfolio, and a crypto wallet) --
+// see phase-b.md decision 1. Currency is "VND" for market: "stock" and
+// "USDT" for market: "crypto" (crypto portfolios land in Phase I).
+type Portfolio struct {
+	ID              string  `json:"id"`
+	UserID          string  `json:"userId"`
+	Name            string  `json:"name"`
+	Market          string  `json:"market"`
+	StartingCapital float64 `json:"startingCapital"`
+	Currency        string  `json:"currency"`
+	CreatedAt       string  `json:"createdAt"`
+}
+
 type Position struct {
 	Symbol        string  `json:"symbol"`
 	Quantity      int64   `json:"quantity"`

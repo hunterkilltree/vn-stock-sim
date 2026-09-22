@@ -19,6 +19,7 @@ import (
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/market"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/order"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/portfolio"
+	"github.com/hunterkilltree/vn-stock-sim/backend/internal/screener"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/symbol"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/watchlist"
 )
@@ -41,9 +42,10 @@ func main() {
 	watchlistSvc := watchlist.NewService(watchlist.NewMemoryStore(), symbolSvc)
 	portfolioStore := portfolio.NewMemoryStore()
 	portfolioSvc := portfolio.NewService(portfolioStore, symbolSvc)
-	orderSvc := order.NewService(order.NewMemoryStore(), portfolioStore, symbolSvc)
+	orderSvc := order.NewService(order.NewMemoryStore(), portfolioStore, symbolSvc, portfolioSvc)
 	backtestSvc := backtest.NewService(backtest.NewMemoryStore(), marketSvc)
 	insightSvc := insight.NewService(symbolSvc, marketSvc)
+	screenerSvc := screener.NewService(symbolSvc)
 
 	router := gin.Default()
 	v1 := router.Group("/api/v1")
@@ -56,6 +58,7 @@ func main() {
 	order.RegisterRoutes(v1, orderSvc, tokens)
 	backtest.RegisterRoutes(v1, backtestSvc, tokens)
 	insight.RegisterRoutes(v1, insightSvc)
+	screener.RegisterRoutes(v1, screenerSvc)
 
 	log.Printf("VN Stock Sim API listening on :%s", cfg.Port)
 	if err := router.Run(":" + cfg.Port); err != nil {

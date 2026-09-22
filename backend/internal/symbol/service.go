@@ -1,5 +1,7 @@
 package symbol
 
+import "math"
+
 // QuotePort is the small interface Service depends on to derive a live
 // last price/change instead of carrying its own separately-seeded
 // static value. Satisfied by *market.Service. Kept as primitive types
@@ -54,6 +56,36 @@ func (s *Service) Detail(sym string) (Detail, bool) {
 		if yesterday != 0 {
 			detail.ChangePercent = detail.Change / yesterday * 100
 		}
+		detail.Reference = yesterday
+		band := priceBandPercent(detail.Exchange)
+		detail.Ceiling = roundToTick(yesterday*(1+band), detail.TickSize)
+		detail.Floor = roundToTick(yesterday*(1-band), detail.TickSize)
 	}
 	return detail, true
+}
+
+// priceBandPercent is the real daily price-band rule for each Vietnamese
+// exchange -- ceiling/floor are this percent above/below the reference
+// (previous close), not a design choice. Unknown exchanges fall back to
+// HOSE's band rather than 0, so ceiling/floor never silently collapse to
+// the reference price.
+func priceBandPercent(exchange string) float64 {
+	switch exchange {
+	case "HOSE":
+		return 0.07
+	case "HNX":
+		return 0.10
+	case "UPCOM":
+		return 0.15
+	default:
+		return 0.07
+	}
+}
+
+func roundToTick(price float64, tickSize int) float64 {
+	if tickSize <= 0 {
+		tickSize = 100
+	}
+	t := float64(tickSize)
+	return math.Round(price/t) * t
 }

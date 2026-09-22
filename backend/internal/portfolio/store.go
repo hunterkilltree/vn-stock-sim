@@ -2,11 +2,14 @@ package portfolio
 
 import (
 	"errors"
+	"fmt"
 	"sync"
+	"time"
 )
 
 var ErrInsufficientCash = errors.New("insufficient virtual cash")
 var ErrInsufficientShares = errors.New("insufficient shares")
+var ErrNotFound = errors.New("portfolio not found")
 
 type position struct {
 	quantity int64
@@ -18,35 +21,117 @@ type account struct {
 	positions map[string]*position
 }
 
-// MemoryStore is the in-memory paper-trading ledger: one account per user,
-// lazily opened with StartingCash on first touch. No database wired up for
-// V1 yet (see RESUME.md).
+// MemoryStore is the in-memory paper-trading ledger. Reworked in Phase B
+// (see phase-b.md decision 1) from one account per user to one account
+// per Portfolio: a user may own several portfolios, each with its own
+// cash balance and position set, keyed by portfolio ID. byUser indexes a
+// user's portfolio IDs for listing; byUserDefault remembers each user's
+// lazily-created default portfolio so the pre-Phase-B single-portfolio
+// callers (GET /portfolio, /portfolio/positions, orders with no
+// portfolioId) keep working unchanged. No database wired up for V1 yet
+// (see RESUME.md).
 type MemoryStore struct {
-	mu       sync.Mutex
-	accounts map[string]*account
+	mu            sync.Mutex
+	portfolios    map[string]*Portfolio
+	accounts      map[string]*account
+	byUser        map[string][]string
+	byUserDefault map[string]string
+	nextID        int
 }
 
 func NewMemoryStore() *MemoryStore {
-	return &MemoryStore{accounts: make(map[string]*account)}
+	return &MemoryStore{
+		portfolios:    make(map[string]*Portfolio),
+		accounts:      make(map[string]*account),
+		byUser:        make(map[string][]string),
+		byUserDefault: make(map[string]string),
+	}
 }
 
-func (s *MemoryStore) ensure(userID string) *account {
-	acc, ok := s.accounts[userID]
+func (s *MemoryStore) nextPortfolioID() string {
+	s.nextID++
+	return fmt.Sprintf("pf_%d", s.nextID)
+}
+
+// Create opens a new named portfolio for userID with its own cash
+// balance seeded from startingCapital.
+func (s *MemoryStore) Create(userID, name, market string, startingCapital float64, currency string) Portfolio {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	p := Portfolio{
+		ID:              s.nextPortfolioID(),
+		UserID:          userID,
+		Name:            name,
+		Market:          market,
+		StartingCapital: startingCapital,
+		Currency:        currency,
+		CreatedAt:       time.Now().UTC().Format("2006-01-02T15:04:05Z"),
+	}
+	s.portfolios[p.ID] = &p
+	s.accounts[p.ID] = &account{cash: startingCapital, positions: make(map[string]*position)}
+	s.byUser[userID] = append(s.byUser[userID], p.ID)
+	return p
+}
+
+// DefaultFor returns the lazily-created default portfolio ID for userID,
+// opening a "Danh muc chinh" (Main portfolio) stock portfolio seeded with
+// StartingCash the first time it's asked for a given user -- the same
+// lazy-open behavior the old single-portfolio ensure() had, now sitting
+// on top of the multi-portfolio store.
+func (s *MemoryStore) DefaultFor(userID string) string {
+	s.mu.Lock()
+	if id, ok := s.byUserDefault[userID]; ok {
+		s.mu.Unlock()
+		return id
+	}
+	s.mu.Unlock()
+	p := s.Create(userID, "Danh muc chinh", "stock", StartingCash, "VND")
+	s.mu.Lock()
+	s.byUserDefault[userID] = p.ID
+	s.mu.Unlock()
+	return p.ID
+}
+
+func (s *MemoryStore) List(userID string) []Portfolio {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	ids := s.byUser[userID]
+	out := make([]Portfolio, 0, len(ids))
+	for _, id := range ids {
+		out = append(out, *s.portfolios[id])
+	}
+	return out
+}
+
+// Get returns the portfolio only if it belongs to userID, so callers
+// can't read/act on another user's portfolio by guessing an ID.
+func (s *MemoryStore) Get(userID, id string) (Portfolio, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	p, ok := s.portfolios[id]
+	if !ok || p.UserID != userID {
+		return Portfolio{}, false
+	}
+	return *p, true
+}
+
+func (s *MemoryStore) accountFor(portfolioID string) *account {
+	acc, ok := s.accounts[portfolioID]
 	if !ok {
-		acc = &account{cash: StartingCash, positions: make(map[string]*position)}
-		s.accounts[userID] = acc
+		acc = &account{positions: make(map[string]*position)}
+		s.accounts[portfolioID] = acc
 	}
 	return acc
 }
 
-// ApplyFill books a filled market order against the user's paper account:
-// buy debits cash and grows the position at a blended average cost, sell
-// credits cash and shrinks the position. Returns the fill error (if any)
-// without mutating state, so a rejected order never partially applies.
-func (s *MemoryStore) ApplyFill(userID, sym, side string, quantity int64, price float64) error {
+// ApplyFill books a filled order against a portfolio's ledger: buy debits
+// cash and grows the position at a blended average cost, sell credits
+// cash and shrinks the position. Returns the fill error (if any) without
+// mutating state, so a rejected order never partially applies.
+func (s *MemoryStore) ApplyFill(portfolioID, sym, side string, quantity int64, price float64) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	acc := s.ensure(userID)
+	acc := s.accountFor(portfolioID)
 	cost := price * float64(quantity)
 
 	switch side {
@@ -77,16 +162,16 @@ func (s *MemoryStore) ApplyFill(userID, sym, side string, quantity int64, price 
 	return nil
 }
 
-func (s *MemoryStore) Cash(userID string) float64 {
+func (s *MemoryStore) Cash(portfolioID string) float64 {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.ensure(userID).cash
+	return s.accountFor(portfolioID).cash
 }
 
-func (s *MemoryStore) Positions(userID string) map[string]position {
+func (s *MemoryStore) Positions(portfolioID string) map[string]position {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	acc := s.ensure(userID)
+	acc := s.accountFor(portfolioID)
 	out := make(map[string]position, len(acc.positions))
 	for sym, p := range acc.positions {
 		out[sym] = *p
