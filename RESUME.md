@@ -473,12 +473,14 @@ the new dark RailNav with the active icon highlighted. Also checked at
 that width -- expected and NOT a bug, responsive collapsing to a bottom
 tab bar is explicitly Phase J's scope, not this phase's.
 
-Not yet re-verified inside the actual Docker image at the time of this
-note -- Docker Desktop was not running when this phase finished and had
-to be started; see whether a later session note in this file confirms
-the Docker-image curl check, and if not, run it before trusting this
-further (docker compose build && ./run.sh -d, then curl /, /stocks,
-/stocks/VNM, /chart).
+Re-verified inside the actual Docker image once Docker Desktop finished
+starting: `docker compose build` succeeded for both images (frontend
+build's route table matched the standalone build exactly), `docker
+compose up -d`, then curl against /, /stocks, /stocks/VNM, /chart, and
+/login all returned HTTP 200, /stocks' HTML contained the expected
+SidebarNav labels (Market/Portfolio/Replay/Quant/Settings) and the
+"Soon" pill text, and GET /api/v1/symbols returned real mock data from
+the backend container.
 
 ---
 
