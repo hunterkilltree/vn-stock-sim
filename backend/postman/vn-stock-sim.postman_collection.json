@@ -1,0 +1,619 @@
+{
+  "info": {
+    "name": "VN Stock Sim API",
+    "description": "Every route the Go + Gin backend exposes under /api/v1, generated from the actual handler/types source (backend/internal/*), not api-spec.md's intent document, so field names and bindings here are exactly what the code accepts today. See RESUME.md for what is mock/in-memory vs. real.\n\nQuick start:\n1. Set the `baseUrl` collection variable (defaults to http://localhost:8080, i.e. `go run ./cmd/api` or the Docker Compose backend service reached from the host).\n2. Run \"Auth > Register\" (or \"Auth > Login\" if the account already exists) once -- its test script saves the returned accessToken into the `accessToken` collection variable automatically, and every other authenticated request inherits it via collection-level Bearer auth.\n3. Public endpoints (Symbols, Market, Screener) work with no token.\n4. \"Portfolio > List Portfolios\", \"Orders > Create Order (Market)\", and \"Backtests > Create Backtest\" each save an id (portfolioId/orderId/backtestId) into collection variables for the requests below them that need one.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
+    { "key": "accessToken", "value": "", "type": "string" },
+    { "key": "symbol", "value": "VNM", "type": "string" },
+    { "key": "portfolioId", "value": "", "type": "string" },
+    { "key": "orderId", "value": "", "type": "string" },
+    { "key": "backtestId", "value": "", "type": "string" },
+    { "key": "nowTs", "value": "", "type": "string" },
+    { "key": "from10dTs", "value": "", "type": "string" },
+    { "key": "from180dTs", "value": "", "type": "string" }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Computed fresh before every request so date-ranged market endpoints",
+          "// (bars/indicators) work out of the box with no manual editing --",
+          "// matches api-spec.md's from/to being unix seconds.",
+          "const nowSec = Math.floor(Date.now() / 1000);",
+          "pm.collectionVariables.set('nowTs', String(nowSec));",
+          "pm.collectionVariables.set('from10dTs', String(nowSec - 10 * 24 * 60 * 60));",
+          "pm.collectionVariables.set('from180dTs', String(nowSec - 180 * 24 * 60 * 60));"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "backend/internal/auth. Register/Login are public; Me requires the bearer token the other two return.",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"tester@example.com\",\n  \"displayName\": \"Postman Tester\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "register"]
+            },
+            "description": "201 on success -> { accessToken, expiresIn, user }. 409 email_taken if this email was already registered (in-memory store resets on backend restart)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('accessToken', body.accessToken);",
+                  "  console.log('Saved accessToken for user', body.user.email);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"tester@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "200 on success -> { accessToken, expiresIn, user }. 401 invalid_credentials otherwise."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  pm.collectionVariables.set('accessToken', pm.response.json().accessToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "me"]
+            },
+            "description": "Re-verifies the bearer token against the store on every call (no local JWT decoding) -> { id, email, displayName }."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Symbols",
+      "description": "backend/internal/symbol + insight. All public (no auth) -- they back the stock browser/chart before login.",
+      "item": [
+        {
+          "name": "Search Symbols",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/symbols?q=&exchange=&page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "symbols"],
+              "query": [
+                { "key": "q", "value": "", "description": "matches symbol or company name, case-insensitive" },
+                { "key": "exchange", "value": "", "description": "HOSE | HNX | UPCOM, empty = all" },
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20", "description": "default 20, max 100" }
+              ]
+            },
+            "description": "-> { data: Symbol[], meta: {page,pageSize,totalItems,totalPages} }. V1 mock universe: VNM, VCB, HPG, FPT, SHB."
+          }
+        },
+        {
+          "name": "Get Symbol Detail",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/symbols/{{symbol}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "symbols", "{{symbol}}"]
+            },
+            "description": "-> Symbol + lastPrice/change/changePercent (live, derived from market bars) + marketCap/peRatio/pbRatio/eps/dividendYield + reference/ceiling/floor (HOSE +-7% / HNX +-10% / UPCOM +-15% price bands)."
+          }
+        },
+        {
+          "name": "Get Symbol Insight",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/symbols/{{symbol}}/insight",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "symbols", "{{symbol}}", "insight"]
+            },
+            "description": "-> { symbol, summary, signals[], source: \"rule-based\", generatedAt }. Deliberately NOT a real LLM call -- see RESUME.md."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Market",
+      "description": "backend/internal/market. All public. Bars/indices/orderbook are deterministic (pure functions of symbol+time), not a random walk -- repeated calls a few seconds apart return identical numbers for the same instant.",
+      "item": [
+        {
+          "name": "Get Bars",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/market/bars?symbol={{symbol}}&resolution=1D&from={{from180dTs}}&to={{nowTs}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "market", "bars"],
+              "query": [
+                { "key": "symbol", "value": "{{symbol}}" },
+                { "key": "resolution", "value": "1D", "description": "1 | 5 | 15 | 60 | 1D" },
+                { "key": "from", "value": "{{from180dTs}}", "description": "unix seconds" },
+                { "key": "to", "value": "{{nowTs}}", "description": "unix seconds" }
+              ]
+            },
+            "description": "-> { data: Bar[] } (time/open/high/low/close/volume)."
+          }
+        },
+        {
+          "name": "Get Indicator (SMA)",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/market/indicators?symbol={{symbol}}&resolution=1D&indicator=sma&period=20&from={{from180dTs}}&to={{nowTs}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "market", "indicators"],
+              "query": [
+                { "key": "symbol", "value": "{{symbol}}" },
+                { "key": "resolution", "value": "1D" },
+                { "key": "indicator", "value": "sma", "description": "sma | ema -- others return [] in V1 (RSI/MACD/Bollinger/VWAP not implemented yet)" },
+                { "key": "period", "value": "20" },
+                { "key": "from", "value": "{{from180dTs}}" },
+                { "key": "to", "value": "{{nowTs}}" }
+              ]
+            },
+            "description": "-> { data: IndicatorPoint[] } (time/value)."
+          }
+        },
+        {
+          "name": "Get Indices",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/market/indices",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "market", "indices"]
+            },
+            "description": "-> { data: IndexSnapshot[] } for VN-Index, VN30, HNX-Index, UPCOM-Index -- each { name, value, change, changePercent, sparkline[] }."
+          }
+        },
+        {
+          "name": "Get Order Book",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/market/orderbook?symbol={{symbol}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "market", "orderbook"],
+              "query": [{ "key": "symbol", "value": "{{symbol}}" }]
+            },
+            "description": "-> { data: { bids: PriceLevel[], asks: PriceLevel[] } }, 6 levels each side, 100 VND tick (hardcoded simplification -- see RESUME.md Phase B notes)."
+          }
+        },
+        {
+          "name": "Get Heatmap",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/market/heatmap",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "market", "heatmap"]
+            },
+            "description": "backend/internal/screener -> { data: SectorGroup[] }, each { sector, avgChangePercent, tickers: TickerChange[] }."
+          }
+        },
+        {
+          "name": "Get Movers",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/market/movers?direction=up&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "market", "movers"],
+              "query": [
+                { "key": "direction", "value": "up", "description": "up | down" },
+                { "key": "limit", "value": "5" }
+              ]
+            },
+            "description": "backend/internal/screener -> { data: TickerChange[] } (symbol, changePercent, price, volume), sorted by changePercent."
+          }
+        },
+        {
+          "name": "Get Server Time",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/time",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "time"]
+            },
+            "description": "-> { timestamp } (unix seconds)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Watchlist",
+      "description": "backend/internal/watchlist. Authenticated, per-user (not per-portfolio -- see RESUME.md Phase B decision 2).",
+      "item": [
+        {
+          "name": "List Watchlist",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/watchlist",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "watchlist"]
+            },
+            "description": "-> { data: Item[] } (symbol, addedAt, lastPrice, change, changePercent, volume)."
+          }
+        },
+        {
+          "name": "Add to Watchlist",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"symbol\": \"{{symbol}}\"\n}" },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/watchlist",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "watchlist"]
+            },
+            "description": "Idempotent (adding an already-watched symbol is a no-op). -> { data: Item[] }, the full updated list."
+          }
+        },
+        {
+          "name": "Remove from Watchlist",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/watchlist/{{symbol}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "watchlist", "{{symbol}}"]
+            },
+            "description": "204 No Content, whether or not the symbol was actually on the list."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Portfolio",
+      "description": "backend/internal/portfolio. Authenticated. /portfolio (singular) always resolves to the caller's lazily-created default portfolio; /portfolios (plural) is the real multi-portfolio API from Phase B.",
+      "item": [
+        {
+          "name": "Get Default Portfolio Summary",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/portfolio",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "portfolio"]
+            },
+            "description": "-> { cashBalance, marketValue, totalEquity, unrealizedPnl, unrealizedPnlPercent } for the default portfolio (auto-created with 100,000,000 VND on first call)."
+          }
+        },
+        {
+          "name": "Get Default Portfolio Positions",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/portfolio/positions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "portfolio", "positions"]
+            },
+            "description": "-> { data: Position[] } (symbol, quantity, avgCost, lastPrice, marketValue, unrealizedPnl) for the default portfolio."
+          }
+        },
+        {
+          "name": "List Portfolios",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/portfolios",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "portfolios"]
+            },
+            "description": "-> { data: Portfolio[] } -- every portfolio the caller owns (at least the default one)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json().data;",
+                  "  if (data && data.length) {",
+                  "    pm.collectionVariables.set('portfolioId', data[0].id);",
+                  "    console.log('Saved portfolioId', data[0].id);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Portfolio",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Strategy test\",\n  \"market\": \"stock\",\n  \"startingCapital\": 50000000,\n  \"currency\": \"VND\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/portfolios",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "portfolios"]
+            },
+            "description": "All fields optional -- omitted name/market/currency fall back to \"Danh muc moi\"/\"stock\"/\"VND\", omitted or <=0 startingCapital falls back to 100,000,000. market: \"stock\" | \"crypto\" (crypto portfolios aren't tradable yet, Phase I). -> 201 Portfolio."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('portfolioId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Portfolio by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/portfolios/{{portfolioId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "portfolios", "{{portfolioId}}"]
+            },
+            "description": "404 if portfolioId doesn't exist or belongs to another user. Run \"List Portfolios\" or \"Create Portfolio\" first to populate {{portfolioId}}."
+          }
+        },
+        {
+          "name": "Get Portfolio Summary by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/portfolios/{{portfolioId}}/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "portfolios", "{{portfolioId}}", "summary"]
+            },
+            "description": "Same shape as \"Get Default Portfolio Summary\" but for any owned portfolio by id -- useful for confirming two portfolios' balances stay isolated."
+          }
+        },
+        {
+          "name": "Get Portfolio Positions by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/portfolios/{{portfolioId}}/positions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "portfolios", "{{portfolioId}}", "positions"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "description": "backend/internal/order. Authenticated paper-trading orders. \"market\" fills immediately against the current mock quote; \"limit\"/\"atc\"/\"stop\" are accepted and stored \"queued\" (no matching engine yet in V1).",
+      "item": [
+        {
+          "name": "List Orders",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders"]
+            },
+            "description": "-> { data: Order[] } for the caller, across all their portfolios."
+          }
+        },
+        {
+          "name": "Create Order (Market)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"portfolioId\": \"{{portfolioId}}\",\n  \"symbol\": \"{{symbol}}\",\n  \"side\": \"buy\",\n  \"type\": \"market\",\n  \"quantity\": 100\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders"]
+            },
+            "description": "portfolioId is optional -- omit it to use the caller's default portfolio. side: buy | sell. type: market fills immediately and returns filledPrice + a 0.15% fee. 409 insufficient_funds / insufficient_shares if the paper account can't cover it. -> 201 Order."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('orderId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Order (Limit, queued)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"portfolioId\": \"{{portfolioId}}\",\n  \"symbol\": \"{{symbol}}\",\n  \"side\": \"buy\",\n  \"type\": \"limit\",\n  \"quantity\": 100\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders"]
+            },
+            "description": "type can also be \"atc\" or \"stop\" (LO/ATC/Stop from the design's order ticket) -- all three behave identically today: accepted, status \"queued\", fee 0, never actually filled (no matching engine yet). Its test script overwrites {{orderId}} with this queued order's id (not the market order's above), so the default top-to-bottom run demonstrates a real successful Cancel below rather than a 409."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('orderId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Order",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders", "{{orderId}}"]
+            },
+            "description": "{{orderId}} is whichever of the two Create Order requests above ran last -- run either one first to populate it."
+          }
+        },
+        {
+          "name": "Cancel Order",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders", "{{orderId}}", "cancel"]
+            },
+            "description": "Only a still-\"queued\" order can be cancelled. In the default top-to-bottom run, {{orderId}} points at the \"Create Order (Limit, queued)\" order, so this succeeds; re-running it against a filled market order's id (or cancelling twice) returns 409 cannot_cancel instead."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Backtests",
+      "description": "backend/internal/backtest. Authenticated. Runs synchronously today (the response shape already matches api-spec.md's async queue-then-poll contract for when a real worker pool lands). V1 only supports one rule: ema_crossover.",
+      "item": [
+        {
+          "name": "List Backtests",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/backtests",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "backtests"]
+            }
+          }
+        },
+        {
+          "name": "Create Backtest",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"symbol\": \"{{symbol}}\",\n  \"from\": \"2026-01-01\",\n  \"to\": \"2026-09-01\",\n  \"startingCapital\": 100000000,\n  \"rule\": {\n    \"type\": \"ema_crossover\",\n    \"params\": { \"fast\": 20, \"slow\": 50 }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/backtests",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "backtests"]
+            },
+            "description": "from/to are YYYY-MM-DD (not unix seconds, unlike the market endpoints). rule.params.fast/slow default to 20/50 if omitted or <=0. -> 202 Backtest { id, symbol, status: \"completed\", finalCapital, returnPercent, totalTrades, winRate }."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 202) {",
+                  "  pm.collectionVariables.set('backtestId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Backtest",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/backtests/{{backtestId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "backtests", "{{backtestId}}"]
+            },
+            "description": "Run \"Create Backtest\" first to populate {{backtestId}}."
+          }
+        }
+      ]
+    }
+  ]
+}
