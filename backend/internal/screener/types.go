@@ -3,10 +3,14 @@
 package screener
 
 // TickerChange is one symbol's live day change, used both inside a
-// SectorGroup's tile list and in the top-movers tables.
+// SectorGroup's tile list (Price/Volume left zero there -- the heatmap
+// tiles only ever show symbol+percent) and in the top-movers tables
+// (design/screens/Main.dc.html's Ma/Gia/+-/KL columns, which need both).
 type TickerChange struct {
 	Symbol        string  `json:"symbol"`
 	ChangePercent float64 `json:"changePercent"`
+	Price         float64 `json:"price,omitempty"`
+	Volume        int64   `json:"volume,omitempty"`
 }
 
 // SectorGroup is one sector's heatmap row: its average day change plus

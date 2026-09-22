@@ -632,6 +632,84 @@ build frontend && docker compose up -d`, then curl against /, /stocks,
 contains the `bg-app-chrome` utility class.
 
 Branch: design-system-alignment (off master, after PR #14 merged).
+Merged as PR #15.
+
+**Phase C (rebuild the Main/market-overview screen) -- DONE.** Plan:
+phase-c.md, written against `design/screens/Main.dc.html` as the literal
+spec (not FULL-APP-PLAN.md's older prose summary -- see the
+design-alignment entry above for why `design/` is now canonical).
+
+- Small, targeted backend addition first: `market.Service` gained
+  `LatestQuote(sym) (price, volume, ok)`; `screener.Service` now takes a
+  second dependency (`MarketPort`) so `GetTopMovers` can fill
+  `TickerChange.Price`/`Volume` -- the design's movers table has
+  Mã/Giá/+-/KL columns, and Phase B's `screener` only had symbol+percent.
+  `GetSectorHeatmap` is unaffected (heatmap tiles never showed
+  price/volume).
+- `SidebarNav` fully rebuilt against the real spec: the exact 10-item nav
+  list with exact SVG path data copied verbatim from
+  `Main.dc.html`'s `navRaw` array (not redrawn by eye), a two-line logo
+  lockup (icon box + "VN Stock Sim" + "Mô phỏng · HOSE" caption), a
+  separate "Cài đặt" (Settings) link outside the nav loop, and a balance
+  card now wired to the real `GET /portfolio` cash balance instead of a
+  static sample. `navItems.ts` correspondingly reworked: `kind` per item
+  now matches the source's real `planned` flags (Portfolio/Replay/Quant
+  are real *planned* screens, not backlog -- only Screener/Heatmap/
+  Strategy-Builder/Backtest/Trade-Journal are true `will` items, matching
+  design/SCREENS.md's own "Not designed yet" list exactly). `RailNav`
+  updated to compile against the new `NavItem` shape; its own full spec
+  fidelity (icon set, ordering) is deferred to Phase D against
+  `design/screens/Detail.dc.html`.
+- New `frontend/src/lib/format.ts` -- `formatVN`/`signVN`/`tone`/
+  `formatVolumeVN`, ported directly from `Main.dc.html`'s `renderVals()`
+  script block (not reinvented), so number formatting matches the design
+  exactly (VN locale, literal minus sign U+2212, "tr" short form).
+- New presentational components, one per Main.dc.html section:
+  `IndexCard` (real 20-point sparkline from Phase B's `IndexSnapshot`,
+  normalized into the design's 112x36 viewBox math -- not the design's
+  fake client-generated sparkline), `SectorHeatmap` (tile color-intensity
+  formula ported verbatim), `MoversTable`, `PaperAccountCard`,
+  `OpenPositionsCard`, `ReplayPromoCard`, `QuantPromptCard`.
+- `/stocks/page.tsx` fully rebuilt: parallel-fetches indices/heatmap/
+  movers (public) plus portfolio summary/positions/portfolios (only when
+  `getSessionUser()` resolves), assembling the full screen. Guest state
+  (no session) renders the market-wide content plus a sign-up prompt card
+  in the right column instead of crashing or faking portfolio data --
+  matches design/DESIGN-SYSTEM.md section 9's guest-first rule, which
+  this specific artboard doesn't draw but the system-wide rules document
+  requires.
+- Two documented, deliberate simplifications, not bugs: (1) the header's
+  session-status line shows a real live-computed date/time + a static
+  "Khớp lệnh liên tục" label rather than a fake VN trading-hours model
+  (none exists yet, correctly out of scope this early); (2) the heatmap/
+  movers are visibly sparser than the mockup's sample data, because V1's
+  real mock fixture universe is 5 symbols across 4 sectors vs. the
+  design's ~24 -- rendering whatever the real backend returns rather than
+  padding with fabricated tickers.
+- Replay/Quant promo cards and the header's "Vào Replay" button render
+  disabled (not linked) since `/replay` and `/quant` don't exist until
+  Phases F/H -- clicking them would otherwise 404.
+
+Verified, not just read: `go build ./... && go vet ./...` clean (Docker,
+no local Go); curled `GET /market/movers` and confirmed real
+`price`/`volume` now present. `npx tsc --noEmit`, `npx eslint .`,
+`npm run build` all clean. Browser-pane check at 1440x960: registered a
+real test account through the actual UI (hit one real, since-fixed
+browser-automation flake along the way -- a `form_input`-then-`click by
+ref` sequence silently didn't submit twice in a row with no console
+error; a direct coordinate click on the rendered button worked, and the
+Server Action logs confirmed the POST only fired on that click), and
+confirmed both states: guest (sign-up prompt card, no fabricated
+balance) and logged-in (real "100.000.000 ₫" balance in both the sidebar
+card and the right-column Paper Account card, "Vị thế đang mở" showing
+the correct empty state for a brand-new account with no positions).
+Checked 375x812: sidebar/content overflow horizontally as expected --
+same documented, deferred-to-Phase-J behavior as Phase A, not a new
+regression. Re-verified inside the actual rebuilt Docker image: all six
+routes return HTTP 200, and the Main screen's real content (heatmap,
+paper account, Quant prompt) is present in the served HTML.
+
+Branch: phase-c-main-screen (off master, after PR #15 merged).
 
 ---
 

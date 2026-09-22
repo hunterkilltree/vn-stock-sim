@@ -98,3 +98,19 @@ func (s *Service) LatestClose(sym string) (today, yesterday float64, ok bool) {
 	prev := bars[len(bars)-2]
 	return last.Close, prev.Close, true
 }
+
+// LatestQuote returns the most recent bar's close price and volume --
+// used by screener.Service to fill the price/volume columns of the
+// Main screen's top-movers table (design/screens/Main.dc.html), which
+// GetTopMovers's underlying symbol.Detail alone can't supply (Detail has
+// a live price but no volume). ok is false if no bars are available.
+func (s *Service) LatestQuote(sym string) (price float64, volume int64, ok bool) {
+	to := time.Now().Unix()
+	from := to - 10*24*60*60
+	bars := s.data.GetBars(sym, "1D", from, to)
+	if len(bars) == 0 {
+		return 0, 0, false
+	}
+	last := bars[len(bars)-1]
+	return last.Close, last.Volume, true
+}

@@ -122,3 +122,77 @@ export type User = {
 export function getMe(token: string): Promise<User> {
   return apiFetch<User>("/api/v1/auth/me", { token });
 }
+
+// -- Phase B endpoints (backend/internal/market, screener, portfolio) --
+
+export type IndexSnapshot = {
+  name: string;
+  value: number;
+  change: number;
+  changePercent: number;
+  sparkline: number[];
+};
+
+export function getIndices(): Promise<{ data: IndexSnapshot[] }> {
+  return apiFetch<{ data: IndexSnapshot[] }>("/api/v1/market/indices");
+}
+
+export type TickerChange = {
+  symbol: string;
+  changePercent: number;
+  price?: number;
+  volume?: number;
+};
+
+export type SectorGroup = {
+  sector: string;
+  avgChangePercent: number;
+  tickers: TickerChange[];
+};
+
+export function getHeatmap(): Promise<{ data: SectorGroup[] }> {
+  return apiFetch<{ data: SectorGroup[] }>("/api/v1/market/heatmap");
+}
+
+export function getMovers(direction: "up" | "down", limit = 5): Promise<{ data: TickerChange[] }> {
+  return apiFetch<{ data: TickerChange[] }>(`/api/v1/market/movers?direction=${direction}&limit=${limit}`);
+}
+
+export type PortfolioSummary = {
+  cashBalance: number;
+  marketValue: number;
+  totalEquity: number;
+  unrealizedPnl: number;
+  unrealizedPnlPercent: number;
+};
+
+export function getPortfolioSummary(token: string): Promise<PortfolioSummary> {
+  return apiFetch<PortfolioSummary>("/api/v1/portfolio", { token });
+}
+
+export type Position = {
+  symbol: string;
+  quantity: number;
+  avgCost: number;
+  lastPrice: number;
+  marketValue: number;
+  unrealizedPnl: number;
+};
+
+export function getPortfolioPositions(token: string): Promise<{ data: Position[] }> {
+  return apiFetch<{ data: Position[] }>("/api/v1/portfolio/positions", { token });
+}
+
+export type Portfolio = {
+  id: string;
+  userId: string;
+  name: string;
+  market: string;
+  startingCapital: number;
+  currency: string;
+  createdAt: string;
+};
+
+export function getPortfolios(token: string): Promise<{ data: Portfolio[] }> {
+  return apiFetch<{ data: Portfolio[] }>("/api/v1/portfolios", { token });
+}
