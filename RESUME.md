@@ -710,6 +710,33 @@ routes return HTTP 200, and the Main screen's real content (heatmap,
 paper account, Quant prompt) is present in the served HTML.
 
 Branch: phase-c-main-screen (off master, after PR #15 merged).
+Merged as PR #16.
+
+Bug found and fixed 2026-09-22 (follow-up to Phase C, user-reported) --
+DONE. The Market Overview header's session-status line ("Phiên
+<date> · <time> · Khớp lệnh liên tục") was computed with
+`new Date().toLocaleDateString/toLocaleTimeString("vi-VN", ...)` with no
+explicit `timeZone`, so it rendered in the server process's local
+timezone (UTC inside this repo's Docker containers) rather than the
+Vietnamese exchanges' own timezone (Asia/Ho_Chi_Minh, ICT, UTC+7) --
+mislabeling a UTC clock reading as if it were VN local session time, off
+by exactly 7 hours (and on the wrong calendar date whenever "now" fell
+in that 7-hour window past UTC midnight). Same class of bug as the
+2026-09-21 stock-price/chart UTC-freshness fix: a real timestamp
+rendered against the wrong reference. Fixed by passing
+`timeZone: "Asia/Ho_Chi_Minh"` explicitly to both calls
+(frontend/src/app/stocks/page.tsx's `nowSessionLabel`).
+
+Verified, not just read: confirmed the Alpine-based Docker image's
+Node/ICU build actually has Asia/Ho_Chi_Minh timezone data available
+(worth checking explicitly on `node:20-alpine`, not assumed) by
+rebuilding the frontend image and comparing `date -u` against the
+rendered page inside the real container -- UTC 23:36 correctly rendered
+as VN "23/09/2026 · 06:36" (next calendar day, +7h), both via the dev
+server and the built Docker image. All six routes re-curled, still
+HTTP 200.
+
+Branch: fix-vn-session-timezone (off master, after PR #16 merged).
 
 ---
 

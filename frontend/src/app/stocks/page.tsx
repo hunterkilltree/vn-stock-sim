@@ -30,10 +30,21 @@ function formatDateVN(iso: string): string {
   return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" });
 }
 
+// VN_TIME_ZONE is IANA "Asia/Ho_Chi_Minh" (ICT, UTC+7) -- the Vietnamese
+// exchanges' own timezone, not the server process's local one. Without
+// an explicit timeZone, Date#toLocale*String falls back to the
+// container's TZ (UTC in this repo's Docker image), which would render
+// e.g. "07:45" and label it as if it were the VN session's "14:45" --
+// wrong by exactly the UTC+7 offset. This is the same class of bug as
+// the 2026-09-21 stock-price/chart UTC-freshness fix (see RESUME.md):
+// a real timestamp rendered against the wrong reference, not a design
+// choice.
+const VN_TIME_ZONE = "Asia/Ho_Chi_Minh";
+
 function nowSessionLabel(): string {
   const now = new Date();
-  const date = now.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
-  const time = now.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+  const date = now.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: VN_TIME_ZONE });
+  const time = now.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", timeZone: VN_TIME_ZONE });
   return `Phiên ${date} · ${time} · Khớp lệnh liên tục`;
 }
 
