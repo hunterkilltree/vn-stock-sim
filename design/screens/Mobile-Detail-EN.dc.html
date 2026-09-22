@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FPT detail — mobile</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=Lora:wght@600;700&amp;display=swap">
+<style>
+body { margin: 0; background: #0F0F0E; color: #F3F0E9; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+a { color: #E08A3C; text-decoration: none; }
+a:hover { color: #F0A65C; }
+button { font-family: inherit; }
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: #0F0F0E; overflow: hidden;">
+
+  <div style="flex-grow: 1; min-height: 0; box-sizing: border-box; padding: 52px 18px 14px 18px; display: flex; flex-direction: column; gap: 14px;">
+
+    <header style="display: flex; align-items: center; gap: 12px;">
+      <a href="Mobile-Market-EN.dc.html" aria-label="Back to market" style="width: 44px; height: 44px; flex-shrink: 0; border: 1px solid #2C2C28; border-radius: 12px; background: #171715; color: #A5A19A; display: flex; align-items: center; justify-content: center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>
+      </a>
+      <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-family: Lora, Georgia, serif; font-size: 20px; font-weight: 700;">FPT</span>
+          <span style="padding: 1px 6px; border: 1px solid #2C2C28; border-radius: 5px; font-size: 10px; color: #8A867E;">HOSE</span>
+        </div>
+        <span style="font-size: 11.5px; color: #8A867E;">FPT Corporation</span>
+      </div>
+      <button type="button" aria-label="Add to watchlist" style="width: 44px; height: 44px; flex-shrink: 0; border: 1px solid #2C2C28; border-radius: 12px; background: #171715; color: #A5A19A; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4V4z"></path></svg>
+      </button>
+    </header>
+
+    <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;">
+      <div style="display: flex; flex-direction: column; gap: 3px;">
+        <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 32px; font-weight: 600; color: #35C77F; letter-spacing: -0.02em;">128.50</span>
+        <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; color: #35C77F;">+3.02 (+2.41%)</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-end; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px;">
+        <span style="color: #C08BFF;">Ceiling 134.00</span>
+        <span style="color: #F0C243;">Ref 125.48</span>
+        <span style="color: #4FD3E8;">Floor 116.95</span>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 6px;">
+      <sc-for list="{{frames}}" as="f" hint-placeholder-count="5">
+        <button type="button" style="{{f.style}}">{{f.label}}</button>
+      </sc-for>
+    </div>
+
+    <section style="flex-grow: 1; min-height: 0; box-sizing: border-box; padding: 12px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; flex-direction: column; gap: 8px;">
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 10px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; color: #A5A19A;">
+          <span>O 126.10</span>
+          <span>H 129.30</span>
+          <span>L 125.60</span>
+        </div>
+        <span style="display: flex; align-items: center; gap: 5px; font-size: 10px; color: #8A867E;"><span style="width: 12px; height: 2px; border-radius: 2px; background: #E08A3C;"></span>SMA 20</span>
+      </div>
+
+      <svg viewBox="0 0 354 238" width="100%" height="238" fill="none" role="img" aria-label="Daily candlestick chart for FPT with an SMA 20 overlay">
+        <sc-for list="{{grid}}" as="g" hint-placeholder-count="4">
+          <g>
+            <line x1="0" y1="{{g.y}}" x2="308" y2="{{g.y}}" stroke="#23231F" stroke-width="1"></line>
+            <text x="354" y="{{g.ty}}" text-anchor="end" fill="#8A867E" font-family="'IBM Plex Mono', monospace" font-size="9.5">{{g.label}}</text>
+          </g>
+        </sc-for>
+        <sc-for list="{{candles}}" as="c" hint-placeholder-count="34">
+          <g>
+            <path d="{{c.wick}}" stroke="{{c.col}}" stroke-width="1.1"></path>
+            <rect x="{{c.x}}" y="{{c.y}}" width="{{c.w}}" height="{{c.h}}" fill="{{c.col}}" rx="0.6"></rect>
+          </g>
+        </sc-for>
+        <polyline points="{{sma20}}" stroke="#E08A3C" stroke-width="1.5" stroke-linejoin="round"></polyline>
+        <line x1="0" y1="{{lastY}}" x2="308" y2="{{lastY}}" stroke="#35C77F" stroke-width="1" stroke-dasharray="3 3"></line>
+        <g>
+          <sc-for list="{{vol}}" as="v" hint-placeholder-count="34">
+            <rect x="{{v.x}}" y="{{v.y}}" width="{{v.w}}" height="{{v.h}}" fill="{{v.col}}" opacity="0.6" rx="0.6"></rect>
+          </sc-for>
+        </g>
+      </svg>
+
+      <div style="display: flex; align-items: center; gap: 10px; padding-top: 8px; border-top: 1px solid #23231F;">
+        <span style="font-size: 10px; color: #8A867E; letter-spacing: 0.06em; text-transform: uppercase;">RSI 14</span>
+        <svg viewBox="0 0 260 30" width="100%" height="30" fill="none" role="img" aria-label="RSI 14 currently at 61.4">
+          <line x1="0" y1="6" x2="260" y2="6" stroke="#2C2C28" stroke-width="1" stroke-dasharray="3 3"></line>
+          <line x1="0" y1="24" x2="260" y2="24" stroke="#2C2C28" stroke-width="1" stroke-dasharray="3 3"></line>
+          <polyline points="{{rsi}}" stroke="#C08BFF" stroke-width="1.5" stroke-linejoin="round"></polyline>
+        </svg>
+        <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; color: #C08BFF;">{{rsiLast}}</span>
+      </div>
+    </section>
+
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;">
+      <sc-for list="{{stats}}" as="s" hint-placeholder-count="4">
+        <div style="box-sizing: border-box; padding: 9px 10px; border: 1px solid #23231F; border-radius: 11px; background: #171715; display: flex; flex-direction: column; gap: 3px;">
+          <span style="font-size: 9.5px; color: #8A867E;">{{s.k}}</span>
+          <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12.5px; font-weight: 600;">{{s.v}}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="flex-shrink: 0; box-sizing: border-box; padding: 12px 18px 22px 18px; border-top: 1px solid #2C2C28; background: #131311; display: flex; align-items: center; gap: 10px;">
+    <a href="Mobile-Replay-EN.dc.html" aria-label="Replay this ticker" style="width: 52px; height: 52px; flex-shrink: 0; border: 1px solid #4A3521; border-radius: 14px; background: #1C1813; color: #E08A3C; display: flex; align-items: center; justify-content: center;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 6L4 12l7 6V6zM20 6l-7 6 7 6V6z"></path></svg>
+    </a>
+    <button type="button" style="flex-grow: 1; box-sizing: border-box; height: 52px; border: 0; border-radius: 14px; background: #35C77F; color: #08130D; font-size: 15px; font-weight: 600; cursor: pointer;">Paper buy</button>
+    <button type="button" style="flex-grow: 1; box-sizing: border-box; height: 52px; border: 0; border-radius: 14px; background: #FF5C5C; color: #1A0808; font-size: 15px; font-weight: 600; cursor: pointer;">Paper sell</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  rng(seed) {
+    let s = seed;
+    return function () { s = (s * 1103515245 + 12345) % 2147483648; return s / 2147483648; };
+  }
+  num(v, d) {
+    return v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+  bars(n, seed, vol, endPrice) {
+    const r = this.rng(seed);
+    const out = [];
+    let px = 100;
+    for (let i = 0; i < n; i++) {
+      const o = px;
+      const c = o * (1 + (r() - 0.44) * vol / 100);
+      const h = Math.max(o, c) * (1 + r() * vol / 320);
+      const l = Math.min(o, c) * (1 - r() * vol / 320);
+      out.push({ o: o, h: h, l: l, c: c, v: 0.45 + r() * 1.5 });
+      px = c;
+    }
+    const k = endPrice / out[n - 1].c;
+    return out.map(function (d) { return { o: d.o * k, h: d.h * k, l: d.l * k, c: d.c * k, v: d.v }; });
+  }
+  sma(arr, p) {
+    return arr.map(function (v, i) {
+      if (i < p - 1) return null;
+      let s = 0;
+      for (let j = i - p + 1; j <= i; j++) s += arr[j];
+      return s / p;
+    });
+  }
+  rsiCalc(arr, p) {
+    const out = [];
+    let gain = 0, loss = 0;
+    for (let i = 0; i < arr.length; i++) {
+      if (i === 0) { out.push(null); continue; }
+      const d = arr[i] - arr[i - 1];
+      const g = Math.max(d, 0), l = Math.max(-d, 0);
+      if (i <= p) {
+        gain += g; loss += l;
+        if (i === p) { gain /= p; loss /= p; out.push(100 - 100 / (1 + gain / (loss || 1e-9))); }
+        else out.push(null);
+      } else {
+        gain = (gain * (p - 1) + g) / p;
+        loss = (loss * (p - 1) + l) / p;
+        out.push(100 - 100 / (1 + gain / (loss || 1e-9)));
+      }
+    }
+    return out;
+  }
+  renderVals() {
+    const self = this;
+    const n = 34, plotW = 308, step = plotW / n, bw = step * 0.58;
+    const x = function (i) { return i * step + step / 2; };
+    const data = this.bars(n, 78241, 2.1, 128.5);
+    const closes = data.map(function (d) { return d.c; });
+
+    const hi = Math.max.apply(null, data.map(function (d) { return d.h; })) * 1.01;
+    const lo = Math.min.apply(null, data.map(function (d) { return d.l; })) * 0.99;
+    const H = 176, pad = 8;
+    const py = function (v) { return pad + (hi - v) / (hi - lo) * (H - pad * 2); };
+
+    const candles = data.map(function (d, i) {
+      const col = d.c >= d.o ? '#35C77F' : '#FF5C5C';
+      const top = py(Math.max(d.o, d.c));
+      const bot = py(Math.min(d.o, d.c));
+      const cx = x(i);
+      return {
+        col: col,
+        wick: 'M' + cx.toFixed(1) + ' ' + py(d.h).toFixed(1) + 'V' + py(d.l).toFixed(1),
+        x: (cx - bw / 2).toFixed(1),
+        y: top.toFixed(1),
+        w: bw.toFixed(1),
+        h: Math.max(1.4, bot - top).toFixed(1)
+      };
+    });
+
+    const grid = [];
+    for (let i = 0; i <= 3; i++) {
+      const v = lo + (hi - lo) * i / 3;
+      const gy = py(v);
+      grid.push({ y: gy.toFixed(1), ty: (gy + 3.2).toFixed(1), label: self.num(v, 1) });
+    }
+
+    const maxV = Math.max.apply(null, data.map(function (d) { return d.v; }));
+    const vol = data.map(function (d, i) {
+      const h = d.v / maxV * 42;
+      return {
+        x: (x(i) - bw / 2).toFixed(1),
+        y: (236 - h).toFixed(1),
+        w: bw.toFixed(1),
+        h: Math.max(1.2, h).toFixed(1),
+        col: d.c >= d.o ? '#35C77F' : '#FF5C5C'
+      };
+    });
+
+    const rsiVals = this.rsiCalc(closes, 14);
+    const rsiPts = [];
+    for (let i = 0; i < rsiVals.length; i++) {
+      if (rsiVals[i] === null) continue;
+      rsiPts.push((i / (n - 1) * 260).toFixed(1) + ',' + (28 - rsiVals[i] / 100 * 26).toFixed(1));
+    }
+
+    const frames = ['1D', '1W', '1M', '3M', '1Y'].map(function (l, i) {
+      const on = i === 2;
+      return {
+        label: l,
+        style: 'flex-grow: 1; box-sizing: border-box; height: 36px; border: 1px solid ' + (on ? '#3C3C36' : '#2C2C28') +
+          '; border-radius: 10px; background: ' + (on ? '#2C2C28' : '#171715') + '; color: ' + (on ? '#F3F0E9' : '#8A867E') +
+          '; font-size: 12px; font-weight: ' + (on ? '600' : '500') + '; cursor: pointer;'
+      };
+    });
+
+    const smaVals = this.sma(closes, 20);
+    const smaPts = [];
+    for (let i = 0; i < smaVals.length; i++) if (smaVals[i] !== null) smaPts.push(x(i).toFixed(1) + ',' + py(smaVals[i]).toFixed(1));
+
+    return {
+      candles: candles, grid: grid, vol: vol, frames: frames,
+      sma20: smaPts.join(' '),
+      rsi: rsiPts.join(' '),
+      rsiLast: self.num(rsiVals[n - 1], 1),
+      lastY: py(128.5).toFixed(1),
+      stats: [
+        { k: 'Vol', v: '3.42M' }, { k: 'P/E', v: '22.4' },
+        { k: 'ROE', v: '27.9%' }, { k: 'Mkt cap', v: '188T ₫' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

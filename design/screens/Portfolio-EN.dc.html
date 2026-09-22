@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Paper trading portfolio</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=Lora:wght@600;700&amp;display=swap">
+<style>
+body { margin: 0; background: #0F0F0E; color: #F3F0E9; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+a { color: #E08A3C; text-decoration: none; }
+a:hover { color: #F0A65C; }
+button { font-family: inherit; }
+table { border-collapse: collapse; }
+</style>
+</helmet>
+<div style="width: 1440px; height: 960px; box-sizing: border-box; display: flex; background: #0F0F0E; overflow: hidden;">
+
+  <nav style="width: 236px; flex-shrink: 0; box-sizing: border-box; height: 960px; padding: 22px 16px; border-right: 1px solid #2C2C28; background: #131311; display: flex; flex-direction: column; gap: 20px;" aria-label="Main navigation">
+    <a href="Main-EN.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 0 6px; color: #F3F0E9;">
+      <span style="width: 32px; height: 32px; flex-shrink: 0; border-radius: 9px; background: #E08A3C; display: flex; align-items: center; justify-content: center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="9" width="6" height="6" fill="#131210"></rect><rect x="14" y="9" width="6" height="8" fill="#131210"></rect><path d="M7 4v5M7 15v5M17 3v6M17 17v4" stroke="#131210" stroke-width="2.2" stroke-linecap="round"></path></svg>
+      </span>
+      <span style="display: flex; flex-direction: column; gap: 1px;">
+        <span style="font-family: Lora, Georgia, serif; font-size: 17px; font-weight: 700; letter-spacing: -0.01em;">VN Stock Sim</span>
+        <span style="font-size: 10px; color: #8A867E; letter-spacing: 0.1em; text-transform: uppercase;">Simulation · HOSE</span>
+      </span>
+    </a>
+
+    <div style="display: flex; flex-direction: column; gap: 2px;">
+      <sc-for list="{{nav}}" as="item" hint-placeholder-count="10">
+        <a href="{{item.href}}" style="{{item.style}}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.d}}"></path></svg>
+          <span style="font-size: 13.5px; font-weight: 500;">{{item.label}}</span>
+          <span style="{{item.badge}}">{{item.badgeText}}</span>
+        </a>
+      </sc-for>
+    </div>
+
+    <div style="flex-grow: 1;"></div>
+
+    <a href="Settings-AI-EN.dc.html" style="display: flex; align-items: center; gap: 11px; box-sizing: border-box; height: 40px; padding: 0 12px; border-radius: 10px; color: #A5A19A;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1V21a2 2 0 11-4 0v-.1A1.6 1.6 0 005.9 19.7l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 003 14.6a2 2 0 010-4h.1A1.6 1.6 0 004.3 8L4.2 8a2 2 0 112.8-2.8l.1.1a1.6 1.6 0 002.7-1.1V4a2 2 0 114 0v.1A1.6 1.6 0 0017 5.3l.1-.1A2 2 0 1119.9 8l-.1.1a1.6 1.6 0 001.1 2.7H21a2 2 0 010 4h-.1a1.6 1.6 0 00-1.5 1.2z"></path></svg>
+      <span style="font-size: 13.5px; font-weight: 500;">Settings</span>
+    </a>
+
+    <div style="box-sizing: border-box; padding: 14px; border: 1px solid #2C2C28; border-radius: 12px; background: #1A1A17; display: flex; flex-direction: column; gap: 8px;">
+      <span style="font-size: 10px; color: #8A867E; letter-spacing: 0.1em; text-transform: uppercase;">Last Replay session</span>
+      <span style="font-size: 12.5px; color: #D7D2C7;">HPG · 2021 · scored 74/100</span>
+      <a href="Replay-EN.dc.html" style="font-size: 12.5px; font-weight: 600;">Play again →</a>
+    </div>
+  </nav>
+
+  <div style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: 24px 28px; display: flex; flex-direction: column; gap: 18px;">
+
+    <header style="display: flex; align-items: center; justify-content: space-between; gap: 24px;">
+      <div style="display: flex; align-items: center; gap: 22px;">
+        <h1 style="margin: 0; font-family: Lora, Georgia, serif; font-size: 27px; font-weight: 700; letter-spacing: -0.015em;">Paper trading</h1>
+        <div style="display: flex; gap: 6px;">
+          <sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+            <button type="button" style="{{t.style}}">{{t.label}}</button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button type="button" style="box-sizing: border-box; height: 44px; padding: 0 15px; border: 1px solid #2C2C28; border-radius: 11px; background: #171715; color: #A5A19A; font-size: 13px; font-weight: 500; cursor: pointer;">Reset virtual account</button>
+        <a href="Detail-EN.dc.html" style="box-sizing: border-box; height: 44px; padding: 0 16px; border-radius: 11px; background: #E08A3C; color: #131210; font-size: 13.5px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+          <span>New order</span>
+        </a>
+      </div>
+    </header>
+
+    <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px;">
+      <sc-for list="{{kpis}}" as="k" hint-placeholder-count="5">
+        <section style="box-sizing: border-box; padding: 15px 17px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 10.5px; color: #8A867E; letter-spacing: 0.08em; text-transform: uppercase;">{{k.k}}</span>
+          <span style="{{k.style}}">{{k.v}}</span>
+          <span style="font-size: 11.5px; color: #8A867E;">{{k.note}}</span>
+        </section>
+      </sc-for>
+    </div>
+
+    <div style="flex-grow: 1; min-height: 0; display: flex; gap: 18px;">
+
+      <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 18px;">
+
+        <section style="height: 306px; flex-shrink: 0; box-sizing: border-box; padding: 18px 20px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; flex-direction: column; gap: 3px;">
+              <h2 style="margin: 0; font-size: 15px; font-weight: 600;">Equity curve</h2>
+              <span style="font-size: 11.5px; color: #8A867E;">Against VN-Index over the same period · sample data</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 16px;">
+              <div style="display: flex; align-items: center; gap: 14px; font-size: 11px;">
+                <span style="display: flex; align-items: center; gap: 6px; color: #A5A19A;"><span style="width: 14px; height: 2.5px; border-radius: 2px; background: #35C77F;"></span>Account +8.64%</span>
+                <span style="display: flex; align-items: center; gap: 6px; color: #A5A19A;"><span style="width: 14px; height: 2.5px; border-radius: 2px; background: #6F6C63;"></span>VN-Index +4.12%</span>
+              </div>
+              <div style="display: flex; gap: 5px;">
+                <sc-for list="{{ranges}}" as="r" hint-placeholder-count="4">
+                  <button type="button" style="{{r.style}}">{{r.label}}</button>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+          <svg viewBox="0 0 1000 200" width="100%" height="200" fill="none" role="img" aria-label="Simulated account equity up 8.64% versus VN-Index up 4.12%">
+            <sc-for list="{{eGrid}}" as="g" hint-placeholder-count="4">
+              <g>
+                <line x1="0" y1="{{g.y}}" x2="944" y2="{{g.y}}" stroke="#23231F" stroke-width="1"></line>
+                <text x="1000" y="{{g.ty}}" text-anchor="end" fill="#8A867E" font-family="'IBM Plex Mono', monospace" font-size="10.5">{{g.label}}</text>
+              </g>
+            </sc-for>
+            <path d="{{eqArea}}" fill="#35C77F" opacity="0.1"></path>
+            <polyline points="{{bench}}" stroke="#6F6C63" stroke-width="1.6" stroke-dasharray="4 3" stroke-linejoin="round"></polyline>
+            <polyline points="{{eq}}" stroke="#35C77F" stroke-width="2" stroke-linejoin="round"></polyline>
+          </svg>
+          <div style="display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; color: #8A867E;">
+            <sc-for list="{{months}}" as="m" hint-placeholder-count="9">
+              <span>{{m}}</span>
+            </sc-for>
+          </div>
+        </section>
+
+        <section style="flex-grow: 1; min-height: 0; box-sizing: border-box; padding: 18px 20px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <h2 style="margin: 0; font-size: 15px; font-weight: 600;">Open positions</h2>
+            <span style="font-size: 11.5px; color: #8A867E;">6 tickers · updated 14:45</span>
+          </div>
+          <table style="width: 100%; font-size: 12.5px;">
+            <thead>
+              <tr style="color: #8A867E; font-size: 10.5px; letter-spacing: 0.07em; text-transform: uppercase;">
+                <th scope="col" style="text-align: left; padding: 0 0 9px 0; font-weight: 500;">Ticker</th>
+                <th scope="col" style="text-align: right; padding: 0 0 9px 0; font-weight: 500;">Quantity</th>
+                <th scope="col" style="text-align: right; padding: 0 0 9px 0; font-weight: 500;">Avg cost</th>
+                <th scope="col" style="text-align: right; padding: 0 0 9px 0; font-weight: 500;">Last</th>
+                <th scope="col" style="text-align: right; padding: 0 0 9px 0; font-weight: 500;">Value</th>
+                <th scope="col" style="text-align: right; padding: 0 0 9px 0; font-weight: 500;">P/L</th>
+                <th scope="col" style="text-align: right; padding: 0 0 9px 0; font-weight: 500;">% NAV</th>
+                <th scope="col" style="text-align: right; padding: 0 0 9px 0; font-weight: 500;">Held</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{holdings}}" as="h" hint-placeholder-count="6">
+                <tr style="border-top: 1px solid #23231F;">
+                  <td style="padding: 9.5px 0;">
+                    <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-weight: 600;">{{h.t}}</span>
+                    <span style="margin-left: 8px; font-size: 11px; color: #8A867E;">{{h.name}}</span>
+                  </td>
+                  <td style="padding: 9.5px 0; text-align: right; font-family: 'IBM Plex Mono', ui-monospace, monospace; color: #A5A19A;">{{h.qty}}</td>
+                  <td style="padding: 9.5px 0; text-align: right; font-family: 'IBM Plex Mono', ui-monospace, monospace; color: #A5A19A;">{{h.cost}}</td>
+                  <td style="padding: 9.5px 0; text-align: right; font-family: 'IBM Plex Mono', ui-monospace, monospace;">{{h.last}}</td>
+                  <td style="padding: 9.5px 0; text-align: right; font-family: 'IBM Plex Mono', ui-monospace, monospace;">{{h.value}}</td>
+                  <td style="{{h.pnlStyle}}">{{h.pnl}}</td>
+                  <td style="padding: 9.5px 0; text-align: right; font-family: 'IBM Plex Mono', ui-monospace, monospace; color: #A5A19A;">{{h.w}}</td>
+                  <td style="padding: 9.5px 0; text-align: right; color: #8A867E;">{{h.days}}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </section>
+      </div>
+
+      <div style="width: 352px; flex-shrink: 0; display: flex; flex-direction: column; gap: 18px;">
+
+        <section style="box-sizing: border-box; padding: 18px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; flex-direction: column; gap: 13px;">
+          <h2 style="margin: 0; font-size: 15px; font-weight: 600;">Sector allocation</h2>
+          <div style="display: flex; flex-direction: column; gap: 11px;">
+            <sc-for list="{{alloc}}" as="a" hint-placeholder-count="5">
+              <div style="display: flex; flex-direction: column; gap: 5px;">
+                <div style="display: flex; justify-content: space-between; font-size: 12px;">
+                  <span style="color: #D7D2C7;">{{a.k}}</span>
+                  <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; color: #A5A19A;">{{a.v}}</span>
+                </div>
+                <div style="height: 6px; border-radius: 3px; background: #23231F;">
+                  <div style="{{a.bar}}"></div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+
+        <section style="box-sizing: border-box; padding: 18px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <h2 style="margin: 0; font-size: 15px; font-weight: 600;">Pending orders</h2>
+            <span style="padding: 2px 8px; border-radius: 6px; background: #23231F; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; color: #D7D2C7;">3</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 9px;">
+            <sc-for list="{{pending}}" as="p" hint-placeholder-count="3">
+              <div style="display: flex; align-items: center; gap: 11px; box-sizing: border-box; padding: 10px 12px; border: 1px solid #23231F; border-radius: 10px; background: #1A1A17;">
+                <span style="{{p.sideStyle}}">{{p.side}}</span>
+                <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                  <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; font-weight: 600;">{{p.t}} · {{p.qty}}</span>
+                  <span style="font-size: 11px; color: #8A867E;">{{p.kind}}</span>
+                </div>
+                <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px;">{{p.price}}</span>
+                <button type="button" aria-label="Cancel order" style="width: 30px; height: 30px; flex-shrink: 0; border: 1px solid #2C2C28; border-radius: 8px; background: #1F1F1C; color: #8A867E; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+                </button>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+
+        <section style="flex-grow: 1; box-sizing: border-box; padding: 18px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; flex-direction: column; gap: 13px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <h2 style="margin: 0; font-size: 15px; font-weight: 600;">Trade journal</h2>
+            <span style="font-size: 12px; color: #8A867E;">128 closed trades</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px 10px;">
+            <sc-for list="{{journal}}" as="j" hint-placeholder-count="6">
+              <div style="display: flex; flex-direction: column; gap: 3px;">
+                <span style="font-size: 10.5px; color: #8A867E;">{{j.k}}</span>
+                <span style="{{j.style}}">{{j.v}}</span>
+              </div>
+            </sc-for>
+          </div>
+          <p style="margin: 0; padding-top: 12px; border-top: 1px solid #23231F; font-size: 12px; color: #A5A19A; line-height: 1.55; text-wrap: pretty;">Every simulated order — Replay sessions included — is logged with its note so you can review it later.</p>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  rng(seed) {
+    let s = seed;
+    return function () { s = (s * 1103515245 + 12345) % 2147483648; return s / 2147483648; };
+  }
+  num(v, d) {
+    return v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+  walk(n, seed, endPct, vol) {
+    const r = this.rng(seed);
+    const out = [];
+    let v = 0;
+    for (let i = 0; i < n; i++) {
+      v += (r() - 0.5) * vol;
+      out.push(v);
+    }
+    const drift = out[n - 1];
+    return out.map(function (x, i) { return x - drift * (i / (n - 1)) + endPct * (i / (n - 1)); });
+  }
+  renderVals() {
+    const self = this;
+    const navRaw = [
+      ['Overview', 'Main-EN.dc.html', 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z', false],
+      ['Charts &amp; indicators', 'Detail-EN.dc.html', 'M4 20V11M9 20V4M14 20V14M19 20V8', false],
+      ['Stock screener', 'Quant-EN.dc.html', 'M4 6h16M7 12h10M10 18h4', false, true],
+      ['Heatmap', 'Main-EN.dc.html', 'M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18', false, true],
+      ['Strategy builder', 'Quant-EN.dc.html', 'M6 4h5v5H6zM13 15h5v5h-5zM8.5 9v4a2 2 0 002 2h2.5', false, true],
+      ['Backtesting', 'Quant-EN.dc.html', 'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7.5V12l3 2', false, true],
+      ['Paper trading', 'Portfolio-EN.dc.html', 'M3 7h18v12H3zM3 7l3-4h12l3 4M16 13h2', true],
+      ['Replay Mode', 'Replay-EN.dc.html', 'M11 6L4 12l7 6V6zM20 6l-7 6 7 6V6z', false],
+      ['Trade journal', 'Portfolio-EN.dc.html', 'M5 4h9a3 3 0 013 3v13H8a3 3 0 01-3-3V4zM5 17h11', false, true],
+      ['Quant assistant', 'Quant-EN.dc.html', 'M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5z', false]
+    ];
+    const nav = navRaw.map(function (n) {
+      const planned = n[4] === true;
+      return {
+        label: n[0].replace('&amp;', '&'), href: n[1], d: n[2],
+        badgeText: planned ? 'WILL' : '',
+        badge: planned
+          ? 'margin-left: auto; padding: 1.5px 6px; border: 1px solid #3C3C36; border-radius: 5px; font-family: \'IBM Plex Mono\', ui-monospace, monospace; font-size: 9px; font-weight: 600; letter-spacing: 0.12em; color: #8A867E;'
+          : 'display: none;',
+        style: 'display: flex; align-items: center; gap: 11px; box-sizing: border-box; height: 40px; padding: 0 12px; border-radius: 10px; color: ' +
+          (n[3] ? '#F3F0E9' : '#A5A19A') + '; background: ' + (n[3] ? '#23231F' : 'transparent') + ';'
+      };
+    });
+
+    const tabs = ['Overview', 'Positions', 'Pending', 'Journal'].map(function (l, i) {
+      const on = i === 0;
+      return {
+        label: l,
+        style: 'box-sizing: border-box; height: 36px; padding: 0 14px; border: 1px solid ' + (on ? '#3C3C36' : 'transparent') +
+          '; border-radius: 9px; background: ' + (on ? '#2C2C28' : 'transparent') + '; color: ' + (on ? '#F3F0E9' : '#8A867E') +
+          '; font-size: 13px; font-weight: ' + (on ? '600' : '500') + '; cursor: pointer;'
+      };
+    });
+
+    const kpiRaw = [
+      ['Account value', '1,086,420,000 ₫', '#F3F0E9', 'Started at 1bn ₫'],
+      ['Total P/L', '+86,420,000 ₫', '#35C77F', '+8.64% since 01/01/2026'],
+      ['Win rate', '58.6%', '#F3F0E9', '75 wins / 53 losses'],
+      ['Profit factor', '1.94', '#F3F0E9', 'Avg win 2.8% · avg loss 1.6%'],
+      ['Max drawdown', '−9.80%', '#FF5C5C', 'Period 12/03 – 04/04']
+    ];
+    const kpis = kpiRaw.map(function (k) {
+      return {
+        k: k[0], v: k[1], note: k[3],
+        style: 'font-family: \'IBM Plex Mono\', ui-monospace, monospace; font-size: 19px; font-weight: 600; letter-spacing: -0.01em; color: ' + k[2] + ';'
+      };
+    });
+
+    const n = 120, W = 944, H = 200, pad = 14;
+    const eqVals = this.walk(n, 30211, 8.64, 1.5);
+    const bmVals = this.walk(n, 90853, 4.12, 1.2);
+    const all = eqVals.concat(bmVals);
+    const hi = Math.max.apply(null, all) + 1.5;
+    const lo = Math.min.apply(null, all) - 1.5;
+    const ex = function (i) { return i / (n - 1) * W; };
+    const ey = function (v) { return pad + (hi - v) / (hi - lo) * (H - pad * 2); };
+    const line = function (vals) {
+      return vals.map(function (v, i) { return ex(i).toFixed(1) + ',' + ey(v).toFixed(1); }).join(' ');
+    };
+    const eGrid = [];
+    for (let i = 0; i <= 3; i++) {
+      const v = lo + (hi - lo) * i / 3;
+      const y = ey(v);
+      eGrid.push({ y: y.toFixed(1), ty: (y + 3.5).toFixed(1), label: (v >= 0 ? '+' : '−') + self.num(Math.abs(v), 1) + '%' });
+    }
+    const eqArea = 'M0,' + ey(eqVals[0]).toFixed(1) + ' ' +
+      eqVals.map(function (v, i) { return 'L' + ex(i).toFixed(1) + ',' + ey(v).toFixed(1); }).join(' ') +
+      ' L' + W + ',' + (H - pad).toFixed(1) + ' L0,' + (H - pad).toFixed(1) + ' Z';
+
+    const ranges = ['1M', '3M', 'YTD', 'All'].map(function (l, i) {
+      const on = i === 2;
+      return {
+        label: l,
+        style: 'box-sizing: border-box; height: 30px; padding: 0 12px; border: 1px solid ' + (on ? '#3C3C36' : '#2C2C28') +
+          '; border-radius: 8px; background: ' + (on ? '#2C2C28' : '#171715') + '; color: ' + (on ? '#F3F0E9' : '#8A867E') +
+          '; font-size: 11.5px; cursor: pointer;'
+      };
+    });
+
+    const hold = function (t, name, qty, cost, last, days) {
+      const pct = (last - cost) / cost * 100;
+      const value = qty * last / 1000;
+      return {
+        t: t, name: name, days: days,
+        qty: qty.toLocaleString('en-US'),
+        cost: self.num(cost, 2),
+        last: self.num(last, 2),
+        value: self.num(value, 1) + 'M',
+        w: self.num(value / 1086.42 * 100, 1) + '%',
+        pnl: (pct >= 0 ? '+' : '−') + self.num(Math.abs(pct), 2) + '%',
+        pnlStyle: 'padding: 9.5px 0; text-align: right; font-family: \'IBM Plex Mono\', ui-monospace, monospace; font-weight: 600; color: ' +
+          (pct >= 0 ? '#35C77F' : '#FF5C5C') + ';'
+      };
+    };
+    const holdings = [
+      hold('FPT', 'FPT Corporation', 1500, 121.0, 128.5, '24 sessions'),
+      hold('SSI', 'SSI Securities', 4000, 35.1, 38.4, '11 sessions'),
+      hold('VCB', 'Vietcombank', 2000, 92.4, 94.6, '38 sessions'),
+      hold('HPG', 'Hoa Phat Group', 6000, 28.25, 27.85, '9 sessions'),
+      hold('MWG', 'Mobile World', 1200, 59.2, 61.0, '17 sessions'),
+      hold('VHM', 'Vinhomes', 1800, 43.5, 41.2, '6 sessions')
+    ];
+
+    const allocRaw = [['Technology', 17.7, '#E08A3C'], ['Brokers', 14.1, '#4FD3E8'], ['Banks', 17.4, '#7FA2FF'], ['Steel', 15.4, '#C08BFF'], ['Retail &amp; property', 15.6, '#35C77F'], ['Cash', 19.8, '#6F6C63']];
+    const alloc = allocRaw.map(function (a) {
+      return {
+        k: a[0].replace('&amp;', '&'),
+        v: self.num(a[1], 1) + '%',
+        bar: 'width: ' + (a[1] / 20 * 100).toFixed(1) + '%; height: 6px; border-radius: 3px; background: ' + a[2] + ';'
+      };
+    });
+
+    const pendRaw = [
+      ['Buy', 'VNM', '1,000', 'LO · good till 24/09', '61.50'],
+      ['Sell', 'HPG', '3,000', 'Stop · triggers below 27.00', '27.00'],
+      ['Buy', 'CTG', '2,000', 'LO · day order', '33.80']
+    ];
+    const pending = pendRaw.map(function (p) {
+      const buy = p[0] === 'Buy';
+      return {
+        side: p[0], t: p[1], qty: p[2], kind: p[3], price: p[4],
+        sideStyle: 'flex-shrink: 0; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; color: ' +
+          (buy ? '#35C77F' : '#FF5C5C') + '; background: ' + (buy ? 'rgba(53, 199, 127, 0.14)' : 'rgba(255, 92, 92, 0.14)') + ';'
+      };
+    });
+
+    const jRaw = [
+      ['Average win', '+2.81%', '#35C77F'],
+      ['Average loss', '−1.64%', '#FF5C5C'],
+      ['Avg holding time', '8.4 sessions', '#F3F0E9'],
+      ['Best trade', 'ELC +24.6%', '#35C77F'],
+      ['Worst trade', 'NVL −11.2%', '#FF5C5C'],
+      ['From Replay', '46 trades', '#F3F0E9']
+    ];
+    const journal = jRaw.map(function (j) {
+      return {
+        k: j[0], v: j[1],
+        style: 'font-family: \'IBM Plex Mono\', ui-monospace, monospace; font-size: 14.5px; font-weight: 600; color: ' + j[2] + ';'
+      };
+    });
+
+    return {
+      nav: nav, tabs: tabs, kpis: kpis, ranges: ranges, holdings: holdings, alloc: alloc,
+      pending: pending, journal: journal, eGrid: eGrid, eqArea: eqArea,
+      eq: line(eqVals), bench: line(bmVals),
+      months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep']
+    };
+  }
+}
+</script>
+</body>
+</html>

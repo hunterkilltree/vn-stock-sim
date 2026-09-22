@@ -1,0 +1,479 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Account-Menu-EN.dc.html": {
+      "h": 600,
+      "radius": 16,
+      "title": "Account menu (popover)",
+      "w": 400,
+      "x": 3040,
+      "y": 9460
+    },
+    "Account-Menu.dc.html": {
+      "h": 600,
+      "radius": 16,
+      "title": "Menu tài khoản (popover)",
+      "w": 400,
+      "x": 3040,
+      "y": 8100
+    },
+    "Login-EN.dc.html": {
+      "h": 960,
+      "radius": 14,
+      "title": "Sign in",
+      "w": 1440,
+      "x": 0,
+      "y": 9460
+    },
+    "Login.dc.html": {
+      "h": 960,
+      "radius": 14,
+      "title": "Đăng nhập",
+      "w": 1440,
+      "x": 0,
+      "y": 8100
+    },
+    "Mobile-Login-EN.dc.html": {
+      "h": 844,
+      "radius": 28,
+      "title": "Sign in (mobile)",
+      "w": 390,
+      "x": 3520,
+      "y": 9460
+    },
+    "Mobile-Login.dc.html": {
+      "h": 844,
+      "radius": 28,
+      "title": "Đăng nhập (điện thoại)",
+      "w": 390,
+      "x": 3520,
+      "y": 8100
+    },
+    "Signup-EN.dc.html": {
+      "h": 960,
+      "radius": 14,
+      "title": "Create account",
+      "w": 1440,
+      "x": 1520,
+      "y": 9460
+    },
+    "Signup.dc.html": {
+      "h": 960,
+      "radius": 14,
+      "title": "Tạo tài khoản",
+      "w": 1440,
+      "x": 1520,
+      "y": 8100
+    },
+    "Crypto-Detail-EN.dc.html": {
+      "h": 960,
+      "radius": 14,
+      "title": "Crypto · BTC/USDT detail",
+      "w": 1440,
+      "x": 1520,
+      "y": 6660
+    },
+    "Crypto-Detail.dc.html": {
+      "h": 960,
+      "radius": 14,
+      "title": "Crypto · chi tiết BTC/USDT",
+      "w": 1440,
+      "x": 1520,
+      "y": 5300
+    },
+    "Crypto-Main-EN.dc.html": {
+      "h": 960,
+      "radius": 14,
+      "title": "Crypto · market overview",
+      "w": 1440,
+      "x": 0,
+      "y": 6660
+    },
+    "Crypto-Main.dc.html": {
+      "h": 960,
+      "radius": 14,
+      "title": "Crypto · tổng quan thị trường",
+      "w": 1440,
+      "x": 0,
+      "y": 5300
+    },
+    "Crypto-Replay-EN.dc.html": {
+      "h": 960,
+      "radius": 14,
+      "title": "Crypto · Replay on hourly candles",
+      "w": 1440,
+      "x": 3040,
+      "y": 6660
+    },
+    "Crypto-Replay.dc.html": {
+      "h": 960,
+      "radius": 14,
+      "title": "Crypto · Replay nến 1 giờ",
+      "w": 1440,
+      "x": 3040,
+      "y": 5300
+    },
+    "Detail-EN.dc.html": {
+      "h": 960,
+      "radius": 14,
+      "title": "Ticker detail · charts and indicators",
+      "w": 1440,
+      "x": 1520,
+      "y": 2600
+    },
+    "Detail.dc.html": {
+      "h": 960,
+      "radius": 14,
+      "title": "Chi tiết mã · biểu đồ và chỉ báo",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "Main-EN.dc.html": {
+      "h": 960,
+      "radius": 14,
+      "title": "Market overview",
+      "w": 1440,
+      "x": 0,
+      "y": 2600
+    },
+    "Main.dc.html": {
+      "h": 960,
+      "radius": 14,
+      "title": "Tổng quan thị trường",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "Mobile-Detail-EN.dc.html": {
+      "h": 844,
+      "radius": 28,
+      "title": "Ticker detail (mobile)",
+      "w": 390,
+      "x": 470,
+      "y": 3960
+    },
+    "Mobile-Detail.dc.html": {
+      "h": 844,
+      "radius": 28,
+      "title": "Chi tiết mã (điện thoại)",
+      "w": 390,
+      "x": 470,
+      "y": 1360
+    },
+    "Mobile-Market-EN.dc.html": {
+      "h": 844,
+      "radius": 28,
+      "title": "Market (mobile)",
+      "w": 390,
+      "x": 0,
+      "y": 3960
+    },
+    "Mobile-Market.dc.html": {
+      "h": 844,
+      "radius": 28,
+      "title": "Thị trường (điện thoại)",
+      "w": 390,
+      "x": 0,
+      "y": 1360
+    },
+    "Mobile-Portfolio-EN.dc.html": {
+      "h": 844,
+      "radius": 28,
+      "title": "Portfolio (mobile)",
+      "w": 390,
+      "x": 1410,
+      "y": 3960
+    },
+    "Mobile-Portfolio.dc.html": {
+      "h": 844,
+      "radius": 28,
+      "title": "Danh mục (điện thoại)",
+      "w": 390,
+      "x": 1410,
+      "y": 1360
+    },
+    "Mobile-Quant-EN.dc.html": {
+      "h": 844,
+      "radius": 28,
+      "title": "Quant assistant (mobile)",
+      "w": 390,
+      "x": 1880,
+      "y": 3960
+    },
+    "Mobile-Quant.dc.html": {
+      "h": 844,
+      "radius": 28,
+      "title": "Trợ lý Quant (điện thoại)",
+      "w": 390,
+      "x": 1880,
+      "y": 1360
+    },
+    "Mobile-Replay-EN.dc.html": {
+      "h": 844,
+      "radius": 28,
+      "title": "Replay (mobile)",
+      "w": 390,
+      "x": 940,
+      "y": 3960
+    },
+    "Mobile-Replay.dc.html": {
+      "h": 844,
+      "radius": 28,
+      "title": "Replay (điện thoại)",
+      "w": 390,
+      "x": 940,
+      "y": 1360
+    },
+    "Mobile-Settings-EN.dc.html": {
+      "h": 844,
+      "radius": 28,
+      "title": "AI model settings (mobile)",
+      "w": 390,
+      "x": 2350,
+      "y": 3960
+    },
+    "Mobile-Settings.dc.html": {
+      "h": 844,
+      "radius": 28,
+      "title": "Cài đặt mô hình AI (điện thoại)",
+      "w": 390,
+      "x": 2350,
+      "y": 1360
+    },
+    "Portfolio-EN.dc.html": {
+      "h": 960,
+      "radius": 14,
+      "title": "Paper trading · portfolio",
+      "w": 1440,
+      "x": 4560,
+      "y": 2600
+    },
+    "Portfolio.dc.html": {
+      "h": 960,
+      "radius": 14,
+      "title": "Giao dịch giấy · danh mục",
+      "w": 1440,
+      "x": 4560,
+      "y": 0
+    },
+    "Quant-Chart-EN.dc.html": {
+      "h": 960,
+      "radius": 14,
+      "title": "Quant on the chart · selection → strategy wheel",
+      "w": 1440,
+      "x": 7600,
+      "y": 2600
+    },
+    "Quant-Chart.dc.html": {
+      "h": 960,
+      "radius": 14,
+      "title": "Quant trên biểu đồ · chọn vùng → vòng chiến lược",
+      "w": 1440,
+      "x": 7600,
+      "y": 0
+    },
+    "Quant-EN.dc.html": {
+      "h": 960,
+      "radius": 14,
+      "title": "Quant assistant · screening and strategies",
+      "w": 1440,
+      "x": 6080,
+      "y": 2600
+    },
+    "Quant.dc.html": {
+      "h": 960,
+      "radius": 14,
+      "title": "Trợ lý Quant · lọc và dựng chiến lược",
+      "w": 1440,
+      "x": 6080,
+      "y": 0
+    },
+    "Replay-EN.dc.html": {
+      "h": 960,
+      "radius": 14,
+      "title": "Replay Mode",
+      "w": 1440,
+      "x": 3040,
+      "y": 2600
+    },
+    "Replay.dc.html": {
+      "h": 960,
+      "radius": 14,
+      "title": "Chế độ Replay",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "Settings-AI-EN.dc.html": {
+      "h": 960,
+      "radius": 14,
+      "title": "Settings · AI model",
+      "w": 1440,
+      "x": 9120,
+      "y": 2600
+    },
+    "Settings-AI.dc.html": {
+      "h": 960,
+      "radius": 14,
+      "title": "Cài đặt · mô hình AI",
+      "w": 1440,
+      "x": 9120,
+      "y": 0
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-09-22T08:00:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "badgeKey": {
+      "fill": "gray",
+      "text": "WILL badge\n\nA muted outline pill on any nav item whose screen does not exist in this design set yet — planned, not drawn.\n\nCarrying it today: Bộ lọc cổ phiếu / Stock screener · Bản đồ nhiệt (full screen) / Heatmap · Xây chiến lược / Strategy builder · Kiểm thử lịch sử / Backtesting · Sổ giao dịch (full screen) / Trade journal. In crypto mode also: paper trading and Quant, which currently borrow the stock screens.\n\nDeliberately grey, not amber: amber means Replay in this system, and a planned feature should not shout louder than a built one.\n\nIf the badge ships to real users, swap the word for “Sắp có” / “Coming soon” — “WILL” reads as an internal marker.",
+      "w": 380,
+      "x": 10800,
+      "y": 0
+    },
+    "cryptoRules": {
+      "fill": "gray",
+      "text": "Stock mode vs crypto mode — what actually changes\n\nMode switch sits at the top of the sidebar (full nav) or as a STK/CRY pair on the icon rail. Everything below it re-skins; the layout never moves.\n\nGone in crypto: ceiling / reference / floor prices and their purple–yellow–cyan colours, trading sessions, lot sizes, LO / MP / ATC order types, P/E and ROE.\n\nNew in crypto: 24/7 status instead of a session clock, pairs (BTC/USDT) instead of tickers, order book with cumulative depth bars, Market / Limit / Stop / OCO, amounts in coin with USDT value, 24h high–low–volume and distance from ATH, circulating vs max supply.\n\nKept: green up / red down, the candle engine, Replay, the paper account, Quant.\n\nReplay on crypto runs hourly candles and never skips a weekend; risk management is scored more strictly because volatility is far higher.",
+      "w": 380,
+      "x": 4620,
+      "y": 5300
+    },
+    "legend": {
+      "fill": "gray",
+      "text": "Hệ thống thiết kế\n\nNền: #0F0F0E · thẻ #171715 · viền #2C2C28\nChữ: Lora (tiêu đề) · Be Vietnam Pro (giao diện) · IBM Plex Mono (số liệu)\nNhấn: #E08A3C\n\nMàu giá theo quy ước Việt Nam:\ntăng #35C77F · giảm #FF5C5C · tham chiếu #F0C243 · trần #C08BFF · sàn #4FD3E8\n\nMọi số liệu trên artboard là dữ liệu mẫu.",
+      "w": 380,
+      "x": 2930,
+      "y": 1360
+    },
+    "localeRules": {
+      "fill": "gray",
+      "text": "Localisation rules (EN build)\n\nNumbers: 1,412.58 — comma thousands, dot decimal.\nDates: 22/09/2026, DD/MM — Vietnamese exchange convention kept.\nCurrency: 1,086,420,000 ₫ · short forms M / bn / T ₫.\nPrices quoted in thousands of ₫, as on HOSE.\nTickers, exchange names and order types (LO, MP, ATC) stay untranslated.\nCeiling / Reference / Floor keep the VN colour code — the words translate, the semantics do not.\n\nKey terms: Tổng quan → Overview · Bản đồ nhiệt → Heatmap · Giao dịch giấy → Paper trading · Sổ giao dịch → Trade journal · Vị thế → Positions · Giá vốn → Avg cost · Sụt giảm tối đa → Max drawdown · Hệ số lợi nhuận → Profit factor · Trợ lý Quant → Quant assistant.\n\nVietnamese labels run 15–30% longer than English: every EN artboard is the VI layout unchanged, so if it fits in VI it fits in EN.",
+      "w": 380,
+      "x": 2930,
+      "y": 3960
+    },
+    "authRules": {
+      "fill": "gray",
+      "text": "Accounts — the rules behind these screens\n\nGuest first: Replay, charts and the screener run with no account. The sign-in prompt appears at the first paper order, because that is the first thing that needs somewhere to live.\n\nEmail and password only — accounts are created by hand. No Google, Zalo or Apple sign-in in this build; if they are added later the buttons go above the divider, and the guest button stays below it.\n\nStarting capital is chosen at sign-up, not fixed: 1 tỷ ₫, 500 triệu ₫ or 10.000 USDT. It is the number every later return percentage is measured against, so it belongs in the sign-up form rather than in settings.\n\nOne person can hold several paper portfolios (main, a strategy test, a crypto wallet). The account menu is where they are switched, which is why portfolios sit above profile and settings in it.\n\nNo ID documents, no brokerage connection, no fees — the sign-up screen says so in the left panel rather than burying it in terms.",
+      "w": 380,
+      "x": 4030,
+      "y": 8100
+    },
+    "rowAuth": {
+      "kind": "title1",
+      "maxW": 3910,
+      "text": "Tài khoản · tiếng Việt",
+      "w": 240,
+      "x": 0,
+      "y": 7820
+    },
+    "rowAuthEN": {
+      "kind": "title1",
+      "maxW": 3910,
+      "text": "Accounts · English",
+      "w": 240,
+      "x": 0,
+      "y": 9180
+    },
+    "rowCrypto": {
+      "kind": "title1",
+      "maxW": 4480,
+      "text": "Crypto · tiếng Việt · 1440 × 960",
+      "w": 240,
+      "x": 0,
+      "y": 5020
+    },
+    "rowCryptoEN": {
+      "kind": "title1",
+      "maxW": 4480,
+      "text": "Crypto · English · 1440 × 960",
+      "w": 240,
+      "x": 0,
+      "y": 6380
+    },
+    "rowDesktop": {
+      "kind": "title1",
+      "maxW": 8000,
+      "text": "Máy tính · 1440 × 960",
+      "w": 240,
+      "x": 0,
+      "y": -280
+    },
+    "rowDesktopEN": {
+      "kind": "title1",
+      "maxW": 8000,
+      "text": "English · desktop 1440 × 960",
+      "w": 240,
+      "x": 0,
+      "y": 2320
+    },
+    "rowMobile": {
+      "kind": "title1",
+      "maxW": 2740,
+      "text": "Điện thoại · 390 × 844",
+      "w": 240,
+      "x": 0,
+      "y": 1080
+    },
+    "rowMobileEN": {
+      "kind": "title1",
+      "maxW": 2740,
+      "text": "English · mobile 390 × 844",
+      "w": 240,
+      "x": 0,
+      "y": 3680
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Detail.dc.html",
+    "Replay.dc.html",
+    "Portfolio.dc.html",
+    "Quant.dc.html",
+    "Quant-Chart.dc.html",
+    "Settings-AI.dc.html",
+    "Mobile-Market.dc.html",
+    "Mobile-Detail.dc.html",
+    "Mobile-Replay.dc.html",
+    "Mobile-Portfolio.dc.html",
+    "Mobile-Quant.dc.html",
+    "Mobile-Settings.dc.html",
+    "Main-EN.dc.html",
+    "Detail-EN.dc.html",
+    "Replay-EN.dc.html",
+    "Portfolio-EN.dc.html",
+    "Quant-EN.dc.html",
+    "Quant-Chart-EN.dc.html",
+    "Settings-AI-EN.dc.html",
+    "Mobile-Market-EN.dc.html",
+    "Mobile-Detail-EN.dc.html",
+    "Mobile-Replay-EN.dc.html",
+    "Mobile-Portfolio-EN.dc.html",
+    "Mobile-Quant-EN.dc.html",
+    "Mobile-Settings-EN.dc.html",
+    "Crypto-Main.dc.html",
+    "Crypto-Detail.dc.html",
+    "Crypto-Replay.dc.html",
+    "Crypto-Main-EN.dc.html",
+    "Crypto-Detail-EN.dc.html",
+    "Crypto-Replay-EN.dc.html",
+    "Login.dc.html",
+    "Signup.dc.html",
+    "Account-Menu.dc.html",
+    "Mobile-Login.dc.html",
+    "Login-EN.dc.html",
+    "Signup-EN.dc.html",
+    "Account-Menu-EN.dc.html",
+    "Mobile-Login-EN.dc.html"
+  ],
+  "pages": [],
+  "title": "VN Stock Sim — bộ giao diện cốt lõi"
+}

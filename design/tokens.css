@@ -1,0 +1,156 @@
+/* VN Stock Sim — design tokens
+   Dark trading terminal, warm cast. Values match the artboards exactly. */
+
+:root {
+  /* ---- Surfaces ---- */
+  --bg: #0F0F0E;
+  --chrome: #131311;
+  --surface: #171715;
+  --surface-2: #1F1F1C;
+  --surface-3: #23231F;
+  --hairline: #23231F;
+  --border: #2C2C28;
+  --border-strong: #3C3C36;
+
+  /* ---- Text ---- */
+  --text: #F3F0E9;
+  --text-2: #D7D2C7;
+  --text-3: #A5A19A;
+  --text-muted: #8A867E;   /* lightest text allowed on a panel — 5.0:1 */
+  --text-faint: #6F6C63;   /* decoration only, never information */
+
+  /* ---- Brand accent ---- */
+  --accent: #E08A3C;
+  --accent-hover: #F0A65C;
+  --accent-ink: #131210;   /* text on accent fills — never white */
+  --accent-surface: #1C1813;
+  --accent-border: #4A3521;
+
+  /* ---- Market colours (Vietnamese convention) ---- */
+  --up: #35C77F;
+  --down: #FF5C5C;
+  --ref: #F0C243;          /* reference price */
+  --ceiling: #C08BFF;      /* stocks only */
+  --floor: #4FD3E8;        /* stocks only */
+  --up-ink: #08130D;
+  --down-ink: #1A0808;
+  --up-wash: rgba(53, 199, 127, 0.14);
+  --down-wash: rgba(255, 92, 92, 0.14);
+  --ref-wash: rgba(240, 194, 67, 0.16);
+
+  /* ---- Indicators ---- */
+  --sma-20: #E08A3C;
+  --sma-50: #7FA2FF;
+  --rsi: #C08BFF;
+  --macd: #4FD3E8;
+
+  /* ---- Caution block ---- */
+  --warn-surface: #1A1713;
+  --warn-border: #3A3226;
+  --warn-text: #C6BFB1;
+
+  /* ---- Type ---- */
+  --font-display: Lora, Georgia, serif;
+  --font-ui: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --text-display-xl: 42px;
+  --text-display-lg: 40px;
+  --text-display-md: 30px;
+  --text-title: 27px;
+  --text-title-sm: 25px;
+  --text-kpi-lg: 19px;
+  --text-kpi: 16px;
+  --text-panel-heading: 15px;
+  --text-body: 14px;
+  --text-body-sm: 13.5px;
+  --text-label: 12.5px;
+  --text-caption: 11.5px;
+  --text-micro: 10.5px;
+  --text-badge: 9px;
+
+  --tracking-tight: -0.015em;
+  --tracking-micro: 0.08em;   /* uppercase micro-labels */
+  --tracking-badge: 0.12em;
+
+  /* ---- Radius ---- */
+  --r-badge: 5px;
+  --r-chip: 8px;
+  --r-control: 11px;
+  --r-input: 12px;
+  --r-card: 14px;
+  --r-popover: 16px;
+
+  /* ---- Control heights ---- */
+  --h-chip: 30px;
+  --h-btn-sm: 34px;
+  --h-segment: 36px;
+  --h-nav: 40px;
+  --h-touch: 44px;          /* minimum touch target */
+  --h-input: 48px;
+  --h-btn: 52px;
+  --h-btn-mobile: 54px;
+
+  /* ---- Spacing ---- */
+  --sp-1: 4px;
+  --sp-2: 6px;
+  --sp-3: 8px;
+  --sp-4: 10px;
+  --sp-5: 12px;
+  --sp-6: 14px;
+  --sp-7: 16px;
+  --sp-8: 18px;
+  --sp-9: 20px;
+  --sp-10: 24px;
+  --sp-11: 28px;
+
+  /* ---- Layout ---- */
+  --sidebar-w: 236px;
+  --rail-w: 72px;
+  --settings-nav-w: 232px;
+  --tabbar-h: 78px;
+  --desktop-w: 1440px;
+  --desktop-h: 960px;
+  --phone-w: 390px;
+  --phone-h: 844px;
+}
+
+/* Base — the app is dark only; there is no light theme in this design. */
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { color: var(--accent-hover); }
+
+/* Every number in this product is mono. */
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+.up { color: var(--up); }
+.down { color: var(--down); }
+.ref { color: var(--ref); }
+.ceiling { color: var(--ceiling); }  /* stocks only */
+.floor { color: var(--floor); }      /* stocks only */
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+}
+
+/* Planned-feature marker. Grey on purpose — amber means Replay. */
+.badge-will {
+  margin-left: auto;
+  padding: 1.5px 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-badge);
+  font-family: var(--font-mono);
+  font-size: var(--text-badge);
+  font-weight: 600;
+  letter-spacing: var(--tracking-badge);
+  color: var(--text-muted);
+}

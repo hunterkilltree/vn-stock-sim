@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Market — mobile</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=Lora:wght@600;700&amp;display=swap">
+<style>
+body { margin: 0; background: #0F0F0E; color: #F3F0E9; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+a { color: #E08A3C; text-decoration: none; }
+a:hover { color: #F0A65C; }
+button { font-family: inherit; }
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: #0F0F0E; overflow: hidden;">
+
+  <div style="flex-grow: 1; min-height: 0; box-sizing: border-box; padding: 52px 18px 16px 18px; display: flex; flex-direction: column; gap: 14px;">
+
+    <header style="display: flex; align-items: center; justify-content: space-between;">
+      <div style="display: flex; flex-direction: column; gap: 2px;">
+        <h1 style="margin: 0; font-family: Lora, Georgia, serif; font-size: 23px; font-weight: 700; letter-spacing: -0.015em;">Market</h1>
+        <span style="font-size: 11.5px; color: #8A867E;">22/09/2026 · 14:45 · session open</span>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button type="button" aria-label="Search ticker" style="width: 44px; height: 44px; border: 1px solid #2C2C28; border-radius: 12px; background: #171715; color: #A5A19A; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M16.5 16.5L21 21"></path></svg>
+        </button>
+        <button type="button" aria-label="Your account" style="width: 44px; height: 44px; border: 1px solid #2C2C28; border-radius: 12px; background: #1F1F1C; color: #F3F0E9; font-size: 13px; font-weight: 600; cursor: pointer;">TD</button>
+      </div>
+    </header>
+
+    <section style="box-sizing: border-box; padding: 16px; border: 1px solid #2C2C28; border-radius: 16px; background: #171715; display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <span style="font-size: 11px; color: #8A867E; letter-spacing: 0.09em; text-transform: uppercase;">VN-Index</span>
+        <span style="padding: 3px 8px; border-radius: 6px; background: rgba(53, 199, 127, 0.14); color: #35C77F; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11.5px; font-weight: 600;">+0.84%</span>
+      </div>
+      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;">
+        <div style="display: flex; flex-direction: column; gap: 3px;">
+          <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 30px; font-weight: 600; letter-spacing: -0.02em;">1,412.58</span>
+          <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12.5px; color: #35C77F;">+11.76 pts</span>
+        </div>
+        <svg width="120" height="46" viewBox="0 0 120 46" fill="none" aria-hidden="true">
+          <polyline points="{{spark}}" stroke="#35C77F" stroke-width="2" stroke-linejoin="round"></polyline>
+        </svg>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid #23231F; font-size: 11.5px; color: #8A867E;">
+        <span>Vol 842.6M</span>
+        <span>Value 21,480bn ₫</span>
+        <span style="color: #35C77F;">248 up</span>
+        <span style="color: #FF5C5C;">121 down</span>
+      </div>
+    </section>
+
+    <div style="display: flex; gap: 10px;">
+      <sc-for list="{{idx}}" as="ix" hint-placeholder-count="3">
+        <div style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: 11px 12px; border: 1px solid #2C2C28; border-radius: 13px; background: #171715; display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-size: 10px; color: #8A867E; letter-spacing: 0.07em; text-transform: uppercase;">{{ix.name}}</span>
+          <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 14px; font-weight: 600;">{{ix.value}}</span>
+          <span style="{{ix.pctStyle}}">{{ix.pct}}</span>
+        </div>
+      </sc-for>
+    </div>
+
+    <section style="display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <h2 style="margin: 0; font-size: 14.5px; font-weight: 600;">Heatmap</h2>
+        <a href="Main-EN.dc.html" style="font-size: 12px; font-weight: 500;">Whole market</a>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
+        <sc-for list="{{tiles}}" as="t" hint-placeholder-count="9">
+          <div style="{{t.box}}">
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13.5px; font-weight: 600;">{{t.t}}</span>
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11.5px; color: #E8E3D8;">{{t.p}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="flex-grow: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <h2 style="margin: 0; font-size: 14.5px; font-weight: 600;">Top gainers</h2>
+        <span style="font-size: 11.5px; color: #8A867E;">HOSE</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
+          <a href="Mobile-Detail-EN.dc.html" style="box-sizing: border-box; min-height: 56px; padding: 10px 14px; border: 1px solid #23231F; border-radius: 13px; background: #171715; color: #F3F0E9; display: flex; align-items: center; gap: 12px;">
+            <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+              <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 14px; font-weight: 600;">{{r.t}}</span>
+              <span style="font-size: 11px; color: #8A867E;">{{r.name}}</span>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+              <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 14px; color: #35C77F;">{{r.price}}</span>
+              <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11.5px; color: #35C77F;">{{r.pct}}</span>
+            </div>
+          </a>
+        </sc-for>
+      </div>
+    </section>
+  </div>
+
+  <nav style="height: 78px; flex-shrink: 0; box-sizing: border-box; padding: 8px 12px 18px 12px; border-top: 1px solid #2C2C28; background: #131311; display: flex; align-items: center; justify-content: space-between;" aria-label="Navigation">
+    <sc-for list="{{tabsLeft}}" as="t" hint-placeholder-count="2">
+      <a href="{{t.href}}" style="{{t.style}}">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{t.d}}"></path></svg>
+        <span style="font-size: 10px; font-weight: 500;">{{t.label}}</span>
+      </a>
+    </sc-for>
+    <a href="Mobile-Replay-EN.dc.html" style="width: 56px; height: 56px; flex-shrink: 0; margin-bottom: 10px; border-radius: 18px; background: #E08A3C; color: #131210; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 6L4 12l7 6V6zM20 6l-7 6 7 6V6z"></path></svg>
+      <span style="font-size: 9px; font-weight: 700;">Replay</span>
+    </a>
+    <sc-for list="{{tabsRight}}" as="t" hint-placeholder-count="2">
+      <a href="{{t.href}}" style="{{t.style}}">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{t.d}}"></path></svg>
+        <span style="font-size: 10px; font-weight: 500;">{{t.label}}</span>
+      </a>
+    </sc-for>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  rng(seed) {
+    let s = seed;
+    return function () { s = (s * 1103515245 + 12345) % 2147483648; return s / 2147483648; };
+  }
+  num(v, d) {
+    return v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+  sign(v, d) {
+    return (v > 0 ? '+' : v < 0 ? '−' : '') + this.num(Math.abs(v), d);
+  }
+  tone(v) { return v > 0 ? '#35C77F' : v < 0 ? '#FF5C5C' : '#F0C243'; }
+  tab(label, href, d, on) {
+    return {
+      label: label, href: href, d: d,
+      style: 'width: 64px; box-sizing: border-box; padding: 6px 0; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; color: ' +
+        (on ? '#F3F0E9' : '#8A867E') + ';'
+    };
+  }
+  renderVals() {
+    const self = this;
+    const r = this.rng(4177);
+    const pts = [];
+    let v = 0.35;
+    for (let i = 0; i < 28; i++) {
+      v = Math.max(0.1, Math.min(0.9, v + (r() - 0.5) * 0.22 + 0.022));
+      pts.push((i / 27 * 120).toFixed(1) + ',' + ((1 - v) * 38 + 4).toFixed(1));
+    }
+
+    const idxRaw = [['VN30', 1486.2, 1.02], ['HNX', 238.41, -0.27], ['UPCOM', 101.33, 0.11]];
+    const idx = idxRaw.map(function (x) {
+      return {
+        name: x[0], value: self.num(x[1], 2), pct: self.sign(x[2], 2) + '%',
+        pctStyle: 'font-family: \'IBM Plex Mono\', ui-monospace, monospace; font-size: 11.5px; color: ' + self.tone(x[2]) + ';'
+      };
+    });
+
+    const tileRaw = [['VCB', 1.24], ['FPT', 2.41], ['SSI', 3.42], ['HPG', -1.41], ['VHM', -1.82], ['MWG', 3.11], ['CTG', 2.13], ['NVL', -3.21], ['VNM', -0.62]];
+    const tiles = tileRaw.map(function (t) {
+      const p = t[1];
+      const a = (0.12 + Math.min(Math.abs(p), 5) / 5 * 0.33).toFixed(2);
+      const bg = p > 0 ? 'rgba(53, 199, 127, ' + a + ')' : 'rgba(255, 92, 92, ' + a + ')';
+      const bd = p > 0 ? 'rgba(53, 199, 127, 0.4)' : 'rgba(255, 92, 92, 0.4)';
+      return {
+        t: t[0], p: self.sign(p, 2) + '%',
+        box: 'box-sizing: border-box; height: 52px; padding: 7px 10px; border: 1px solid ' + bd + '; border-radius: 10px; background: ' +
+          bg + '; display: flex; flex-direction: column; justify-content: space-between;'
+      };
+    });
+
+    const rowRaw = [
+      ['ELC', 'Elcom', 24.9, 6.85], ['FRT', 'FPT Retail', 178.4, 5.02],
+      ['HCM', 'HSC Securities', 32.15, 4.11], ['SSI', 'SSI Securities', 38.4, 3.42]
+    ];
+    const rows = rowRaw.map(function (x) {
+      return { t: x[0], name: x[1], price: self.num(x[2], 2), pct: self.sign(x[3], 2) + '%' };
+    });
+
+    return {
+      spark: pts.join(' '), idx: idx, tiles: tiles, rows: rows,
+      tabsLeft: [
+        self.tab('Market', 'Mobile-Market-EN.dc.html', 'M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18', true),
+        self.tab('Charts', 'Mobile-Detail-EN.dc.html', 'M4 20V11M9 20V4M14 20V14M19 20V8', false)
+      ],
+      tabsRight: [
+        self.tab('Portfolio', 'Mobile-Portfolio-EN.dc.html', 'M3 7h18v12H3zM3 7l3-4h12l3 4M16 13h2', false),
+        self.tab('Quant', 'Mobile-Quant-EN.dc.html', 'M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5z', false)
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

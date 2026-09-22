@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Crypto market overview</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=Lora:wght@600;700&amp;display=swap">
+<style>
+body { margin: 0; background: #0F0F0E; color: #F3F0E9; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+a { color: #E08A3C; text-decoration: none; }
+a:hover { color: #F0A65C; }
+button { font-family: inherit; }
+table { border-collapse: collapse; }
+</style>
+</helmet>
+<div style="width: 1440px; height: 960px; box-sizing: border-box; display: flex; background: #0F0F0E; overflow: hidden;">
+
+  <nav style="width: 236px; flex-shrink: 0; box-sizing: border-box; height: 960px; padding: 22px 16px; border-right: 1px solid #2C2C28; background: #131311; display: flex; flex-direction: column; gap: 18px;" aria-label="Main navigation">
+    <a href="Main-EN.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 0 6px; color: #F3F0E9;">
+      <span style="width: 32px; height: 32px; flex-shrink: 0; border-radius: 9px; background: #E08A3C; display: flex; align-items: center; justify-content: center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="9" width="6" height="6" fill="#131210"></rect><rect x="14" y="9" width="6" height="8" fill="#131210"></rect><path d="M7 4v5M7 15v5M17 3v6M17 17v4" stroke="#131210" stroke-width="2.2" stroke-linecap="round"></path></svg>
+      </span>
+      <span style="display: flex; flex-direction: column; gap: 1px;">
+        <span style="font-family: Lora, Georgia, serif; font-size: 17px; font-weight: 700; letter-spacing: -0.01em;">VN Stock Sim</span>
+        <span style="font-size: 10px; color: #8A867E; letter-spacing: 0.1em; text-transform: uppercase;">Simulation · 24/7</span>
+      </span>
+    </a>
+
+    <div role="group" aria-label="Choose market" style="display: flex; gap: 4px; box-sizing: border-box; padding: 4px; border: 1px solid #2C2C28; border-radius: 12px; background: #1A1A17;">
+      <a href="Main-EN.dc.html" style="flex-grow: 1; box-sizing: border-box; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; gap: 7px; color: #8A867E; font-size: 12.5px; font-weight: 500;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V11M9 20V4M14 20V14M19 20V8"></path></svg>
+        <span>Stocks</span>
+      </a>
+      <a href="Crypto-Main-EN.dc.html" aria-current="page" style="flex-grow: 1; box-sizing: border-box; height: 36px; border-radius: 9px; background: #E08A3C; display: flex; align-items: center; justify-content: center; gap: 7px; color: #131210; font-size: 12.5px; font-weight: 600;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 8.5h4a2 2 0 010 4h-4h4.3a2 2 0 010 4H9.5M10.8 6.5v11"></path></svg>
+        <span>Crypto</span>
+      </a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 2px;">
+      <sc-for list="{{nav}}" as="item" hint-placeholder-count="9">
+        <a href="{{item.href}}" style="{{item.style}}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.d}}"></path></svg>
+          <span style="font-size: 13.5px; font-weight: 500;">{{item.label}}</span>
+          <span style="{{item.badge}}">{{item.badgeText}}</span>
+        </a>
+      </sc-for>
+    </div>
+
+    <div style="flex-grow: 1;"></div>
+
+    <a href="Settings-AI-EN.dc.html" style="display: flex; align-items: center; gap: 11px; box-sizing: border-box; height: 40px; padding: 0 12px; border-radius: 10px; color: #A5A19A;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1V21a2 2 0 11-4 0v-.1A1.6 1.6 0 005.9 19.7l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 003 14.6a2 2 0 010-4h.1A1.6 1.6 0 004.3 8L4.2 8a2 2 0 112.8-2.8l.1.1a1.6 1.6 0 002.7-1.1V4a2 2 0 114 0v.1A1.6 1.6 0 0017 5.3l.1-.1A2 2 0 1119.9 8l-.1.1a1.6 1.6 0 001.1 2.7H21a2 2 0 010 4h-.1a1.6 1.6 0 00-1.5 1.2z"></path></svg>
+      <span style="font-size: 13.5px; font-weight: 500;">Settings</span>
+    </a>
+
+    <div style="box-sizing: border-box; padding: 14px; border: 1px solid #2C2C28; border-radius: 12px; background: #1A1A17; display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 10px; color: #8A867E; letter-spacing: 0.1em; text-transform: uppercase;">Virtual balance</span>
+      <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 18px; font-weight: 600;">3,284.50 USDT</span>
+      <span style="font-size: 11.5px; color: #8A867E;">No real money involved</span>
+    </div>
+  </nav>
+
+  <div style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: 24px 28px; display: flex; flex-direction: column; gap: 20px;">
+
+    <header style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px;">
+      <div style="display: flex; flex-direction: column; gap: 5px;">
+        <h1 style="margin: 0; font-family: Lora, Georgia, serif; font-size: 27px; font-weight: 700; letter-spacing: -0.015em;">Crypto market</h1>
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: #A5A19A;">
+          <span style="width: 7px; height: 7px; border-radius: 50%; background: #35C77F;"></span>
+          <span>22/09/2026 · 14:45 · trades 24/7, no sessions and no ceiling–floor bands</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px; box-sizing: border-box; height: 44px; padding: 0 14px; border: 1px solid #2C2C28; border-radius: 11px; background: #171715;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M16.5 16.5L21 21"></path></svg>
+          <label for="q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);">Search trading pair</label>
+          <input id="q" type="search" placeholder="Search: BTC/USDT, SOL…" style="width: 200px; border: 0; background: transparent; color: #F3F0E9; font-family: inherit; font-size: 13px; outline: none;">
+        </div>
+        <a href="Crypto-Replay-EN.dc.html" style="display: flex; align-items: center; gap: 8px; box-sizing: border-box; height: 44px; padding: 0 16px; border-radius: 11px; background: #E08A3C; color: #131210; font-size: 13.5px; font-weight: 600;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 6L4 12l7 6V6zM20 6l-7 6 7 6V6z"></path></svg>
+          <span>Enter Replay</span>
+        </a>
+        <button type="button" aria-label="Your account" style="width: 44px; height: 44px; border: 1px solid #2C2C28; border-radius: 11px; background: #1F1F1C; color: #F3F0E9; font-size: 13px; font-weight: 600; cursor: pointer;">TD</button>
+      </div>
+    </header>
+
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px;">
+      <sc-for list="{{idx}}" as="ix" hint-placeholder-count="4">
+        <section style="box-sizing: border-box; padding: 16px 18px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 11px; color: #8A867E; letter-spacing: 0.09em; text-transform: uppercase;">{{ix.name}}</span>
+            <span style="{{ix.badge}}">{{ix.pct}}</span>
+          </div>
+          <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;">
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 23px; font-weight: 600; letter-spacing: -0.01em;">{{ix.value}}</span>
+              <span style="{{ix.chgStyle}}">{{ix.chg}}</span>
+            </div>
+            <svg width="112" height="36" viewBox="0 0 112 36" fill="none" aria-hidden="true"><polyline points="{{ix.points}}" stroke="{{ix.color}}" stroke-width="1.8" stroke-linejoin="round" fill="none"></polyline></svg>
+          </div>
+          <div style="padding-top: 10px; border-top: 1px solid #23231F; font-size: 11.5px; color: #8A867E;">{{ix.foot}}</div>
+        </section>
+      </sc-for>
+    </div>
+
+    <div style="flex-grow: 1; min-height: 0; display: flex; gap: 20px;">
+
+      <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
+
+        <section style="flex-grow: 1; min-height: 0; box-sizing: border-box; padding: 18px 20px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; flex-direction: column; gap: 14px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: baseline; gap: 12px;">
+              <h2 style="margin: 0; font-size: 15px; font-weight: 600;">24-hour heatmap</h2>
+              <span style="font-size: 11.5px; color: #8A867E;">No ceiling/floor colours — crypto has no price limits</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 14px; font-size: 11px; color: #8A867E;">
+              <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; border-radius: 3px; background: #35C77F;"></span>Up</span>
+              <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; border-radius: 3px; background: #F0C243;"></span>Flat</span>
+              <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; border-radius: 3px; background: #FF5C5C;"></span>Down</span>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <sc-for list="{{sectors}}" as="sec" hint-placeholder-count="4">
+              <div style="display: flex; flex-direction: column; gap: 7px;">
+                <div style="display: flex; align-items: baseline; gap: 8px;">
+                  <span style="font-size: 12px; font-weight: 600; color: #D7D2C7;">{{sec.name}}</span>
+                  <span style="{{sec.pctStyle}}">{{sec.pct}}</span>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px;">
+                  <sc-for list="{{sec.items}}" as="tile" hint-placeholder-count="6">
+                    <div style="{{tile.box}}">
+                      <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; font-weight: 600;">{{tile.t}}</span>
+                      <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11.5px; color: #E8E3D8;">{{tile.p}}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+
+        <section style="height: 226px; flex-shrink: 0; box-sizing: border-box; padding: 18px 20px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; gap: 24px;">
+          <sc-for list="{{movers}}" as="col" hint-placeholder-count="2">
+            <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px;">
+              <h2 style="margin: 0; font-size: 12.5px; font-weight: 600; color: #D7D2C7;">{{col.title}}</h2>
+              <table style="width: 100%; font-size: 12.5px;">
+                <thead>
+                  <tr style="color: #8A867E; font-size: 10.5px; letter-spacing: 0.07em; text-transform: uppercase;">
+                    <th scope="col" style="text-align: left; padding: 0 0 7px 0; font-weight: 500;">Pair</th>
+                    <th scope="col" style="text-align: right; padding: 0 0 7px 0; font-weight: 500;">Price</th>
+                    <th scope="col" style="text-align: right; padding: 0 0 7px 0; font-weight: 500;">24h</th>
+                    <th scope="col" style="text-align: right; padding: 0 0 7px 0; font-weight: 500;">24h vol</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <sc-for list="{{col.rows}}" as="r" hint-placeholder-count="5">
+                    <tr style="border-top: 1px solid #23231F;">
+                      <td style="padding: 6.5px 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-weight: 600;">{{r.t}}</td>
+                      <td style="padding: 6.5px 0; text-align: right; font-family: 'IBM Plex Mono', ui-monospace, monospace;">{{r.price}}</td>
+                      <td style="{{r.pctStyle}}">{{r.pct}}</td>
+                      <td style="padding: 6.5px 0; text-align: right; color: #8A867E; font-family: 'IBM Plex Mono', ui-monospace, monospace;">{{r.vol}}</td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+          </sc-for>
+        </section>
+
+      </div>
+
+      <div style="width: 372px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px;">
+
+        <section style="box-sizing: border-box; padding: 18px 20px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 11px; color: #8A867E; letter-spacing: 0.09em; text-transform: uppercase;">Paper wallet</span>
+            <span style="font-size: 11px; color: #8A867E;">Since 01/01/2026</span>
+          </div>
+          <div style="display: flex; align-items: flex-end; gap: 10px;">
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 27px; font-weight: 600; letter-spacing: -0.015em;">14,268.40 USDT</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="padding: 3px 8px; border-radius: 6px; background: rgba(53, 199, 127, 0.16); color: #35C77F; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; font-weight: 600;">+42.68%</span>
+            <span style="font-size: 12px; color: #A5A19A;">on 10,000 USDT starting balance</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding-top: 12px; border-top: 1px solid #23231F;">
+            <div style="display: flex; flex-direction: column; gap: 3px;">
+              <span style="font-size: 10.5px; color: #8A867E;">Free USDT</span>
+              <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13.5px; font-weight: 600;">3,284.50</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 3px;">
+              <span style="font-size: 10.5px; color: #8A867E;">In coins</span>
+              <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13.5px; font-weight: 600;">77.0%</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 3px;">
+              <span style="font-size: 10.5px; color: #8A867E;">Open P/L</span>
+              <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13.5px; font-weight: 600; color: #35C77F;">+486.20</span>
+            </div>
+          </div>
+        </section>
+
+        <section style="flex-grow: 1; min-height: 0; box-sizing: border-box; padding: 18px 20px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <h2 style="margin: 0; font-size: 15px; font-weight: 600;">Holdings</h2>
+            <span style="font-size: 11.5px; color: #8A867E;">Spot only · no leverage</span>
+          </div>
+          <table style="width: 100%; font-size: 12.5px;">
+            <thead>
+              <tr style="color: #8A867E; font-size: 10.5px; letter-spacing: 0.07em; text-transform: uppercase;">
+                <th scope="col" style="text-align: left; padding: 0 0 7px 0; font-weight: 500;">Coin</th>
+                <th scope="col" style="text-align: right; padding: 0 0 7px 0; font-weight: 500;">Amount</th>
+                <th scope="col" style="text-align: right; padding: 0 0 7px 0; font-weight: 500;">Avg cost</th>
+                <th scope="col" style="text-align: right; padding: 0 0 7px 0; font-weight: 500;">P/L</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{positions}}" as="p" hint-placeholder-count="4">
+                <tr style="border-top: 1px solid #23231F;">
+                  <td style="padding: 8px 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-weight: 600;">{{p.t}}</td>
+                  <td style="padding: 8px 0; text-align: right; font-family: 'IBM Plex Mono', ui-monospace, monospace; color: #A5A19A;">{{p.qty}}</td>
+                  <td style="padding: 8px 0; text-align: right; font-family: 'IBM Plex Mono', ui-monospace, monospace; color: #A5A19A;">{{p.cost}}</td>
+                  <td style="{{p.pnlStyle}}">{{p.pnl}}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </section>
+
+        <section style="box-sizing: border-box; padding: 18px 20px; border: 1px solid #4A3521; border-radius: 14px; background: #1C1813; display: flex; flex-direction: column; gap: 12px;">
+          <span style="font-size: 11px; color: #E08A3C; letter-spacing: 0.09em; text-transform: uppercase;">Replay Mode</span>
+          <p style="margin: 0; font-family: Lora, Georgia, serif; font-size: 18px; font-weight: 600; line-height: 1.35; text-wrap: pretty;">“Trade the past before you trade the future.”</p>
+          <p style="margin: 0; font-size: 12.5px; color: #A5A19A; line-height: 1.5;">Replay the May 2021 crash on hourly candles — the market never closes, and you never see the next candle.</p>
+          <a href="Crypto-Replay-EN.dc.html" style="box-sizing: border-box; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 11px; background: #E08A3C; color: #131210; font-size: 13.5px; font-weight: 600;">Start a Replay session</a>
+        </section>
+
+        <section style="box-sizing: border-box; padding: 14px 16px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; align-items: center; gap: 12px;">
+          <span style="width: 34px; height: 34px; flex-shrink: 0; border-radius: 10px; background: #23231F; display: flex; align-items: center; justify-content: center;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E08A3C" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5z"></path></svg>
+          </span>
+          <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;">
+            <span style="font-size: 13px; font-weight: 600;">Ask Quant</span>
+            <span style="font-size: 11.5px; color: #8A867E; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">“Which coins have 4h RSI under 30 on rising volume?”</span>
+          </div>
+          <a href="Quant-EN.dc.html" aria-label="Open the Quant assistant" style="width: 34px; height: 34px; flex-shrink: 0; border-radius: 10px; background: #2C2C28; color: #F3F0E9; display: flex; align-items: center; justify-content: center;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"></path></svg>
+          </a>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  rng(seed) {
+    let s = seed;
+    return function () { s = (s * 1103515245 + 12345) % 2147483648; return s / 2147483648; };
+  }
+  spark(seed, bias) {
+    const r = this.rng(seed);
+    const n = 30, w = 112, h = 36, pts = [];
+    let v = 0.45;
+    for (let i = 0; i < n; i++) {
+      v = Math.max(0.08, Math.min(0.92, v + (r() - 0.5) * 0.24 + bias));
+      pts.push((i / (n - 1) * w).toFixed(1) + ',' + ((1 - v) * (h - 4) + 2).toFixed(1));
+    }
+    return pts.join(' ');
+  }
+  num(v, d) {
+    return v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+  sign(v, d) {
+    return (v > 0 ? '+' : v < 0 ? '−' : '') + this.num(Math.abs(v), d);
+  }
+  tone(v) {
+    return v > 0.15 ? '#35C77F' : v < -0.15 ? '#FF5C5C' : '#F0C243';
+  }
+  renderVals() {
+    const self = this;
+    const navRaw = [
+      ['Overview', 'Crypto-Main-EN.dc.html', 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z', true],
+      ['Charts &amp; indicators', 'Crypto-Detail-EN.dc.html', 'M4 20V11M9 20V4M14 20V14M19 20V8', false],
+      ['Coin screener', 'Quant-EN.dc.html', 'M4 6h16M7 12h10M10 18h4', false, true],
+      ['Heatmap', 'Crypto-Main-EN.dc.html', 'M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18', false, true],
+      ['Strategy builder', 'Quant-EN.dc.html', 'M6 4h5v5H6zM13 15h5v5h-5zM8.5 9v4a2 2 0 002 2h2.5', false, true],
+      ['Backtesting', 'Quant-EN.dc.html', 'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7.5V12l3 2', false, true],
+      ['Paper trading', 'Portfolio-EN.dc.html', 'M3 7h18v12H3zM3 7l3-4h12l3 4M16 13h2', false, true],
+      ['Replay Mode', 'Crypto-Replay-EN.dc.html', 'M11 6L4 12l7 6V6zM20 6l-7 6 7 6V6z', false],
+      ['Quant assistant', 'Quant-EN.dc.html', 'M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5z', false, true]
+    ];
+    const nav = navRaw.map(function (n) {
+      const planned = n[4] === true;
+      return {
+        label: n[0].replace('&amp;', '&'), href: n[1], d: n[2],
+        badgeText: planned ? 'WILL' : '',
+        badge: planned
+          ? 'margin-left: auto; padding: 1.5px 6px; border: 1px solid #3C3C36; border-radius: 5px; font-family: \'IBM Plex Mono\', ui-monospace, monospace; font-size: 9px; font-weight: 600; letter-spacing: 0.12em; color: #8A867E;'
+          : 'display: none;',
+        style: 'display: flex; align-items: center; gap: 11px; box-sizing: border-box; height: 40px; padding: 0 12px; border-radius: 10px; color: ' +
+          (n[3] ? '#F3F0E9' : '#A5A19A') + '; background: ' + (n[3] ? '#23231F' : 'transparent') + ';'
+      };
+    });
+
+    const idxRaw = [
+      ['BTC / USDT', '64,820.50', 2.14, '24h vol 28.4bn USDT', 9137],
+      ['ETH / USDT', '3,412.80', 1.62, '24h vol 14.1bn USDT', 4421],
+      ['Global market cap', '2.41T USD', 1.84, '12,480 listed coins', 7715],
+      ['BTC dominance', '54.20%', -0.31, 'ETH 18.4% · others 27.4%', 2203]
+    ];
+    const idx = idxRaw.map(function (x) {
+      const up = x[2] >= 0;
+      const col = self.tone(x[2]);
+      return {
+        name: x[0], value: x[1],
+        chg: self.sign(x[2], 2) + '% in 24 hours',
+        pct: self.sign(x[2], 2) + '%',
+        foot: x[3],
+        color: col,
+        points: self.spark(x[4], up ? 0.02 : -0.02),
+        chgStyle: 'font-family: \'IBM Plex Mono\', ui-monospace, monospace; font-size: 12px; color: ' + col + ';',
+        badge: 'padding: 3px 8px; border-radius: 6px; font-family: \'IBM Plex Mono\', ui-monospace, monospace; font-size: 11.5px; font-weight: 600; color: ' +
+          col + '; background: ' + (up ? 'rgba(53, 199, 127, 0.14)' : 'rgba(255, 92, 92, 0.14)') + ';'
+      };
+    });
+
+    const tile = function (t, p) {
+      const a = (0.12 + Math.min(Math.abs(p), 12) / 12 * 0.33).toFixed(2);
+      const bg = p > 0.15 ? 'rgba(53, 199, 127, ' + a + ')' : p < -0.15 ? 'rgba(255, 92, 92, ' + a + ')' : 'rgba(240, 194, 67, 0.16)';
+      const bd = p > 0.15 ? 'rgba(53, 199, 127, 0.4)' : p < -0.15 ? 'rgba(255, 92, 92, 0.4)' : 'rgba(240, 194, 67, 0.45)';
+      return {
+        t: t, p: self.sign(p, 1) + '%',
+        box: 'box-sizing: border-box; height: 46px; padding: 6px 9px; border: 1px solid ' + bd + '; border-radius: 8px; background: ' +
+          bg + '; display: flex; flex-direction: column; justify-content: space-between;'
+      };
+    };
+    const sectorsRaw = [
+      ['Layer 1', 2.4, [['BTC', 2.1], ['ETH', 1.6], ['SOL', 6.8], ['AVAX', 3.2], ['ADA', -1.4], ['DOT', 0.1]]],
+      ['DeFi', 3.8, [['UNI', 4.2], ['AAVE', 5.9], ['LINK', 2.8], ['MKR', -2.1], ['CRV', 8.4], ['LDO', 3.6]]],
+      ['Exchanges &amp; infra', -0.6, [['BNB', 0.8], ['OKB', -1.2], ['ATOM', -3.4], ['FIL', 2.2], ['ARB', -0.1], ['OP', 1.4]]],
+      ['Vietnamese projects', 5.1, [['AXS', 9.2], ['RON', 7.4], ['KNC', 1.8], ['C98', 4.6], ['SLP', 12.1], ['VNDC', 0.0]]]
+    ];
+    const sectors = sectorsRaw.map(function (s) {
+      return {
+        name: s[0].replace('&amp;', '&'),
+        pct: self.sign(s[1], 1) + '%',
+        pctStyle: 'font-family: \'IBM Plex Mono\', ui-monospace, monospace; font-size: 11px; color: ' + self.tone(s[1]) + ';',
+        items: s[2].map(function (i) { return tile(i[0], i[1]); })
+      };
+    });
+
+    const row = function (t, price, p, vol) {
+      return {
+        t: t, price: price, pct: self.sign(p, 1) + '%', vol: vol,
+        pctStyle: 'padding: 6.5px 0; text-align: right; font-family: \'IBM Plex Mono\', ui-monospace, monospace; font-weight: 600; color: ' + self.tone(p) + ';'
+      };
+    };
+    const movers = [
+      {
+        title: 'Top 24h gainers',
+        rows: [row('SLP/USDT', '0.00412', 12.1, '84M'), row('AXS/USDT', '6.84', 9.2, '162M'), row('CRV/USDT', '0.684', 8.4, '96M'), row('RON/USDT', '1.842', 7.4, '48M'), row('SOL/USDT', '184.20', 6.8, '2.4bn')]
+      },
+      {
+        title: 'Top 24h losers',
+        rows: [row('ATOM/USDT', '7.42', -3.4, '62M'), row('MKR/USDT', '2,184.00', -2.1, '38M'), row('ADA/USDT', '0.4820', -1.4, '284M'), row('OKB/USDT', '48.20', -1.2, '18M'), row('OP/USDT', '2.140', -0.1, '74M')]
+      }
+    ];
+
+    const pos = function (t, qty, cost, pnlPct, pnlAbs) {
+      return {
+        t: t, qty: qty, cost: cost,
+        pnl: self.sign(pnlPct, 1) + '% · ' + pnlAbs,
+        pnlStyle: 'padding: 8px 0; text-align: right; font-family: \'IBM Plex Mono\', ui-monospace, monospace; font-weight: 600; color: ' + self.tone(pnlPct) + ';'
+      };
+    };
+    const positions = [
+      pos('BTC', '0.1240', '58,420.00', 10.9, '+794.20'),
+      pos('ETH', '1.8400', '3,640.00', -6.2, '−417.90'),
+      pos('SOL', '18.000', '162.40', 13.4, '+392.40'),
+      pos('AXS', '420.00', '5.920', 15.5, '+385.40')
+    ];
+
+    return { nav: nav, idx: idx, sectors: sectors, movers: movers, positions: positions };
+  }
+}
+</script>
+</body>
+</html>
