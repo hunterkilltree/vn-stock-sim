@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Menu tài khoản</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=Lora:wght@600;700&amp;display=swap">
+<style>
+body { margin: 0; background: #0F0F0E; color: #F3F0E9; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+a { color: #E08A3C; text-decoration: none; }
+a:hover { color: #F0A65C; }
+button { font-family: inherit; }
+</style>
+</helmet>
+<div style="width: 400px; height: 600px; box-sizing: border-box; padding: 20px; background: #0F0F0E; display: flex; align-items: flex-start; justify-content: center; overflow: hidden;">
+
+  <div style="width: 360px; box-sizing: border-box; padding: 8px; border: 1px solid #2C2C28; border-radius: 16px; background: #171715; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55); display: flex; flex-direction: column; gap: 6px;">
+
+    <div style="display: flex; align-items: center; gap: 12px; box-sizing: border-box; padding: 12px 12px 14px 12px; border-bottom: 1px solid #23231F;">
+      <span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; background: #2C2C28; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600;">TĐ</span>
+      <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+        <span style="font-size: 14px; font-weight: 600;">Trần Đức</span>
+        <span style="font-size: 11.5px; color: #8A867E; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">tran.duc@email.com</span>
+      </div>
+      <span style="flex-shrink: 0; padding: 3px 8px; border: 1px solid #2C2C28; border-radius: 6px; font-size: 10.5px; color: #A5A19A;">Cá nhân</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 4px; padding: 4px 4px 8px 4px; border-bottom: 1px solid #23231F;">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 4px 8px;">
+        <span style="font-size: 10px; color: #8A867E; letter-spacing: 0.1em; text-transform: uppercase;">Danh mục giấy</span>
+        <span style="font-size: 10.5px; color: #6F6C63;">3 danh mục</span>
+      </div>
+      <sc-for list="{{portfolios}}" as="p" hint-placeholder-count="3">
+        <a href="Portfolio.dc.html" style="{{p.row}}">
+          <span style="{{p.dot}}"></span>
+          <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+            <span style="{{p.nameStyle}}">{{p.name}}</span>
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; color: #8A867E;">{{p.nav}}</span>
+          </span>
+          <span style="{{p.pctStyle}}">{{p.pct}}</span>
+        </a>
+      </sc-for>
+      <button type="button" style="display: flex; align-items: center; gap: 10px; box-sizing: border-box; width: 100%; height: 40px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: #E08A3C; font-size: 13px; font-weight: 500; cursor: pointer;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+        <span>Tạo danh mục mới</span>
+      </button>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 2px; padding: 2px 4px 6px 4px; border-bottom: 1px solid #23231F;">
+      <sc-for list="{{links}}" as="l" hint-placeholder-count="3">
+        <a href="{{l.href}}" style="display: flex; align-items: center; gap: 11px; box-sizing: border-box; height: 40px; padding: 0 12px; border-radius: 10px; color: #D7D2C7; font-size: 13.5px;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{l.d}}"></path></svg>
+          <span style="flex-grow: 1;">{{l.label}}</span>
+          <span style="{{l.badge}}">{{l.badgeText}}</span>
+        </a>
+      </sc-for>
+    </div>
+
+    <button type="button" style="display: flex; align-items: center; gap: 11px; box-sizing: border-box; width: 100%; height: 40px; margin: 0 0 2px 0; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: #FF5C5C; font-size: 13.5px; font-weight: 500; cursor: pointer;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 17l5-5-5-5M20 12H9M12 20H6a2 2 0 01-2-2V6a2 2 0 012-2h6"></path></svg>
+      <span>Đăng xuất</span>
+    </button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":400,"height":600}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const pfRaw = [
+      ['Danh mục chính', '1.086,42 tr ₫', '+8,64%', true],
+      ['Thử chiến lược RSI', '512,80 tr ₫', '−2,10%', false],
+      ['Ví crypto', '14.268,40 USDT', '+42,68%', false]
+    ];
+    const portfolios = pfRaw.map(function (p) {
+      const up = p[2].charAt(0) === '+';
+      return {
+        name: p[0], nav: p[1], pct: p[2],
+        row: 'display: flex; align-items: center; gap: 11px; box-sizing: border-box; height: 48px; padding: 0 12px; border-radius: 10px; color: #F3F0E9; background: ' +
+          (p[3] ? '#1F1F1C' : 'transparent') + ';',
+        dot: 'width: 8px; height: 8px; flex-shrink: 0; border-radius: 50%; background: ' + (p[3] ? '#E08A3C' : '#3C3C36') + ';',
+        nameStyle: 'font-size: 13.5px; font-weight: ' + (p[3] ? '600' : '500') + '; color: ' + (p[3] ? '#F3F0E9' : '#D7D2C7') + ';',
+        pctStyle: 'flex-shrink: 0; font-family: \'IBM Plex Mono\', ui-monospace, monospace; font-size: 12px; font-weight: 600; color: ' +
+          (up ? '#35C77F' : '#FF5C5C') + ';'
+      };
+    });
+
+    const linkRaw = [
+      ['Hồ sơ &amp; bảo mật', 'Settings-AI.dc.html', 'M12 12a4 4 0 100-8 4 4 0 000 8zM5 20a7 7 0 0114 0', true],
+      ['Cài đặt', 'Settings-AI.dc.html', 'M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1V21a2 2 0 11-4 0v-.1A1.6 1.6 0 005.9 19.7l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 003 14.6a2 2 0 010-4h.1A1.6 1.6 0 004.3 8L4.2 8a2 2 0 112.8-2.8l.1.1a1.6 1.6 0 002.7-1.1V4a2 2 0 114 0v.1A1.6 1.6 0 0017 5.3l.1-.1A2 2 0 1119.9 8l-.1.1a1.6 1.6 0 001.1 2.7H21a2 2 0 010 4h-.1a1.6 1.6 0 00-1.5 1.2z', false],
+      ['Trợ giúp', 'Settings-AI.dc.html', 'M12 21a9 9 0 100-18 9 9 0 000 18zM9.5 9.5a2.5 2.5 0 114 2c-.9.7-1.5 1.2-1.5 2.5M12 17.5h0', true]
+    ];
+    const links = linkRaw.map(function (l) {
+      const planned = l[3] === true;
+      return {
+        label: l[0].replace('&amp;', '&'), href: l[1], d: l[2],
+        badgeText: planned ? 'WILL' : '',
+        badge: planned
+          ? 'padding: 1.5px 6px; border: 1px solid #3C3C36; border-radius: 5px; font-family: \'IBM Plex Mono\', ui-monospace, monospace; font-size: 9px; font-weight: 600; letter-spacing: 0.12em; color: #8A867E;'
+          : 'display: none;'
+      };
+    });
+
+    return { portfolios: portfolios, links: links };
+  }
+}
+</script>
+</body>
+</html>

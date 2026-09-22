@@ -8,6 +8,18 @@ full (not just the thumbnail), so the backend/frontend breakdown below is
 grounded in the actual markup, sample data shapes, and interaction notes
 left on the canvas, not a guess from the screen names.
 
+**Superseded as the design-system source of truth, 2026-09-22:** the
+user supplied a precise, machine-readable export of this same canvas at
+`design/` (copied into this repo -- see `design/README.md`), with exact
+hex values, exact token names, and an exact type/spacing/radius scale in
+`design/tokens.css`/`design/tokens.json`, plus `design/DESIGN-SYSTEM.md`
+and `design/SCREENS.md`. Section 1 below (written from the earlier,
+approximate artifact-reading pass) is kept for narrative context, but
+every later phase (C onward) must read `design/DESIGN-SYSTEM.md` and the
+relevant `design/screens/*.dc.html` file directly as the literal spec,
+not this section's prose summary. See phase-design-alignment.md for the
+correction this triggered in Phase A's already-built tokens/shell.
+
 How this fits the rest of the repo: CLAUDE.md still governs architecture
 conventions (Go Handler to Service to Adapter, feature-based packages,
 api-spec.md response envelope, Next.js Server Components fetching

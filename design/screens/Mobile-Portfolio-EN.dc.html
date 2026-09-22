@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Paper portfolio — mobile</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=Lora:wght@600;700&amp;display=swap">
+<style>
+body { margin: 0; background: #0F0F0E; color: #F3F0E9; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+a { color: #E08A3C; text-decoration: none; }
+a:hover { color: #F0A65C; }
+button { font-family: inherit; }
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: #0F0F0E; overflow: hidden;">
+
+  <div style="flex-grow: 1; min-height: 0; box-sizing: border-box; padding: 52px 18px 14px 18px; display: flex; flex-direction: column; gap: 13px;">
+
+    <header style="display: flex; align-items: center; justify-content: space-between;">
+      <div style="display: flex; flex-direction: column; gap: 2px;">
+        <h1 style="margin: 0; font-family: Lora, Georgia, serif; font-size: 23px; font-weight: 700; letter-spacing: -0.015em;">Paper portfolio</h1>
+        <span style="font-size: 11.5px; color: #8A867E;">Simulated account · 6 tickers</span>
+      </div>
+      <button type="button" aria-label="New order" style="width: 44px; height: 44px; border: 0; border-radius: 12px; background: #E08A3C; color: #131210; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+      </button>
+    </header>
+
+    <section style="box-sizing: border-box; padding: 16px; border: 1px solid #2C2C28; border-radius: 16px; background: #171715; display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <span style="font-size: 11px; color: #8A867E; letter-spacing: 0.09em; text-transform: uppercase;">Account value</span>
+        <span style="padding: 3px 8px; border-radius: 6px; background: rgba(53, 199, 127, 0.14); color: #35C77F; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11.5px; font-weight: 600;">+8.64%</span>
+      </div>
+      <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 27px; font-weight: 600; letter-spacing: -0.02em;">1,086,420,000 ₫</span>
+      <svg viewBox="0 0 322 74" width="100%" height="74" fill="none" role="img" aria-label="Simulated account equity year to date, up 8.64%">
+        <line x1="0" y1="66" x2="322" y2="66" stroke="#23231F" stroke-width="1"></line>
+        <path d="{{area}}" fill="#35C77F" opacity="0.1"></path>
+        <polyline points="{{bench}}" stroke="#6F6C63" stroke-width="1.4" stroke-dasharray="4 3" stroke-linejoin="round"></polyline>
+        <polyline points="{{eq}}" stroke="#35C77F" stroke-width="1.9" stroke-linejoin="round"></polyline>
+      </svg>
+      <div style="display: flex; justify-content: space-between; font-size: 11px; color: #8A867E;">
+        <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 13px; height: 2.5px; border-radius: 2px; background: #35C77F;"></span>Account</span>
+        <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 13px; height: 2.5px; border-radius: 2px; background: #6F6C63;"></span>VN-Index +4.12%</span>
+        <span>Year to date</span>
+      </div>
+    </section>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px;">
+      <sc-for list="{{kpis}}" as="k" hint-placeholder-count="4">
+        <div style="box-sizing: border-box; padding: 11px 13px; border: 1px solid #23231F; border-radius: 13px; background: #171715; display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-size: 10px; color: #8A867E; letter-spacing: 0.06em; text-transform: uppercase;">{{k.k}}</span>
+          <span style="{{k.style}}">{{k.v}}</span>
+        </div>
+      </sc-for>
+    </div>
+
+    <section style="flex-grow: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <h2 style="margin: 0; font-size: 14.5px; font-weight: 600;">Open positions</h2>
+        <a href="Portfolio-EN.dc.html" style="font-size: 12px; font-weight: 500;">Trade journal</a>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <sc-for list="{{holdings}}" as="h" hint-placeholder-count="4">
+          <a href="Mobile-Detail-EN.dc.html" style="box-sizing: border-box; min-height: 62px; padding: 11px 14px; border: 1px solid #23231F; border-radius: 13px; background: #171715; color: #F3F0E9; display: flex; align-items: center; gap: 12px;">
+            <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
+              <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 14px; font-weight: 600;">{{h.t}}</span>
+              <span style="font-size: 11px; color: #8A867E;">{{h.sub}}</span>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px;">
+              <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13.5px;">{{h.value}}</span>
+              <span style="{{h.pnlStyle}}">{{h.pnl}}</span>
+            </div>
+          </a>
+        </sc-for>
+      </div>
+    </section>
+  </div>
+
+  <nav style="height: 78px; flex-shrink: 0; box-sizing: border-box; padding: 8px 12px 18px 12px; border-top: 1px solid #2C2C28; background: #131311; display: flex; align-items: center; justify-content: space-between;" aria-label="Navigation">
+    <sc-for list="{{tabsLeft}}" as="t" hint-placeholder-count="2">
+      <a href="{{t.href}}" style="{{t.style}}">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{t.d}}"></path></svg>
+        <span style="font-size: 10px; font-weight: 500;">{{t.label}}</span>
+      </a>
+    </sc-for>
+    <a href="Mobile-Replay-EN.dc.html" style="width: 56px; height: 56px; flex-shrink: 0; margin-bottom: 10px; border-radius: 18px; background: #E08A3C; color: #131210; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 6L4 12l7 6V6zM20 6l-7 6 7 6V6z"></path></svg>
+      <span style="font-size: 9px; font-weight: 700;">Replay</span>
+    </a>
+    <sc-for list="{{tabsRight}}" as="t" hint-placeholder-count="2">
+      <a href="{{t.href}}" style="{{t.style}}">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{t.d}}"></path></svg>
+        <span style="font-size: 10px; font-weight: 500;">{{t.label}}</span>
+      </a>
+    </sc-for>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  rng(seed) {
+    let s = seed;
+    return function () { s = (s * 1103515245 + 12345) % 2147483648; return s / 2147483648; };
+  }
+  num(v, d) {
+    return v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+  walk(n, seed, endPct, vol) {
+    const r = this.rng(seed);
+    const out = [];
+    let v = 0;
+    for (let i = 0; i < n; i++) { v += (r() - 0.5) * vol; out.push(v); }
+    const drift = out[n - 1];
+    return out.map(function (x, i) { return x - drift * (i / (n - 1)) + endPct * (i / (n - 1)); });
+  }
+  tab(label, href, d, on) {
+    return {
+      label: label, href: href, d: d,
+      style: 'width: 64px; box-sizing: border-box; padding: 6px 0; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; color: ' +
+        (on ? '#F3F0E9' : '#8A867E') + ';'
+    };
+  }
+  renderVals() {
+    const self = this;
+    const n = 90, W = 322, top = 6, bottom = 66;
+    const eqVals = this.walk(n, 30211, 8.64, 1.5);
+    const bmVals = this.walk(n, 90853, 4.12, 1.2);
+    const all = eqVals.concat(bmVals);
+    const hi = Math.max.apply(null, all) + 1;
+    const lo = Math.min.apply(null, all) - 1;
+    const ex = function (i) { return i / (n - 1) * W; };
+    const ey = function (v) { return top + (hi - v) / (hi - lo) * (bottom - top); };
+    const line = function (vals) {
+      return vals.map(function (v, i) { return ex(i).toFixed(1) + ',' + ey(v).toFixed(1); }).join(' ');
+    };
+    const area = 'M0,' + ey(eqVals[0]).toFixed(1) + ' ' +
+      eqVals.map(function (v, i) { return 'L' + ex(i).toFixed(1) + ',' + ey(v).toFixed(1); }).join(' ') +
+      ' L' + W + ',' + bottom + ' L0,' + bottom + ' Z';
+
+    const kpiRaw = [
+      ['Total P/L', '+86.42M ₫', '#35C77F'],
+      ['Win rate', '58.6%', '#F3F0E9'],
+      ['Profit factor', '1.94', '#F3F0E9'],
+      ['Max drawdown', '−9.80%', '#FF5C5C']
+    ];
+    const kpis = kpiRaw.map(function (k) {
+      return {
+        k: k[0], v: k[1],
+        style: 'font-family: \'IBM Plex Mono\', ui-monospace, monospace; font-size: 16px; font-weight: 600; color: ' + k[2] + ';'
+      };
+    });
+
+    const hold = function (t, qty, cost, last) {
+      const pct = (last - cost) / cost * 100;
+      const value = qty * last / 1000;
+      return {
+        t: t,
+        sub: qty.toLocaleString('en-US') + ' sh · cost ' + self.num(cost, 2),
+        value: self.num(value, 1) + 'M',
+        pnl: (pct >= 0 ? '+' : '−') + self.num(Math.abs(pct), 2) + '%',
+        pnlStyle: 'font-family: \'IBM Plex Mono\', ui-monospace, monospace; font-size: 12px; font-weight: 600; color: ' +
+          (pct >= 0 ? '#35C77F' : '#FF5C5C') + ';'
+      };
+    };
+    const holdings = [
+      hold('FPT', 1500, 121.0, 128.5),
+      hold('SSI', 4000, 35.1, 38.4),
+      hold('VCB', 2000, 92.4, 94.6),
+      hold('HPG', 6000, 28.25, 27.85)
+    ];
+
+    return {
+      area: area, eq: line(eqVals), bench: line(bmVals), kpis: kpis, holdings: holdings,
+      tabsLeft: [
+        self.tab('Market', 'Mobile-Market-EN.dc.html', 'M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18', false),
+        self.tab('Charts', 'Mobile-Detail-EN.dc.html', 'M4 20V11M9 20V4M14 20V14M19 20V8', false)
+      ],
+      tabsRight: [
+        self.tab('Portfolio', 'Mobile-Portfolio-EN.dc.html', 'M3 7h18v12H3zM3 7l3-4h12l3 4M16 13h2', true),
+        self.tab('Quant', 'Mobile-Quant-EN.dc.html', 'M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5z', false)
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

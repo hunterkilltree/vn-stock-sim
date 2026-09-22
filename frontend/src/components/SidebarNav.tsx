@@ -4,19 +4,22 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { navItems } from "@/lib/navItems";
 import { LogoMark, AvatarPlaceholder } from "@/components/icons";
+import WillBadge from "@/components/WillBadge";
 
-// Full 236px sidebar shell -- used on Main/Portfolio/Quant per the design
-// canvas (FULL-APP-PLAN.md section 1). Content redesign for the pages
-// that use this happens in later phases (C, E, H); this phase only adds
-// the shell itself, see phase-a.md.
+// Full 236px sidebar shell -- used on Main/Portfolio/Quant per
+// design/DESIGN-SYSTEM.md section 4 ("Nav item (sidebar)"). Content
+// redesign for the pages that use this happens in later phases (C, E,
+// H); this is the shell only, corrected to match design/tokens.css
+// exactly in phase-design-alignment.md (chrome background, not bg;
+// active state is text on surface-3, not accent-colored text).
 export default function SidebarNav() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex w-[236px] shrink-0 flex-col border-r border-app-border bg-app-bg px-4 py-6">
-      <Link href="/stocks" className="mb-8 flex items-center gap-2 px-2 text-app-fg">
+    <aside className="flex w-[236px] shrink-0 flex-col gap-6 bg-app-chrome px-4 py-6">
+      <Link href="/stocks" className="flex items-center gap-2 px-2 text-app-text">
         <LogoMark className="text-app-accent" />
-        <span className="font-serif text-base font-medium tracking-tight">VN Stock Sim</span>
+        <span className="font-display text-base font-semibold tracking-tight">VN Stock Sim</span>
       </Link>
 
       <nav className="flex flex-1 flex-col gap-1">
@@ -28,14 +31,12 @@ export default function SidebarNav() {
             return (
               <div
                 key={item.href}
-                title="Coming in a later phase"
-                className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2 text-sm text-neutral-600"
+                title="Designed, not built yet"
+                className="flex h-10 cursor-not-allowed items-center gap-[11px] rounded-[11px] px-3 text-[13.5px] text-app-text-muted"
               >
-                <Icon />
+                <Icon width={18} height={18} />
                 <span className="flex-1">{item.label}</span>
-                <span className="rounded-full border border-app-border px-2 py-0.5 text-[10px] uppercase tracking-wide text-neutral-500">
-                  {item.kind === "will" ? "Will" : "Soon"}
-                </span>
+                {item.kind === "will" && <WillBadge />}
               </div>
             );
           }
@@ -44,13 +45,11 @@ export default function SidebarNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
-                active
-                  ? "bg-app-surface text-app-accent"
-                  : "text-neutral-300 hover:bg-app-hover hover:text-app-fg"
+              className={`flex h-10 items-center gap-[11px] rounded-[11px] px-3 text-[13.5px] transition-colors ${
+                active ? "bg-app-surface-3 text-app-text" : "text-app-text-3 hover:bg-app-surface-3/50 hover:text-app-text"
               }`}
             >
-              <Icon />
+              <Icon width={18} height={18} />
               <span>{item.label}</span>
             </Link>
           );
@@ -60,9 +59,9 @@ export default function SidebarNav() {
       <button
         type="button"
         title="Account menu — built in a later phase"
-        className="flex cursor-not-allowed items-center gap-2 rounded-lg border border-app-border px-3 py-2 text-sm text-neutral-400"
+        className="flex h-10 cursor-not-allowed items-center gap-2 rounded-[11px] border border-app-border px-3 text-[13.5px] text-app-text-muted"
       >
-        <AvatarPlaceholder />
+        <AvatarPlaceholder width={18} height={18} />
         <span>Account</span>
       </button>
     </aside>

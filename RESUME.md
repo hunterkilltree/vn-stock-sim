@@ -569,6 +569,69 @@ this machine, same as every prior backend phase):
   `status: "queued"`, `fee: 0`.
 
 Branch: phase-b-backend-data-model (off master, after PR #13 merged).
+Merged as PR #14.
+
+**Design-system alignment (correction pass, not a lettered phase) --
+DONE.** Plan: phase-design-alignment.md. Triggered by the user supplying
+an authoritative, machine-readable design export (README.md,
+DESIGN-SYSTEM.md, SCREENS.md, tokens.css, tokens.json, canvas.json, 40
+`.dc.html` screen sources) at a local path outside the repo, with the
+instruction "this app have to follow design." This is the same design
+canvas read earlier via the Claude artifact browser (identical 20
+screens x VI/EN), but with exact hex values and exact token names where
+the earlier pass only had approximate, eyeballed values.
+
+- Copied the entire export into the repo at `design/` (40 screen files +
+  4 docs), per the export's own README instruction to do exactly that --
+  now the durable, versioned source every later phase (C onward) reads
+  directly, not an external Downloads path.
+- Corrected `frontend/src/app/globals.css`'s Phase A `--app-*` token
+  block against `design/tokens.css` byte-for-byte. The five VN price
+  colors and `--app-accent`/`--app-bg`/`--app-border` were already
+  exact; `--app-card`/`--app-hover`/`--app-surface`/`--app-fg` were
+  renamed and corrected (`--app-surface` had been an invented value,
+  `#1A1A17`, with no counterpart in the real system -- the real
+  `--surface-2` is `#1F1F1C`). Added everything that was missing
+  entirely: `--app-chrome` (`#131311`, the real bug -- `SidebarNav`/
+  `RailNav` had been using the page-ground color for their own
+  background instead of this distinct, slightly darker "chassis"
+  color), `--app-text-2/3/muted/faint`, `--app-border-strong`,
+  `--app-accent-hover/ink/surface/border`, `--price-up-ink/down-ink`,
+  the four indicator colors (`--app-sma-20/50`, `--app-rsi`,
+  `--app-macd`), and the three caution-block colors.
+- `SidebarNav.tsx`/`RailNav.tsx`: background switched from `bg-app-bg`
+  to `bg-app-chrome`; active-nav-item styling switched from
+  accent-colored text to `design/DESIGN-SYSTEM.md` section 4's actual
+  rule ("Active: `--text` on `--surface-3`") -- accent had been
+  overused for an ordinary nav state, when the design system explicitly
+  reserves amber for "primary buttons, Replay, active mode" and warns
+  "if three amber things are visible at once, one of them is wrong."
+- New `frontend/src/components/WillBadge.tsx`, matching the spec's real
+  `.badge-will` component exactly (mono 9px/600, 0.12em tracking, 5px
+  radius, `--border-strong` border, `--text-muted` text). Per
+  DESIGN-SYSTEM.md's own distinction, this is reserved for true backlog
+  items with no screen at all (design/SCREENS.md's "Not designed yet"
+  list) -- Portfolio/Replay/Quant/Settings are designed screens simply
+  not built yet, so their disabled nav state stays a plain muted
+  treatment without the badge, which no longer falsely claims those
+  screens don't exist.
+- FULL-APP-PLAN.md section 1 gained a pointer note marking `design/` as
+  the design-system source of truth going forward, superseding that
+  section's own prose (written from the earlier, approximate
+  artifact-reading pass).
+
+Verified: `npx tsc --noEmit`, `npx eslint .`, `npm run build` all clean,
+route table unchanged. Browser-pane check (dev server, backend running):
+`/stocks`'s SidebarNav and `/chart`'s RailNav both visibly read as a
+distinct, slightly darker chassis than the page background; the active
+nav item shows white text on a lighter grey background, not amber text;
+Portfolio/Replay/Quant/Settings show plain muted text with no badge.
+Re-verified inside the actual rebuilt Docker image: `docker compose
+build frontend && docker compose up -d`, then curl against /, /stocks,
+/stocks/VNM, /chart, /login all returned HTTP 200, and the served HTML
+contains the `bg-app-chrome` utility class.
+
+Branch: design-system-alignment (off master, after PR #14 merged).
 
 ---
 

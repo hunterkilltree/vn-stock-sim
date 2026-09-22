@@ -10,26 +10,61 @@
   --foreground: #171717;
 }
 
-/* Dark app-shell palette + VN price-color convention, from the design
-   canvas read for FULL-APP-PLAN.md (see phase-a.md) -- additive, does
+/* Dark app-shell palette, from the authoritative design export at
+   design/tokens.css (see phase-design-alignment.md) -- additive, does
    NOT replace --background/--foreground above. Used only by the app
-   screens the canvas designed (SidebarNav/RailNav and the pages that use
+   screens the design targets (SidebarNav/RailNav and the pages that use
    them), never by the marketing/auth pages, which keep the light
-   luxalgo-style palette untouched. */
+   luxalgo-style palette untouched. Every value here is copied exactly
+   from design/tokens.css, not eyeballed -- variable names keep the
+   "app-" prefix (design/tokens.css's own names are unprefixed, e.g.
+   --bg/--surface) so the generated Tailwind utilities (bg-app-bg,
+   text-app-text, ...) read unambiguously next to this app's unrelated
+   light-theme --background/--foreground pair. */
 :root {
+  /* Surfaces */
   --app-bg: #0f0f0e;
-  --app-card: #171715;
+  --app-chrome: #131311;
+  --app-surface: #171715;
+  --app-surface-2: #1f1f1c;
+  --app-surface-3: #23231f;
+  --app-hairline: #23231f;
   --app-border: #2c2c28;
-  --app-hover: #23231f;
-  --app-surface: #1a1a17;
-  --app-accent: #e08a3c;
-  --app-fg: #ededea;
+  --app-border-strong: #3c3c36;
 
+  /* Text */
+  --app-text: #f3f0e9;
+  --app-text-2: #d7d2c7;
+  --app-text-3: #a5a19a;
+  --app-text-muted: #8a867e;
+  --app-text-faint: #6f6c63;
+
+  /* Brand accent */
+  --app-accent: #e08a3c;
+  --app-accent-hover: #f0a65c;
+  --app-accent-ink: #131210;
+  --app-accent-surface: #1c1813;
+  --app-accent-border: #4a3521;
+
+  /* Market colours -- Vietnamese convention */
   --price-up: #35c77f;
   --price-down: #ff5c5c;
   --price-ref: #f0c243;
   --price-ceiling: #c08bff;
   --price-floor: #4fd3e8;
+  --price-up-ink: #08130d;
+  --price-down-ink: #1a0808;
+
+  /* Indicators */
+  --app-sma-20: #e08a3c;
+  --app-sma-50: #7fa2ff;
+  --app-rsi: #c08bff;
+  --app-macd: #4fd3e8;
+
+  /* Caution block */
+  --app-warn-surface: #1a1713;
+  --app-warn-border: #3a3226;
+  --app-warn-text: #c6bfb1;
 }
 
 @theme inline {
@@ -39,20 +74,45 @@
   --font-mono: var(--font-geist-mono);
 
   --color-app-bg: var(--app-bg);
-  --color-app-card: var(--app-card);
-  --color-app-border: var(--app-border);
-  --color-app-hover: var(--app-hover);
+  --color-app-chrome: var(--app-chrome);
   --color-app-surface: var(--app-surface);
+  --color-app-surface-2: var(--app-surface-2);
+  --color-app-surface-3: var(--app-surface-3);
+  --color-app-hairline: var(--app-hairline);
+  --color-app-border: var(--app-border);
+  --color-app-border-strong: var(--app-border-strong);
+
+  --color-app-text: var(--app-text);
+  --color-app-text-2: var(--app-text-2);
+  --color-app-text-3: var(--app-text-3);
+  --color-app-text-muted: var(--app-text-muted);
+  --color-app-text-faint: var(--app-text-faint);
+
   --color-app-accent: var(--app-accent);
-  --color-app-fg: var(--app-fg);
+  --color-app-accent-hover: var(--app-accent-hover);
+  --color-app-accent-ink: var(--app-accent-ink);
+  --color-app-accent-surface: var(--app-accent-surface);
+  --color-app-accent-border: var(--app-accent-border);
 
   --color-price-up: var(--price-up);
   --color-price-down: var(--price-down);
   --color-price-ref: var(--price-ref);
   --color-price-ceiling: var(--price-ceiling);
   --color-price-floor: var(--price-floor);
+  --color-price-up-ink: var(--price-up-ink);
+  --color-price-down-ink: var(--price-down-ink);
 
-  --font-serif: var(--font-lora);
+  --color-app-sma-20: var(--app-sma-20);
+  --color-app-sma-50: var(--app-sma-50);
+  --color-app-rsi: var(--app-rsi);
+  --color-app-macd: var(--app-macd);
+
+  --color-app-warn-surface: var(--app-warn-surface);
+  --color-app-warn-border: var(--app-warn-border);
+  --color-app-warn-text: var(--app-warn-text);
+
+  --font-display: var(--font-lora);
+  --font-ui: var(--font-be-vietnam);
   --font-plex-mono: var(--font-plex-mono-raw);
 }
 

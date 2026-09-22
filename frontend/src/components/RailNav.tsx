@@ -6,15 +6,16 @@ import { navItems } from "@/lib/navItems";
 import { LogoMark, AvatarPlaceholder } from "@/components/icons";
 
 // Collapsed 72px icon-only rail -- used on Detail/Replay/Settings/
-// Quant-Chart per the design canvas, where chart screen space matters
-// more than labeled nav (FULL-APP-PLAN.md section 1). Same nav item list
-// as SidebarNav so the two shells never diverge -- see phase-a.md.
+// Quant-Chart per design/DESIGN-SYSTEM.md section 4 ("Icon rail item":
+// 44x44, 11px radius, 19px icon). Corrected in phase-design-alignment.md
+// to use the chrome background and the spec's active-state rule (text
+// on surface-3, not accent-colored icon).
 export default function RailNav() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex w-[72px] shrink-0 flex-col items-center border-r border-app-border bg-app-bg py-6">
-      <Link href="/stocks" className="mb-8 text-app-accent" title="VN Stock Sim">
+    <aside className="flex w-[72px] shrink-0 flex-col items-center gap-6 bg-app-chrome py-6">
+      <Link href="/stocks" className="text-app-accent" title="VN Stock Sim">
         <LogoMark />
       </Link>
 
@@ -27,10 +28,10 @@ export default function RailNav() {
             return (
               <div
                 key={item.href}
-                title={`${item.label} — coming in a later phase`}
-                className="flex h-11 w-11 cursor-not-allowed items-center justify-center rounded-lg text-neutral-600"
+                title={`${item.label} — designed, not built yet`}
+                className="flex h-11 w-11 cursor-not-allowed items-center justify-center rounded-[11px] text-app-text-muted"
               >
-                <Icon />
+                <Icon width={19} height={19} />
               </div>
             );
           }
@@ -40,13 +41,12 @@ export default function RailNav() {
               key={item.href}
               href={item.href}
               title={item.label}
-              className={`flex h-11 w-11 items-center justify-center rounded-lg transition-colors ${
-                active
-                  ? "bg-app-surface text-app-accent"
-                  : "text-neutral-300 hover:bg-app-hover hover:text-app-fg"
+              aria-label={item.label}
+              className={`flex h-11 w-11 items-center justify-center rounded-[11px] transition-colors ${
+                active ? "bg-app-surface-3 text-app-text" : "text-app-text-3 hover:bg-app-surface-3/50 hover:text-app-text"
               }`}
             >
-              <Icon />
+              <Icon width={19} height={19} />
             </Link>
           );
         })}
@@ -55,9 +55,10 @@ export default function RailNav() {
       <button
         type="button"
         title="Account menu — built in a later phase"
-        className="flex h-11 w-11 cursor-not-allowed items-center justify-center rounded-lg border border-app-border text-neutral-400"
+        aria-label="Account menu"
+        className="flex h-11 w-11 cursor-not-allowed items-center justify-center rounded-[11px] border border-app-border text-app-text-muted"
       >
-        <AvatarPlaceholder />
+        <AvatarPlaceholder width={19} height={19} />
       </button>
     </aside>
   );

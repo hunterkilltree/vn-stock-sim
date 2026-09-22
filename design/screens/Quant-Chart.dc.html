@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Quant trên biểu đồ — chọn vùng và chọn chiến lược</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=Lora:wght@600;700&amp;display=swap">
+<style>
+body { margin: 0; background: #0F0F0E; color: #F3F0E9; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+a { color: #E08A3C; text-decoration: none; }
+a:hover { color: #F0A65C; }
+button { font-family: inherit; }
+</style>
+</helmet>
+<div style="width: 1440px; height: 960px; box-sizing: border-box; display: flex; background: #0F0F0E; overflow: hidden;">
+
+  <nav style="width: 72px; flex-shrink: 0; box-sizing: border-box; height: 960px; padding: 20px 0; border-right: 1px solid #2C2C28; background: #131311; display: flex; flex-direction: column; align-items: center; gap: 8px;" aria-label="Điều hướng chính">
+    <a href="Main.dc.html" aria-label="Trang tổng quan" style="width: 36px; height: 36px; margin-bottom: 10px; border-radius: 10px; background: #E08A3C; display: flex; align-items: center; justify-content: center;">
+      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="9" width="6" height="6" fill="#131210"></rect><rect x="14" y="9" width="6" height="8" fill="#131210"></rect><path d="M7 4v5M7 15v5M17 3v6M17 17v4" stroke="#131210" stroke-width="2.2" stroke-linecap="round"></path></svg>
+    </a>
+    <sc-for list="{{rail}}" as="item" hint-placeholder-count="7">
+      <a href="{{item.href}}" aria-label="{{item.label}}" style="{{item.style}}">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.d}}"></path></svg>
+      </a>
+    </sc-for>
+    <div style="flex-grow: 1;"></div>
+    <a href="Settings-AI.dc.html" aria-label="Cài đặt" style="width: 44px; height: 44px; border-radius: 11px; display: flex; align-items: center; justify-content: center; color: #8A867E;">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1V21a2 2 0 11-4 0v-.1A1.6 1.6 0 005.9 19.7l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 003 14.6a2 2 0 010-4h.1A1.6 1.6 0 004.3 8L4.2 8a2 2 0 112.8-2.8l.1.1a1.6 1.6 0 002.7-1.1V4a2 2 0 114 0v.1A1.6 1.6 0 0017 5.3l.1-.1A2 2 0 1119.9 8l-.1.1a1.6 1.6 0 001.1 2.7H21a2 2 0 010 4h-.1a1.6 1.6 0 00-1.5 1.2z"></path></svg>
+    </a>
+  </nav>
+
+  <div style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px;">
+
+    <header style="display: flex; align-items: center; justify-content: space-between; gap: 24px;">
+      <div style="display: flex; align-items: center; gap: 18px;">
+        <div style="display: flex; flex-direction: column; gap: 3px;">
+          <h1 style="margin: 0; font-family: Lora, Georgia, serif; font-size: 25px; font-weight: 700; letter-spacing: -0.015em;">Hỏi Quant trên biểu đồ</h1>
+          <span style="font-size: 12.5px; color: #8A867E;">FPT · nến ngày · kéo trên biểu đồ để chọn vùng, rồi chọn chiến lược</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 9px; box-sizing: border-box; padding: 8px 13px; border: 1px solid #4A3521; border-radius: 10px; background: #1C1813;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E08A3C" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M8 4v6M16 4v6M4 17h16M8 14v6M16 14v6"></path></svg>
+          <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12.5px; font-weight: 600; color: #E08A3C;">05/03 → 22/09 · 142 nến</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button type="button" style="box-sizing: border-box; height: 44px; padding: 0 15px; border: 1px solid #2C2C28; border-radius: 11px; background: #171715; color: #A5A19A; font-size: 13px; font-weight: 500; cursor: pointer;">Xoá vùng chọn</button>
+        <a href="Quant.dc.html" style="box-sizing: border-box; height: 44px; padding: 0 16px; border-radius: 11px; background: #E08A3C; color: #131210; font-size: 13.5px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5z"></path></svg>
+          <span>Mở hội thoại Quant</span>
+        </a>
+      </div>
+    </header>
+
+    <div style="flex-grow: 1; min-height: 0; display: flex; gap: 20px;">
+
+      <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 16px;">
+
+        <section style="flex-grow: 1; min-height: 0; box-sizing: border-box; padding: 16px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 14px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11.5px; color: #A5A19A;">
+              <span style="color: #D7D2C7;">FPT</span>
+              <span>Vùng chọn: 105,20 → 128,50</span>
+              <span style="color: #35C77F;">+22,15%</span>
+              <span style="color: #8A867E;">KLTB 3,1 tr</span>
+            </div>
+            <span style="padding: 2px 8px; border: 1px solid #2C2C28; border-radius: 5px; font-size: 10px; color: #8A867E; letter-spacing: 0.06em; text-transform: uppercase;">Dữ liệu mẫu</span>
+          </div>
+
+          <div style="position: relative; width: 884px; height: 520px;">
+            <svg width="884" height="520" viewBox="0 0 884 520" fill="none" role="img" aria-label="Biểu đồ nến FPT với một vùng 142 nến được chọn và bảng chọn chiến lược hình tròn mở ra trên vùng đó">
+              <sc-for list="{{grid}}" as="g" hint-placeholder-count="5">
+                <g>
+                  <line x1="0" y1="{{g.y}}" x2="830" y2="{{g.y}}" stroke="#23231F" stroke-width="1"></line>
+                  <text x="884" y="{{g.ty}}" text-anchor="end" fill="#8A867E" font-family="'IBM Plex Mono', monospace" font-size="10.5">{{g.label}}</text>
+                </g>
+              </sc-for>
+
+              <sc-for list="{{candles}}" as="c" hint-placeholder-count="90">
+                <g>
+                  <path d="{{c.wick}}" stroke="{{c.col}}" stroke-width="1.2" opacity="{{c.op}}"></path>
+                  <rect x="{{c.x}}" y="{{c.y}}" width="{{c.w}}" height="{{c.h}}" fill="{{c.col}}" opacity="{{c.op}}" rx="0.7"></rect>
+                </g>
+              </sc-for>
+
+              <polyline points="{{sma20}}" stroke="#E08A3C" stroke-width="1.5" stroke-linejoin="round" opacity="0.75"></polyline>
+
+              <rect x="0" y="0" width="{{selX}}" height="430" fill="#0F0F0E" opacity="0.55"></rect>
+              <rect x="{{selEnd}}" y="0" width="{{selRight}}" height="430" fill="#0F0F0E" opacity="0.55"></rect>
+              <line x1="{{selX}}" y1="0" x2="{{selX}}" y2="430" stroke="#E08A3C" stroke-width="1.2" stroke-dasharray="4 4"></line>
+              <line x1="{{selEnd}}" y1="0" x2="{{selEnd}}" y2="430" stroke="#E08A3C" stroke-width="1.2" stroke-dasharray="4 4"></line>
+              <rect x="{{handleLX}}" y="196" width="8" height="38" rx="4" fill="#E08A3C"></rect>
+              <rect x="{{handleRX}}" y="196" width="8" height="38" rx="4" fill="#E08A3C"></rect>
+              <rect x="{{selX}}" y="0" width="{{selW}}" height="18" rx="4" fill="#E08A3C"></rect>
+              <text x="{{selMidX}}" y="13" text-anchor="middle" fill="#131210" font-family="'IBM Plex Mono', monospace" font-size="10.5" font-weight="600">142 nến · 05/03 → 22/09</text>
+
+              <g>
+                <sc-for list="{{vol}}" as="v" hint-placeholder-count="90">
+                  <rect x="{{v.x}}" y="{{v.y}}" width="{{v.w}}" height="{{v.h}}" fill="{{v.col}}" opacity="{{v.op}}" rx="0.7"></rect>
+                </sc-for>
+                <line x1="0" y1="520" x2="830" y2="520" stroke="#23231F" stroke-width="1"></line>
+              </g>
+
+              <circle cx="{{cx}}" cy="{{cy}}" r="154" fill="#0F0F0E" opacity="0.72"></circle>
+              <sc-for list="{{segs}}" as="s" hint-placeholder-count="6">
+                <a href="{{s.href}}" aria-label="{{s.aria}}">
+                  <g>
+                    <path d="{{s.path}}" fill="{{s.fill}}" stroke="{{s.stroke}}" stroke-width="1.2"></path>
+                    <path d="{{s.icon}}" transform="{{s.iconT}}" fill="none" stroke="{{s.text}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <text x="{{s.lx}}" y="{{s.ly}}" text-anchor="middle" fill="{{s.text}}" font-family="'Be Vietnam Pro', sans-serif" font-size="11.5" font-weight="{{s.weight}}">{{s.label}}</text>
+                  </g>
+                </a>
+              </sc-for>
+              <circle cx="{{cx}}" cy="{{cy}}" r="62" fill="#131311" stroke="#3C3C36" stroke-width="1.2"></circle>
+              <path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5z" transform="{{hubIconT}}" fill="none" stroke="#E08A3C" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
+              <text x="{{cx}}" y="{{hubY1}}" text-anchor="middle" fill="#F3F0E9" font-family="'Be Vietnam Pro', sans-serif" font-size="12.5" font-weight="600">Chọn chiến lược</text>
+              <text x="{{cx}}" y="{{hubY2}}" text-anchor="middle" fill="#8A867E" font-family="'IBM Plex Mono', monospace" font-size="10.5">142 nến đã chọn</text>
+            </svg>
+
+            <div style="position: absolute; left: 486px; top: 6px; width: 236px; box-sizing: border-box; padding: 11px 13px; border: 1px solid #4A3521; border-radius: 11px; background: #1C1813; display: flex; flex-direction: column; gap: 5px;">
+              <span style="font-size: 12.5px; font-weight: 600; color: #F3F0E9;">Phá kênh giá</span>
+              <span style="font-size: 11.5px; line-height: 1.45; color: #C6BFB1; text-wrap: pretty;">Quant dò 142 nến đã chọn để tìm điểm phá vỡ kênh giá, rồi dựng quy tắc vào và thoát lệnh.</span>
+              <span style="font-size: 11px; color: #8A867E;">Nhấn để gửi · ~4 giây</span>
+            </div>
+          </div>
+        </section>
+
+        <section style="height: 150px; flex-shrink: 0; box-sizing: border-box; padding: 14px 16px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; flex-direction: column; gap: 11px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <h2 style="margin: 0; font-size: 14px; font-weight: 600;">Đã chạy trên vùng này</h2>
+            <span style="font-size: 11.5px; color: #8A867E;">3 chiến lược · cùng 142 nến nên so sánh được trực tiếp</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;">
+            <sc-for list="{{past}}" as="p" hint-placeholder-count="3">
+              <a href="Quant.dc.html" style="box-sizing: border-box; padding: 11px 13px; border: 1px solid #23231F; border-radius: 11px; background: #1A1A17; color: #F3F0E9; display: flex; align-items: center; gap: 12px;">
+                <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
+                  <span style="font-size: 12.5px; font-weight: 600;">{{p.name}}</span>
+                  <span style="font-size: 11px; color: #8A867E;">{{p.note}}</span>
+                </div>
+                <span style="{{p.badge}}">{{p.result}}</span>
+              </a>
+            </sc-for>
+          </div>
+        </section>
+      </div>
+
+      <div style="width: 384px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px;">
+
+        <section style="box-sizing: border-box; padding: 17px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; flex-direction: column; gap: 13px;">
+          <h2 style="margin: 0; font-size: 15px; font-weight: 600;">Vùng gửi cho mô hình</h2>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 10px;">
+            <sc-for list="{{selStats}}" as="s" hint-placeholder-count="4">
+              <div style="display: flex; flex-direction: column; gap: 3px;">
+                <span style="font-size: 10.5px; color: #8A867E;">{{s.k}}</span>
+                <span style="{{s.style}}">{{s.v}}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid #23231F;">
+            <span style="font-size: 10.5px; color: #8A867E; letter-spacing: 0.07em; text-transform: uppercase;">Ngữ cảnh đính kèm</span>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+              <sc-for list="{{ctx}}" as="c" hint-placeholder-count="5">
+                <span style="padding: 4px 9px; border: 1px solid #2C2C28; border-radius: 7px; background: #1F1F1C; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; color: #A5A19A;">{{c}}</span>
+              </sc-for>
+            </div>
+          </div>
+        </section>
+
+        <section style="flex-grow: 1; min-height: 0; box-sizing: border-box; padding: 17px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; flex-direction: column; gap: 14px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <h2 style="margin: 0; font-size: 15px; font-weight: 600;">Quant đang xử lý</h2>
+            <span style="padding: 3px 9px; border-radius: 6px; background: rgba(224, 138, 60, 0.15); font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; font-weight: 600; color: #E08A3C;">Phá kênh giá</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 0;">
+            <sc-for list="{{steps}}" as="st" hint-placeholder-count="5">
+              <div style="display: flex; gap: 12px;">
+                <div style="width: 22px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center;">
+                  <span style="{{st.dot}}"></span>
+                  <span style="{{st.line}}"></span>
+                </div>
+                <div style="flex-grow: 1; min-width: 0; padding-bottom: 14px; display: flex; flex-direction: column; gap: 2px;">
+                  <span style="{{st.labelStyle}}">{{st.label}}</span>
+                  <span style="font-size: 11px; color: #8A867E;">{{st.note}}</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="flex-grow: 1;"></div>
+          <div style="display: flex; align-items: flex-start; gap: 9px; box-sizing: border-box; padding: 10px 12px; border: 1px solid #3A3226; border-radius: 10px; background: #1A1713;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F0C243" stroke-width="1.8" stroke-linecap="round" style="flex-shrink: 0; margin-top: 1px;" aria-hidden="true"><path d="M12 9v5M12 17h0M12 3l9 17H3L12 3z"></path></svg>
+            <p style="margin: 0; font-size: 11.5px; line-height: 1.5; color: #C6BFB1; text-wrap: pretty;">Quy tắc do mô hình sinh ra luôn được kiểm thử lại trên chính vùng đã chọn trước khi hiện kết quả — và chỉ chạy trên tài khoản giấy.</p>
+          </div>
+          <a href="Quant.dc.html" style="box-sizing: border-box; height: 46px; border-radius: 11px; background: #E08A3C; color: #131210; font-size: 13.5px; font-weight: 600; display: flex; align-items: center; justify-content: center;">Xem kết quả trong hội thoại</a>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  rng(seed) {
+    let s = seed;
+    return function () { s = (s * 1103515245 + 12345) % 2147483648; return s / 2147483648; };
+  }
+  num(v, d) {
+    return v.toLocaleString('vi-VN', { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+  bars(n, seed, vol, endPrice) {
+    const r = this.rng(seed);
+    const out = [];
+    let px = 100;
+    for (let i = 0; i < n; i++) {
+      const o = px;
+      const c = o * (1 + (r() - 0.44) * vol / 100);
+      const h = Math.max(o, c) * (1 + r() * vol / 320);
+      const l = Math.min(o, c) * (1 - r() * vol / 320);
+      out.push({ o: o, h: h, l: l, c: c, v: 0.45 + r() * 1.5 });
+      px = c;
+    }
+    const k = endPrice / out[n - 1].c;
+    return out.map(function (d) { return { o: d.o * k, h: d.h * k, l: d.l * k, c: d.c * k, v: d.v }; });
+  }
+  sma(arr, p) {
+    return arr.map(function (v, i) {
+      if (i < p - 1) return null;
+      let s = 0;
+      for (let j = i - p + 1; j <= i; j++) s += arr[j];
+      return s / p;
+    });
+  }
+  arc(cx, cy, r0, r1, a0, a1) {
+    const rad = function (a) { return (a * Math.PI) / 180; };
+    const p = function (r, a) { return [(cx + r * Math.cos(rad(a))).toFixed(2), (cy + r * Math.sin(rad(a))).toFixed(2)]; };
+    const o0 = p(r1, a0), o1 = p(r1, a1), i1 = p(r0, a1), i0 = p(r0, a0);
+    const large = a1 - a0 > 180 ? 1 : 0;
+    return 'M' + o0[0] + ',' + o0[1] + ' A' + r1 + ',' + r1 + ' 0 ' + large + ' 1 ' + o1[0] + ',' + o1[1] +
+      ' L' + i1[0] + ',' + i1[1] + ' A' + r0 + ',' + r0 + ' 0 ' + large + ' 0 ' + i0[0] + ',' + i0[1] + ' Z';
+  }
+  renderVals() {
+    const self = this;
+    const n = 90, plotW = 830, step = plotW / n, bw = step * 0.58;
+    const x = function (i) { return i * step + step / 2; };
+    const data = this.bars(n, 60219, 2.0, 128.5);
+    const closes = data.map(function (d) { return d.c; });
+    const selA = 42, selB = 88;
+
+    const hi = Math.max.apply(null, data.map(function (d) { return d.h; })) * 1.01;
+    const lo = Math.min.apply(null, data.map(function (d) { return d.l; })) * 0.99;
+    const H = 430, pad = 26;
+    const py = function (v) { return pad + (hi - v) / (hi - lo) * (H - pad * 2); };
+
+    const candles = data.map(function (d, i) {
+      const col = d.c >= d.o ? '#35C77F' : '#FF5C5C';
+      const top = py(Math.max(d.o, d.c));
+      const bot = py(Math.min(d.o, d.c));
+      const cx = x(i);
+      return {
+        col: col,
+        op: i >= selA && i <= selB ? '1' : '0.85',
+        wick: 'M' + cx.toFixed(1) + ' ' + py(d.h).toFixed(1) + 'V' + py(d.l).toFixed(1),
+        x: (cx - bw / 2).toFixed(1),
+        y: top.toFixed(1),
+        w: bw.toFixed(1),
+        h: Math.max(1.4, bot - top).toFixed(1)
+      };
+    });
+
+    const grid = [];
+    for (let i = 0; i <= 4; i++) {
+      const v = lo + (hi - lo) * i / 4;
+      const gy = py(v);
+      grid.push({ y: gy.toFixed(1), ty: (gy + 3.5).toFixed(1), label: self.num(v, 1) });
+    }
+
+    const maxV = Math.max.apply(null, data.map(function (d) { return d.v; }));
+    const vol = data.map(function (d, i) {
+      const h = d.v / maxV * 58;
+      return {
+        x: (x(i) - bw / 2).toFixed(1),
+        y: (520 - h).toFixed(1),
+        w: bw.toFixed(1),
+        h: Math.max(1.4, h).toFixed(1),
+        col: d.c >= d.o ? '#35C77F' : '#FF5C5C',
+        op: i >= selA && i <= selB ? '0.7' : '0.3'
+      };
+    });
+
+    const selX = x(selA) - step / 2;
+    const selEnd = x(selB) + step / 2;
+
+    const segRaw = [
+      ['Phá kênh giá', 'M3 15l5-6 4 3 5-7 4 4', true],
+      ['RSI quá bán', 'M3 16c3 0 4-8 7-8s4 8 7 8 4-4 4-4', false],
+      ['Cắt SMA 50', 'M3 17L21 7M3 9h18', false],
+      ['Vùng tích luỹ', 'M4 8h16v8H4zM4 12h16', false],
+      ['Mẫu hình nến', 'M7 4v16M7 8h0M12 6v12M17 5v14M5 9h4v7H5zM10 8h4v8h-4zM15 10h4v6h-4z', false],
+      ['Tự mô tả…', 'M4 6h16M4 12h11M4 18h7', false]
+    ];
+    const cx = x((selA + selB) / 2), cy = 250, r0 = 64, r1 = 140;
+    const segs = segRaw.map(function (s, i) {
+      const a0 = -120 + i * 60 + 1.4, a1 = -120 + (i + 1) * 60 - 1.4;
+      const mid = (a0 + a1) / 2;
+      const rad = (mid * Math.PI) / 180;
+      const lr = 116, ir = 88;
+      const on = s[2];
+      return {
+        label: s[0],
+        href: 'Quant.dc.html',
+        aria: 'Chiến lược ' + s[0] + ' — gửi 142 nến đã chọn cho Quant',
+        path: self.arc(cx, cy, r0, r1, a0, a1),
+        fill: on ? 'rgba(224, 138, 60, 0.2)' : '#1C1C19',
+        stroke: on ? '#E08A3C' : '#3C3C36',
+        text: on ? '#F3F0E9' : '#A5A19A',
+        weight: on ? '600' : '500',
+        lx: (cx + lr * Math.cos(rad)).toFixed(1),
+        ly: (cy + lr * Math.sin(rad) + 4).toFixed(1),
+        icon: s[1],
+        iconT: 'translate(' + (cx + ir * Math.cos(rad) - 9).toFixed(1) + ',' + (cy + ir * Math.sin(rad) - 9).toFixed(1) + ') scale(0.75)'
+      };
+    });
+
+    const railRaw = [
+      ['Tổng quan', 'Main.dc.html', 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z', false],
+      ['Biểu đồ và chỉ báo', 'Detail.dc.html', 'M4 20V11M9 20V4M14 20V14M19 20V8', true],
+      ['Bộ lọc cổ phiếu', 'Quant.dc.html', 'M4 6h16M7 12h10M10 18h4', false],
+      ['Xây chiến lược', 'Quant.dc.html', 'M6 4h5v5H6zM13 15h5v5h-5zM8.5 9v4a2 2 0 002 2h2.5', false],
+      ['Chế độ Replay', 'Replay.dc.html', 'M11 6L4 12l7 6V6zM20 6l-7 6 7 6V6z', false],
+      ['Giao dịch giấy', 'Portfolio.dc.html', 'M3 7h18v12H3zM3 7l3-4h12l3 4M16 13h2', false],
+      ['Trợ lý Quant', 'Quant.dc.html', 'M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5z', false]
+    ];
+    const rail = railRaw.map(function (r) {
+      return {
+        label: r[0], href: r[1], d: r[2],
+        style: 'width: 44px; height: 44px; border-radius: 11px; display: flex; align-items: center; justify-content: center; color: ' +
+          (r[3] ? '#F3F0E9' : '#8A867E') + '; background: ' + (r[3] ? '#23231F' : 'transparent') + ';'
+      };
+    });
+
+    const selStatRaw = [
+      ['Số nến', '142', '#F3F0E9'],
+      ['Biên độ vùng', '+22,15%', '#35C77F'],
+      ['Sụt giảm trong vùng', '−7,40%', '#FF5C5C'],
+      ['Khung thời gian', 'Ngày', '#F3F0E9']
+    ];
+    const selStats = selStatRaw.map(function (s) {
+      return {
+        k: s[0], v: s[1],
+        style: 'font-family: \'IBM Plex Mono\', ui-monospace, monospace; font-size: 16px; font-weight: 600; color: ' + s[2] + ';'
+      };
+    });
+
+    const stepRaw = [
+      ['Đóng gói vùng chọn', '142 nến OHLCV + chỉ báo', 'done'],
+      ['Mô hình đọc bối cảnh', 'Quant v2 · đang chạy', 'run'],
+      ['Sinh quy tắc vào / thoát', 'Dạng biểu thức có thể sửa tay', 'wait'],
+      ['Kiểm thử lại trên vùng chọn', 'Cùng 142 nến, không nhìn tương lai', 'wait'],
+      ['Đề xuất phiên Replay', 'Để bạn tự giao dịch lại đoạn này', 'wait']
+    ];
+    const steps = stepRaw.map(function (s, i) {
+      const st = s[2];
+      const col = st === 'done' ? '#35C77F' : st === 'run' ? '#E08A3C' : '#3C3C36';
+      return {
+        label: s[0], note: s[1],
+        dot: 'width: 11px; height: 11px; margin-top: 4px; border-radius: 50%; background: ' +
+          (st === 'wait' ? 'transparent' : col) + '; border: 2px solid ' + col + ';',
+        line: 'flex-grow: 1; width: 1.5px; margin: 4px 0 0 0; background: ' + (i === 4 ? 'transparent' : '#2C2C28') + ';',
+        labelStyle: 'font-size: 13px; font-weight: ' + (st === 'run' ? '600' : '500') + '; color: ' +
+          (st === 'wait' ? '#8A867E' : '#F3F0E9') + ';'
+      };
+    });
+
+    const pastRaw = [
+      ['Cắt SMA 50', '6 tín hiệu · 4 thắng', '+9,80%', '#35C77F', 'rgba(53, 199, 127, 0.14)'],
+      ['RSI quá bán', '3 tín hiệu · 2 thắng', '+4,10%', '#35C77F', 'rgba(53, 199, 127, 0.14)'],
+      ['Mẫu hình nến', '9 tín hiệu · 3 thắng', '−2,60%', '#FF5C5C', 'rgba(255, 92, 92, 0.14)']
+    ];
+    const past = pastRaw.map(function (p) {
+      return {
+        name: p[0], note: p[1], result: p[2],
+        badge: 'flex-shrink: 0; padding: 4px 9px; border-radius: 7px; font-family: \'IBM Plex Mono\', ui-monospace, monospace; font-size: 12px; font-weight: 600; color: ' +
+          p[3] + '; background: ' + p[4] + ';'
+      };
+    });
+
+    const smaVals = this.sma(closes, 20);
+    const smaPts = [];
+    for (let i = 0; i < smaVals.length; i++) if (smaVals[i] !== null) smaPts.push(x(i).toFixed(1) + ',' + py(smaVals[i]).toFixed(1));
+
+    return {
+      rail: rail, candles: candles, grid: grid, vol: vol, segs: segs, steps: steps, past: past, selStats: selStats,
+      ctx: ['OHLCV ×142', 'RSI(14)', 'SMA 20/50/200', 'MACD', 'khối lượng'],
+      sma20: smaPts.join(' '),
+      selX: selX.toFixed(1),
+      selEnd: selEnd.toFixed(1),
+      selW: (selEnd - selX).toFixed(1),
+      selRight: (plotW - selEnd).toFixed(1),
+      selMidX: ((selX + selEnd) / 2).toFixed(1),
+      handleLX: (selX - 4).toFixed(1),
+      handleRX: (selEnd - 4).toFixed(1),
+      cx: cx.toFixed(1),
+      cy: cy,
+      hubIconT: 'translate(' + (cx - 9).toFixed(1) + ',' + (cy - 38) + ') scale(0.75)',
+      hubY1: cy + 6,
+      hubY2: cy + 24
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Cài đặt — mô hình AI</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=Lora:wght@600;700&amp;display=swap">
+<style>
+body { margin: 0; background: #0F0F0E; color: #F3F0E9; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+a { color: #E08A3C; text-decoration: none; }
+a:hover { color: #F0A65C; }
+button, input, select { font-family: inherit; }
+input[type="checkbox"], input[type="radio"] { accent-color: #E08A3C; }
+input[type="range"] { accent-color: #E08A3C; }
+</style>
+</helmet>
+<div style="width: 1440px; height: 960px; box-sizing: border-box; display: flex; background: #0F0F0E; overflow: hidden;">
+
+  <nav style="width: 72px; flex-shrink: 0; box-sizing: border-box; height: 960px; padding: 20px 0; border-right: 1px solid #2C2C28; background: #131311; display: flex; flex-direction: column; align-items: center; gap: 8px;" aria-label="Điều hướng chính">
+    <a href="Main.dc.html" aria-label="Trang tổng quan" style="width: 36px; height: 36px; margin-bottom: 10px; border-radius: 10px; background: #E08A3C; display: flex; align-items: center; justify-content: center;">
+      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="9" width="6" height="6" fill="#131210"></rect><rect x="14" y="9" width="6" height="8" fill="#131210"></rect><path d="M7 4v5M7 15v5M17 3v6M17 17v4" stroke="#131210" stroke-width="2.2" stroke-linecap="round"></path></svg>
+    </a>
+    <sc-for list="{{rail}}" as="item" hint-placeholder-count="7">
+      <a href="{{item.href}}" aria-label="{{item.label}}" style="{{item.style}}">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.d}}"></path></svg>
+      </a>
+    </sc-for>
+    <div style="flex-grow: 1;"></div>
+    <a href="Settings-AI.dc.html" aria-current="page" aria-label="Cài đặt" style="width: 44px; height: 44px; border-radius: 11px; background: #23231F; display: flex; align-items: center; justify-content: center; color: #F3F0E9;">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1V21a2 2 0 11-4 0v-.1A1.6 1.6 0 005.9 19.7l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 003 14.6a2 2 0 010-4h.1A1.6 1.6 0 004.3 8L4.2 8a2 2 0 112.8-2.8l.1.1a1.6 1.6 0 002.7-1.1V4a2 2 0 114 0v.1A1.6 1.6 0 0017 5.3l.1-.1A2 2 0 1119.9 8l-.1.1a1.6 1.6 0 001.1 2.7H21a2 2 0 010 4h-.1a1.6 1.6 0 00-1.5 1.2z"></path></svg>
+    </a>
+  </nav>
+
+  <div style="width: 232px; flex-shrink: 0; box-sizing: border-box; height: 960px; padding: 24px 16px; border-right: 1px solid #2C2C28; background: #131311; display: flex; flex-direction: column; gap: 18px;">
+    <h1 style="margin: 0; padding: 0 8px; font-family: Lora, Georgia, serif; font-size: 22px; font-weight: 700; letter-spacing: -0.015em;">Cài đặt</h1>
+    <div style="display: flex; flex-direction: column; gap: 2px;">
+      <sc-for list="{{subnav}}" as="s" hint-placeholder-count="8">
+        <a href="Settings-AI.dc.html" style="{{s.style}}">
+          <span>{{s.label}}</span>
+          <span style="{{s.badge}}">{{s.badgeText}}</span>
+        </a>
+      </sc-for>
+    </div>
+    <div style="flex-grow: 1;"></div>
+    <div style="box-sizing: border-box; padding: 13px; border: 1px solid #2C2C28; border-radius: 12px; background: #1A1A17; display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 10px; color: #8A867E; letter-spacing: 0.1em; text-transform: uppercase;">Tài khoản</span>
+      <span style="font-size: 12.5px; color: #D7D2C7;">Gói Cá nhân · miễn phí</span>
+      <a href="Settings-AI.dc.html" style="font-size: 12px; font-weight: 600;">So sánh các gói →</a>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: 24px 28px; display: flex; flex-direction: column; gap: 18px;">
+
+    <header style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px;">
+      <div style="display: flex; flex-direction: column; gap: 5px;">
+        <h2 style="margin: 0; font-family: Lora, Georgia, serif; font-size: 25px; font-weight: 700; letter-spacing: -0.015em;">Mô hình AI</h2>
+        <span style="font-size: 12.5px; color: #8A867E;">Chọn mô hình chạy Trợ lý Quant và quyết định dữ liệu nào được gửi đi</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="display: flex; align-items: center; gap: 7px; box-sizing: border-box; height: 34px; padding: 0 12px; border: 1px solid #2C2C28; border-radius: 9px; background: #171715; font-size: 11.5px; color: #A5A19A;">
+          <span style="width: 7px; height: 7px; border-radius: 50%; background: #35C77F;"></span>
+          <span>Đã kết nối · kiểm tra 14:32</span>
+        </span>
+      </div>
+    </header>
+
+    <div style="flex-grow: 1; min-height: 0; display: flex; gap: 20px;">
+
+      <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 16px;">
+
+        <section style="box-sizing: border-box; padding: 18px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; flex-direction: column; gap: 13px;">
+          <div style="display: flex; flex-direction: column; gap: 3px;">
+            <h3 style="margin: 0; font-size: 15px; font-weight: 600;">Nhà cung cấp mô hình</h3>
+            <span style="font-size: 11.5px; color: #8A867E;">Dùng máy chủ của VN Stock Sim, hoặc cắm khoá API của riêng bạn</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+            <sc-for list="{{providers}}" as="p" hint-placeholder-count="4">
+              <label style="{{p.box}}">
+                <input type="radio" name="provider" checked="{{p.checked}}" style="width: 17px; height: 17px; flex-shrink: 0; margin: 2px 0 0 0;">
+                <span style="display: flex; flex-direction: column; gap: 3px;">
+                  <span style="font-size: 13px; font-weight: 600;">{{p.name}}</span>
+                  <span style="font-size: 11.5px; color: #8A867E; line-height: 1.4;">{{p.note}}</span>
+                </span>
+              </label>
+            </sc-for>
+          </div>
+        </section>
+
+        <section style="box-sizing: border-box; padding: 18px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; flex-direction: column; gap: 14px;">
+          <h3 style="margin: 0; font-size: 15px; font-weight: 600;">Kết nối</h3>
+
+          <div style="display: flex; flex-direction: column; gap: 7px;">
+            <label for="apikey" style="font-size: 12px; color: #A5A19A;">Khoá API</label>
+            <div style="display: flex; gap: 10px;">
+              <input id="apikey" type="password" value="sk-ant-••••••••••••••••••••••4f2b" style="flex-grow: 1; min-width: 0; box-sizing: border-box; height: 46px; padding: 0 14px; border: 1px solid #2C2C28; border-radius: 11px; background: #1F1F1C; color: #F3F0E9; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; outline: none;">
+              <button type="button" style="box-sizing: border-box; height: 46px; padding: 0 15px; border: 1px solid #3C3C36; border-radius: 11px; background: #2C2C28; color: #F3F0E9; font-size: 13px; font-weight: 600; cursor: pointer;">Kiểm tra</button>
+            </div>
+            <span style="display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: #8A867E;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8A867E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 11V8a6 6 0 1112 0v3M5 11h14v9H5z"></path></svg>
+              <span>Khoá được mã hoá và chỉ lưu trên thiết bị này. VN Stock Sim không đọc được khoá của bạn.</span>
+            </span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px;">
+            <div style="display: flex; flex-direction: column; gap: 7px;">
+              <label for="model" style="font-size: 12px; color: #A5A19A;">Mô hình</label>
+              <select id="model" style="box-sizing: border-box; height: 46px; padding: 0 12px; border: 1px solid #2C2C28; border-radius: 11px; background: #1F1F1C; color: #F3F0E9; font-size: 13px; outline: none;">
+                <option>Bản mạnh nhất — suy luận sâu (khuyến nghị)</option>
+                <option>Bản cân bằng — nhanh và rẻ hơn</option>
+                <option>Bản nhẹ — chỉ lọc và tóm tắt</option>
+              </select>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 7px;">
+              <label for="timeout" style="font-size: 12px; color: #A5A19A;">Thời gian chờ</label>
+              <select id="timeout" style="box-sizing: border-box; height: 46px; padding: 0 12px; border: 1px solid #2C2C28; border-radius: 11px; background: #1F1F1C; color: #F3F0E9; font-size: 13px; outline: none;">
+                <option>30 giây</option>
+                <option>60 giây</option>
+                <option>120 giây</option>
+              </select>
+            </div>
+          </div>
+          <span style="font-size: 11.5px; color: #8A867E;">Danh sách mô hình lấy trực tiếp từ khoá của bạn sau khi kiểm tra kết nối.</span>
+        </section>
+
+        <section style="flex-grow: 1; box-sizing: border-box; padding: 18px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; flex-direction: column; gap: 15px;">
+          <h3 style="margin: 0; font-size: 15px; font-weight: 600;">Cách Quant trả lời</h3>
+
+          <div style="display: flex; flex-direction: column; gap: 9px;">
+            <div style="display: flex; align-items: baseline; justify-content: space-between;">
+              <label for="temp" style="font-size: 12.5px; color: #D7D2C7;">Mức sáng tạo</label>
+              <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #E08A3C;">0,2 · chặt chẽ</span>
+            </div>
+            <input id="temp" type="range" min="0" max="100" value="20" style="width: 100%; height: 6px; cursor: pointer;">
+            <span style="font-size: 11.5px; color: #8A867E;">Mức thấp cho quy tắc giao dịch lặp lại được; mức cao hợp với việc gợi ý ý tưởng.</span>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 14px; border-top: 1px solid #23231F;">
+            <sc-for list="{{perms}}" as="p" hint-placeholder-count="2">
+              <label style="display: flex; align-items: center; gap: 13px; cursor: pointer;">
+                <input type="checkbox" checked="{{p.checked}}" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);">
+                <span style="{{p.track}}">
+                  <span style="{{p.knob}}"></span>
+                </span>
+                <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                  <span style="font-size: 13px; font-weight: 500;">{{p.label}}</span>
+                  <span style="font-size: 11.5px; color: #8A867E; line-height: 1.4;">{{p.note}}</span>
+                </span>
+              </label>
+            </sc-for>
+          </div>
+        </section>
+      </div>
+
+      <div style="width: 348px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px;">
+
+        <section style="box-sizing: border-box; padding: 18px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; flex-direction: column; gap: 13px;">
+          <div style="display: flex; flex-direction: column; gap: 3px;">
+            <h3 style="margin: 0; font-size: 15px; font-weight: 600;">Dữ liệu gửi cho mô hình</h3>
+            <span style="font-size: 11.5px; color: #8A867E;">Chỉ những mục bật mới rời khỏi thiết bị</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 11px;">
+            <sc-for list="{{scopes}}" as="s" hint-placeholder-count="5">
+              <label style="display: flex; align-items: flex-start; gap: 11px; cursor: pointer;">
+                <input type="checkbox" checked="{{s.checked}}" style="width: 17px; height: 17px; flex-shrink: 0; margin: 1px 0 0 0;">
+                <span style="display: flex; flex-direction: column; gap: 2px;">
+                  <span style="{{s.labelStyle}}">{{s.label}}</span>
+                  <span style="font-size: 11px; color: #8A867E; line-height: 1.4;">{{s.note}}</span>
+                </span>
+              </label>
+            </sc-for>
+          </div>
+        </section>
+
+        <section style="box-sizing: border-box; padding: 18px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between;">
+            <h3 style="margin: 0; font-size: 15px; font-weight: 600;">Mức dùng tháng 9</h3>
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #A5A19A;">62.400 / 200.000</span>
+          </div>
+          <div style="height: 8px; border-radius: 4px; background: #23231F;">
+            <div style="width: 31.2%; height: 8px; border-radius: 4px; background: #E08A3C;"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 11.5px; color: #8A867E;">
+            <span>128 câu hỏi · 46 chiến lược</span>
+            <span>Đặt lại 01/10</span>
+          </div>
+        </section>
+
+        <section style="flex-grow: 1; box-sizing: border-box; padding: 18px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; flex-direction: column; gap: 12px;">
+          <h3 style="margin: 0; font-size: 15px; font-weight: 600;">Thử trước khi lưu</h3>
+          <div style="box-sizing: border-box; padding: 12px 13px; border: 1px solid #23231F; border-radius: 11px; background: #1A1A17; display: flex; flex-direction: column; gap: 8px;">
+            <span style="font-size: 12.5px; color: #D7D2C7; line-height: 1.5;">“Lọc HOSE có RSI dưới 35 và ROE trên 15%.”</span>
+            <div style="display: flex; align-items: center; gap: 9px; padding-top: 9px; border-top: 1px solid #23231F;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#35C77F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l5 5L20 7"></path></svg>
+              <span style="font-size: 11.5px; color: #A5A19A;">Hiểu đúng 5/5 điều kiện · 1,2 giây · 480 token</span>
+            </div>
+          </div>
+          <button type="button" style="box-sizing: border-box; height: 44px; border: 1px solid #3C3C36; border-radius: 11px; background: #2C2C28; color: #F3F0E9; font-size: 13px; font-weight: 600; cursor: pointer;">Chạy thử lại</button>
+          <div style="flex-grow: 1;"></div>
+          <div style="display: flex; align-items: flex-start; gap: 9px; box-sizing: border-box; padding: 11px 12px; border: 1px solid #3A3226; border-radius: 10px; background: #1A1713;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F0C243" stroke-width="1.8" stroke-linecap="round" style="flex-shrink: 0; margin-top: 1px;" aria-hidden="true"><path d="M12 9v5M12 17h0M12 3l9 17H3L12 3z"></path></svg>
+            <p style="margin: 0; font-size: 11.5px; line-height: 1.5; color: #C6BFB1; text-wrap: pretty;">Dù dùng mô hình nào, Quant cũng không đặt lệnh thật. Mọi quyền ở đây chỉ áp dụng cho tài khoản giấy.</p>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <footer style="flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-top: 16px; border-top: 1px solid #23231F;">
+      <span style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: #F0C243;">
+        <span style="width: 7px; height: 7px; border-radius: 50%; background: #F0C243;"></span>
+        <span>Có 3 thay đổi chưa lưu</span>
+      </span>
+      <div style="display: flex; gap: 10px;">
+        <button type="button" style="box-sizing: border-box; height: 46px; padding: 0 18px; border: 1px solid #2C2C28; border-radius: 11px; background: #171715; color: #A5A19A; font-size: 13.5px; font-weight: 500; cursor: pointer;">Hoàn tác</button>
+        <button type="button" style="box-sizing: border-box; height: 46px; padding: 0 22px; border: 0; border-radius: 11px; background: #E08A3C; color: #131210; font-size: 13.5px; font-weight: 600; cursor: pointer;">Lưu thay đổi</button>
+      </div>
+    </footer>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const railRaw = [
+      ['Tổng quan', 'Main.dc.html', 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z', false],
+      ['Biểu đồ và chỉ báo', 'Detail.dc.html', 'M4 20V11M9 20V4M14 20V14M19 20V8', false],
+      ['Bộ lọc cổ phiếu', 'Quant.dc.html', 'M4 6h16M7 12h10M10 18h4', false],
+      ['Xây chiến lược', 'Quant.dc.html', 'M6 4h5v5H6zM13 15h5v5h-5zM8.5 9v4a2 2 0 002 2h2.5', false],
+      ['Chế độ Replay', 'Replay.dc.html', 'M11 6L4 12l7 6V6zM20 6l-7 6 7 6V6z', false],
+      ['Giao dịch giấy', 'Portfolio.dc.html', 'M3 7h18v12H3zM3 7l3-4h12l3 4M16 13h2', false],
+      ['Trợ lý Quant', 'Quant.dc.html', 'M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5z', false]
+    ];
+    const rail = railRaw.map(function (r) {
+      return {
+        label: r[0], href: r[1], d: r[2],
+        style: 'width: 44px; height: 44px; border-radius: 11px; display: flex; align-items: center; justify-content: center; color: ' +
+          (r[3] ? '#F3F0E9' : '#8A867E') + '; background: ' + (r[3] ? '#23231F' : 'transparent') + ';'
+      };
+    });
+
+    const subRaw = [
+      ['Tài khoản', false, true], ['Mô hình AI', true], ['Dữ liệu thị trường', false, true],
+      ['Tài khoản giấy', false, true], ['Replay và chấm điểm', false, true], ['Thông báo', false, true],
+      ['Giao diện', false, true], ['Quyền riêng tư', false, true]
+    ];
+    const subnav = subRaw.map(function (s) {
+      const planned = s[2] === true;
+      return {
+        label: s[0],
+        badgeText: planned ? 'WILL' : '',
+        badge: planned
+          ? 'margin-left: auto; padding: 1.5px 6px; border: 1px solid #3C3C36; border-radius: 5px; font-family: \'IBM Plex Mono\', ui-monospace, monospace; font-size: 9px; font-weight: 600; letter-spacing: 0.12em; color: #8A867E;'
+          : 'display: none;',
+        style: 'box-sizing: border-box; height: 40px; padding: 0 12px; border-radius: 10px; display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: ' +
+          (s[1] ? '600' : '500') + '; color: ' + (s[1] ? '#F3F0E9' : '#A5A19A') + '; background: ' + (s[1] ? '#23231F' : 'transparent') + ';'
+      };
+    });
+
+    const provRaw = [
+      ['Quant Cloud', 'Mặc định · 200.000 token/tháng miễn phí', false],
+      ['Claude (khoá của bạn)', 'Bạn trả phí trực tiếp cho nhà cung cấp', true],
+      ['OpenAI (khoá của bạn)', 'Bạn trả phí trực tiếp cho nhà cung cấp', false],
+      ['Máy chủ riêng', 'Endpoint tương thích OpenAI do bạn tự vận hành', false]
+    ];
+    const providers = provRaw.map(function (p) {
+      return {
+        name: p[0], note: p[1], checked: p[2],
+        box: 'display: flex; align-items: flex-start; gap: 11px; box-sizing: border-box; padding: 13px 14px; border: 1px solid ' +
+          (p[2] ? '#E08A3C' : '#2C2C28') + '; border-radius: 12px; background: ' + (p[2] ? '#1C1813' : '#1A1A17') + '; cursor: pointer;'
+      };
+    });
+
+    const permRaw = [
+      ['Tự động kiểm thử quy tắc Quant sinh ra', 'Chạy backtest ngay sau khi có chiến lược mới', true],
+      ['Cho phép Quant đặt lệnh trên tài khoản giấy', 'Quant tự khớp lệnh mô phỏng mà không hỏi lại', false]
+    ];
+    const perms = permRaw.map(function (p) {
+      return {
+        label: p[0], note: p[1], checked: p[2],
+        track: 'position: relative; width: 42px; height: 24px; flex-shrink: 0; border-radius: 12px; background: ' +
+          (p[2] ? '#E08A3C' : '#2C2C28') + ';',
+        knob: 'position: absolute; top: 3px; left: ' + (p[2] ? '21px' : '3px') +
+          '; width: 18px; height: 18px; border-radius: 50%; background: ' + (p[2] ? '#131210' : '#8A867E') + ';'
+      };
+    });
+
+    const scopeRaw = [
+      ['Giá và khối lượng (OHLCV)', 'Cần cho mọi câu hỏi về biểu đồ', true],
+      ['Chỉ báo kỹ thuật', 'RSI, MACD, các đường trung bình', true],
+      ['Danh sách theo dõi của bạn', 'Để Quant ưu tiên mã bạn quan tâm', true],
+      ['Số dư và vị thế giấy', 'Chỉ bật nếu muốn Quant gợi ý theo danh mục', false],
+      ['Sổ giao dịch và ghi chú riêng', 'Ghi chú cá nhân của bạn trong từng lệnh', false]
+    ];
+    const scopes = scopeRaw.map(function (s) {
+      return {
+        label: s[0], note: s[1], checked: s[2],
+        labelStyle: 'font-size: 12.5px; font-weight: 500; color: ' + (s[2] ? '#F3F0E9' : '#A5A19A') + ';'
+      };
+    });
+
+    return { rail: rail, subnav: subnav, providers: providers, perms: perms, scopes: scopes };
+  }
+}
+</script>
+</body>
+</html>

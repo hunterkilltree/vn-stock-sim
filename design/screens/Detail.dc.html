@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Chi tiết mã FPT — biểu đồ và chỉ báo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=Lora:wght@600;700&amp;display=swap">
+<style>
+body { margin: 0; background: #0F0F0E; color: #F3F0E9; font-family: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+a { color: #E08A3C; text-decoration: none; }
+a:hover { color: #F0A65C; }
+button, input, select { font-family: inherit; }
+table { border-collapse: collapse; }
+</style>
+</helmet>
+<div style="width: 1440px; height: 960px; box-sizing: border-box; display: flex; background: #0F0F0E; overflow: hidden;">
+
+  <nav style="width: 72px; flex-shrink: 0; box-sizing: border-box; height: 960px; padding: 20px 0; border-right: 1px solid #2C2C28; background: #131311; display: flex; flex-direction: column; align-items: center; gap: 8px;" aria-label="Điều hướng chính">
+    <a href="Main.dc.html" aria-label="Trang tổng quan" style="width: 36px; height: 36px; margin-bottom: 10px; border-radius: 10px; background: #E08A3C; display: flex; align-items: center; justify-content: center;">
+      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="9" width="6" height="6" fill="#131210"></rect><rect x="14" y="9" width="6" height="8" fill="#131210"></rect><path d="M7 4v5M7 15v5M17 3v6M17 17v4" stroke="#131210" stroke-width="2.2" stroke-linecap="round"></path></svg>
+    </a>
+    <sc-for list="{{rail}}" as="item" hint-placeholder-count="7">
+      <a href="{{item.href}}" aria-label="{{item.label}}" style="{{item.style}}">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.d}}"></path></svg>
+      </a>
+    </sc-for>
+    <div style="flex-grow: 1;"></div>
+    <a href="Settings-AI.dc.html" aria-label="Cài đặt" style="width: 44px; height: 44px; border-radius: 11px; display: flex; align-items: center; justify-content: center; color: #8A867E;">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1V21a2 2 0 11-4 0v-.1A1.6 1.6 0 005.9 19.7l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 003 14.6a2 2 0 010-4h.1A1.6 1.6 0 004.3 8L4.2 8a2 2 0 112.8-2.8l.1.1a1.6 1.6 0 002.7-1.1V4a2 2 0 114 0v.1A1.6 1.6 0 0017 5.3l.1-.1A2 2 0 1119.9 8l-.1.1a1.6 1.6 0 001.1 2.7H21a2 2 0 010 4h-.1a1.6 1.6 0 00-1.5 1.2z"></path></svg>
+    </a>
+  </nav>
+
+  <div style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px;">
+
+    <header style="display: flex; align-items: center; justify-content: space-between; gap: 24px;">
+      <div style="display: flex; align-items: center; gap: 22px;">
+        <div style="display: flex; flex-direction: column; gap: 3px;">
+          <div style="display: flex; align-items: center; gap: 9px;">
+            <h1 style="margin: 0; font-family: Lora, Georgia, serif; font-size: 26px; font-weight: 700; letter-spacing: -0.01em;">FPT</h1>
+            <span style="padding: 2px 7px; border: 1px solid #2C2C28; border-radius: 5px; font-size: 10.5px; color: #A5A19A;">HOSE</span>
+          </div>
+          <span style="font-size: 12.5px; color: #8A867E;">CTCP FPT · Công nghệ thông tin</span>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 10px;">
+          <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 30px; font-weight: 600; color: #35C77F; letter-spacing: -0.02em;">128,50</span>
+          <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 14px; font-weight: 600; color: #35C77F;">+3,02 (+2,41%)</span>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <div style="box-sizing: border-box; padding: 6px 11px; border: 1px solid #2C2C28; border-radius: 9px; background: #171715; display: flex; flex-direction: column; gap: 2px;">
+            <span style="font-size: 9.5px; color: #8A867E; letter-spacing: 0.08em; text-transform: uppercase;">Trần</span>
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12.5px; font-weight: 600; color: #C08BFF;">134,00</span>
+          </div>
+          <div style="box-sizing: border-box; padding: 6px 11px; border: 1px solid #2C2C28; border-radius: 9px; background: #171715; display: flex; flex-direction: column; gap: 2px;">
+            <span style="font-size: 9.5px; color: #8A867E; letter-spacing: 0.08em; text-transform: uppercase;">Tham chiếu</span>
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12.5px; font-weight: 600; color: #F0C243;">125,48</span>
+          </div>
+          <div style="box-sizing: border-box; padding: 6px 11px; border: 1px solid #2C2C28; border-radius: 9px; background: #171715; display: flex; flex-direction: column; gap: 2px;">
+            <span style="font-size: 9.5px; color: #8A867E; letter-spacing: 0.08em; text-transform: uppercase;">Sàn</span>
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12.5px; font-weight: 600; color: #4FD3E8;">116,95</span>
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button type="button" style="box-sizing: border-box; height: 44px; padding: 0 15px; border: 1px solid #2C2C28; border-radius: 11px; background: #171715; color: #F3F0E9; font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+          <span>Thêm chỉ báo</span>
+        </button>
+        <a href="Replay.dc.html" style="box-sizing: border-box; height: 44px; padding: 0 15px; border: 1px solid #4A3521; border-radius: 11px; background: #1C1813; color: #E08A3C; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 6L4 12l7 6V6zM20 6l-7 6 7 6V6z"></path></svg>
+          <span>Replay mã này</span>
+        </a>
+      </div>
+    </header>
+
+    <div style="flex-grow: 1; min-height: 0; display: flex; gap: 20px;">
+
+      <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px;">
+
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+          <div style="display: flex; gap: 6px;">
+            <sc-for list="{{frames}}" as="f" hint-placeholder-count="6">
+              <button type="button" style="{{f.style}}">{{f.label}}</button>
+            </sc-for>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <sc-for list="{{chips}}" as="c" hint-placeholder-count="4">
+              <span style="{{c.style}}"><span style="{{c.dot}}"></span>{{c.label}}</span>
+            </sc-for>
+          </div>
+        </div>
+
+        <section style="flex-grow: 1; min-height: 0; box-sizing: border-box; padding: 16px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; flex-direction: column; gap: 10px;">
+
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 14px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11.5px; color: #A5A19A;">
+              <span>O 126,10</span>
+              <span>H 129,30</span>
+              <span>L 125,60</span>
+              <span style="color: #35C77F;">C 128,50</span>
+              <span style="color: #8A867E;">KL 3,42 tr</span>
+            </div>
+            <span style="padding: 2px 8px; border: 1px solid #2C2C28; border-radius: 5px; font-size: 10px; color: #8A867E; letter-spacing: 0.06em; text-transform: uppercase;">Dữ liệu mẫu</span>
+          </div>
+
+          <svg viewBox="0 0 924 372" width="100%" height="372" fill="none" role="img" aria-label="Biểu đồ nến ngày của FPT với hai đường trung bình động SMA 20 và SMA 50">
+            <sc-for list="{{grid}}" as="g" hint-placeholder-count="5">
+              <g>
+                <line x1="0" y1="{{g.y}}" x2="870" y2="{{g.y}}" stroke="#23231F" stroke-width="1"></line>
+                <text x="924" y="{{g.ty}}" text-anchor="end" fill="#8A867E" font-family="'IBM Plex Mono', monospace" font-size="10.5">{{g.label}}</text>
+              </g>
+            </sc-for>
+            <sc-for list="{{candles}}" as="c" hint-placeholder-count="60">
+              <g>
+                <path d="{{c.wick}}" stroke="{{c.col}}" stroke-width="1.3"></path>
+                <rect x="{{c.x}}" y="{{c.y}}" width="{{c.w}}" height="{{c.h}}" fill="{{c.col}}" rx="0.8"></rect>
+              </g>
+            </sc-for>
+            <polyline points="{{sma20}}" stroke="#E08A3C" stroke-width="1.6" stroke-linejoin="round"></polyline>
+            <polyline points="{{sma50}}" stroke="#7FA2FF" stroke-width="1.6" stroke-linejoin="round"></polyline>
+            <line x1="0" y1="{{lastY}}" x2="870" y2="{{lastY}}" stroke="#35C77F" stroke-width="1" stroke-dasharray="3 3"></line>
+            <rect x="874" y="{{lastBoxY}}" width="50" height="17" fill="#35C77F" rx="3"></rect>
+            <text x="899" y="{{lastTextY}}" text-anchor="middle" fill="#0F0F0E" font-family="'IBM Plex Mono', monospace" font-size="10.5" font-weight="600">128,50</text>
+          </svg>
+
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <span style="font-size: 10.5px; color: #8A867E; letter-spacing: 0.07em; text-transform: uppercase;">Khối lượng</span>
+            <svg viewBox="0 0 924 74" width="100%" height="74" fill="none" role="img" aria-label="Biểu đồ khối lượng giao dịch theo phiên">
+              <sc-for list="{{vol}}" as="v" hint-placeholder-count="60">
+                <rect x="{{v.x}}" y="{{v.y}}" width="{{v.w}}" height="{{v.h}}" fill="{{v.col}}" opacity="0.65" rx="0.8"></rect>
+              </sc-for>
+              <line x1="0" y1="72" x2="870" y2="72" stroke="#23231F" stroke-width="1"></line>
+            </svg>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 10.5px; color: #8A867E; letter-spacing: 0.07em; text-transform: uppercase;">RSI (14)</span>
+              <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; color: #C08BFF;">{{rsiLast}}</span>
+            </div>
+            <svg viewBox="0 0 924 96" width="100%" height="96" fill="none" role="img" aria-label="Chỉ báo RSI 14 phiên với vùng quá mua 70 và quá bán 30">
+              <rect x="0" y="16" width="870" height="48" fill="#1F1F1C"></rect>
+              <line x1="0" y1="16" x2="870" y2="16" stroke="#2C2C28" stroke-width="1" stroke-dasharray="3 3"></line>
+              <line x1="0" y1="64" x2="870" y2="64" stroke="#2C2C28" stroke-width="1" stroke-dasharray="3 3"></line>
+              <text x="924" y="20" text-anchor="end" fill="#8A867E" font-family="'IBM Plex Mono', monospace" font-size="10">70</text>
+              <text x="924" y="68" text-anchor="end" fill="#8A867E" font-family="'IBM Plex Mono', monospace" font-size="10">30</text>
+              <polyline points="{{rsi}}" stroke="#C08BFF" stroke-width="1.6" stroke-linejoin="round"></polyline>
+            </svg>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 10.5px; color: #8A867E; letter-spacing: 0.07em; text-transform: uppercase;">MACD (12, 26, 9)</span>
+              <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; color: #35C77F;">{{macdLast}}</span>
+            </div>
+            <svg viewBox="0 0 924 96" width="100%" height="96" fill="none" role="img" aria-label="Chỉ báo MACD với đường tín hiệu và biểu đồ histogram">
+              <line x1="0" y1="48" x2="870" y2="48" stroke="#23231F" stroke-width="1"></line>
+              <sc-for list="{{hist}}" as="h" hint-placeholder-count="60">
+                <rect x="{{h.x}}" y="{{h.y}}" width="{{h.w}}" height="{{h.h}}" fill="{{h.col}}" opacity="0.55" rx="0.8"></rect>
+              </sc-for>
+              <polyline points="{{macd}}" stroke="#4FD3E8" stroke-width="1.6" stroke-linejoin="round"></polyline>
+              <polyline points="{{signal}}" stroke="#E08A3C" stroke-width="1.4" stroke-linejoin="round"></polyline>
+            </svg>
+          </div>
+
+        </section>
+      </div>
+
+      <div style="width: 344px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px;">
+
+        <section style="box-sizing: border-box; padding: 18px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; flex-direction: column; gap: 14px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <h2 style="margin: 0; font-size: 15px; font-weight: 600;">Đặt lệnh giấy</h2>
+            <span style="font-size: 11px; color: #8A867E;">Tài khoản mô phỏng</span>
+          </div>
+
+          <div style="display: flex; gap: 8px;">
+            <button type="button" style="flex-grow: 1; box-sizing: border-box; height: 44px; border: 1px solid rgba(53, 199, 127, 0.5); border-radius: 10px; background: rgba(53, 199, 127, 0.16); color: #35C77F; font-size: 14px; font-weight: 600; cursor: pointer;">Mua</button>
+            <button type="button" style="flex-grow: 1; box-sizing: border-box; height: 44px; border: 1px solid #2C2C28; border-radius: 10px; background: #1F1F1C; color: #A5A19A; font-size: 14px; font-weight: 500; cursor: pointer;">Bán</button>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <span style="font-size: 11px; color: #8A867E;">Loại lệnh</span>
+            <div style="display: flex; gap: 6px;">
+              <sc-for list="{{types}}" as="t" hint-placeholder-count="4">
+                <button type="button" style="{{t.style}}">{{t.label}}</button>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <label for="price" style="font-size: 11px; color: #8A867E;">Giá (nghìn ₫)</label>
+              <input id="price" type="text" value="128,50" style="box-sizing: border-box; height: 44px; padding: 0 12px; border: 1px solid #2C2C28; border-radius: 10px; background: #1F1F1C; color: #F3F0E9; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 14px; outline: none;">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <label for="qty" style="font-size: 11px; color: #8A867E;">Khối lượng</label>
+              <input id="qty" type="text" value="500" style="box-sizing: border-box; height: 44px; padding: 0 12px; border: 1px solid #2C2C28; border-radius: 10px; background: #1F1F1C; color: #F3F0E9; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 14px; outline: none;">
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 6px;">
+            <sc-for list="{{lots}}" as="l" hint-placeholder-count="4">
+              <button type="button" style="flex-grow: 1; box-sizing: border-box; height: 32px; border: 1px solid #2C2C28; border-radius: 8px; background: #1F1F1C; color: #A5A19A; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11.5px; cursor: pointer;">{{l}}</button>
+            </sc-for>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 7px; padding: 12px 0; border-top: 1px solid #23231F; border-bottom: 1px solid #23231F;">
+            <div style="display: flex; justify-content: space-between; font-size: 12.5px;">
+              <span style="color: #8A867E;">Giá trị lệnh</span>
+              <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-weight: 600;">64.250.000 ₫</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 12.5px;">
+              <span style="color: #8A867E;">Phí mô phỏng (0,15%)</span>
+              <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace;">96.375 ₫</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 12.5px;">
+              <span style="color: #8A867E;">Sức mua còn lại</span>
+              <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace;">150.033.625 ₫</span>
+            </div>
+          </div>
+
+          <button type="button" style="box-sizing: border-box; height: 48px; border: 0; border-radius: 11px; background: #35C77F; color: #08130D; font-size: 14.5px; font-weight: 600; cursor: pointer;">Mua 500 FPT ở 128,50</button>
+        </section>
+
+        <section style="box-sizing: border-box; padding: 16px 18px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; flex-direction: column; gap: 10px;">
+          <h2 style="margin: 0; font-size: 13px; font-weight: 600;">Bước giá</h2>
+          <table style="width: 100%; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px;">
+            <thead>
+              <tr style="color: #8A867E; font-size: 10px; font-family: 'Be Vietnam Pro', sans-serif; letter-spacing: 0.07em; text-transform: uppercase;">
+                <th scope="col" style="text-align: left; padding: 0 0 6px 0; font-weight: 500;">KL mua</th>
+                <th scope="col" style="text-align: center; padding: 0 0 6px 0; font-weight: 500;">Giá</th>
+                <th scope="col" style="text-align: right; padding: 0 0 6px 0; font-weight: 500;">KL bán</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{book}}" as="b" hint-placeholder-count="6">
+                <tr style="border-top: 1px solid #23231F;">
+                  <td style="padding: 6px 0; color: #35C77F;">{{b.bid}}</td>
+                  <td style="{{b.priceStyle}}">{{b.price}}</td>
+                  <td style="padding: 6px 0; text-align: right; color: #FF5C5C;">{{b.ask}}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </section>
+
+        <section style="flex-grow: 1; box-sizing: border-box; padding: 16px 18px; border: 1px solid #2C2C28; border-radius: 14px; background: #171715; display: flex; flex-direction: column; gap: 12px;">
+          <h2 style="margin: 0; font-size: 13px; font-weight: 600;">Chỉ số cơ bản</h2>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 10px;">
+            <sc-for list="{{fund}}" as="f" hint-placeholder-count="6">
+              <div style="display: flex; flex-direction: column; gap: 3px;">
+                <span style="font-size: 10.5px; color: #8A867E;">{{f.k}}</span>
+                <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13.5px; font-weight: 600;">{{f.v}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  rng(seed) {
+    let s = seed;
+    return function () { s = (s * 1103515245 + 12345) % 2147483648; return s / 2147483648; };
+  }
+  num(v, d) {
+    return v.toLocaleString('vi-VN', { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+  bars(n, seed, vol, endPrice) {
+    const r = this.rng(seed);
+    const out = [];
+    let px = 100;
+    for (let i = 0; i < n; i++) {
+      const o = px;
+      const c = o * (1 + (r() - 0.44) * vol / 100);
+      const h = Math.max(o, c) * (1 + r() * vol / 320);
+      const l = Math.min(o, c) * (1 - r() * vol / 320);
+      out.push({ o: o, h: h, l: l, c: c, v: 0.45 + r() * 1.5 });
+      px = c;
+    }
+    const k = endPrice / out[n - 1].c;
+    return out.map(function (d) { return { o: d.o * k, h: d.h * k, l: d.l * k, c: d.c * k, v: d.v }; });
+  }
+  sma(arr, p) {
+    return arr.map(function (v, i) {
+      if (i < p - 1) return null;
+      let s = 0;
+      for (let j = i - p + 1; j <= i; j++) s += arr[j];
+      return s / p;
+    });
+  }
+  ema(arr, p) {
+    const k = 2 / (p + 1);
+    const out = [];
+    let prev = arr[0];
+    for (let i = 0; i < arr.length; i++) {
+      prev = i === 0 ? arr[0] : arr[i] * k + prev * (1 - k);
+      out.push(prev);
+    }
+    return out;
+  }
+  rsiCalc(arr, p) {
+    const out = [];
+    let gain = 0, loss = 0;
+    for (let i = 0; i < arr.length; i++) {
+      if (i === 0) { out.push(null); continue; }
+      const d = arr[i] - arr[i - 1];
+      const g = Math.max(d, 0), l = Math.max(-d, 0);
+      if (i <= p) {
+        gain += g; loss += l;
+        if (i === p) { gain /= p; loss /= p; out.push(100 - 100 / (1 + gain / (loss || 1e-9))); }
+        else out.push(null);
+      } else {
+        gain = (gain * (p - 1) + g) / p;
+        loss = (loss * (p - 1) + l) / p;
+        out.push(100 - 100 / (1 + gain / (loss || 1e-9)));
+      }
+    }
+    return out;
+  }
+  poly(vals, x, scale) {
+    const pts = [];
+    for (let i = 0; i < vals.length; i++) {
+      if (vals[i] === null || vals[i] === undefined) continue;
+      pts.push(x(i).toFixed(1) + ',' + scale(vals[i]).toFixed(1));
+    }
+    return pts.join(' ');
+  }
+  renderVals() {
+    const self = this;
+    const n = 60, plotW = 870, step = plotW / n, bw = step * 0.62;
+    const x = function (i) { return i * step + step / 2; };
+    const data = this.bars(n, 78241, 2.1, 128.5);
+    const closes = data.map(function (d) { return d.c; });
+
+    const hi = Math.max.apply(null, data.map(function (d) { return d.h; })) * 1.008;
+    const lo = Math.min.apply(null, data.map(function (d) { return d.l; })) * 0.992;
+    const H = 372, pad = 10;
+    const py = function (v) { return pad + (hi - v) / (hi - lo) * (H - pad * 2); };
+
+    const candles = data.map(function (d, i) {
+      const up = d.c >= d.o;
+      const col = up ? '#35C77F' : '#FF5C5C';
+      const top = py(Math.max(d.o, d.c));
+      const bot = py(Math.min(d.o, d.c));
+      const cx = x(i);
+      return {
+        col: col,
+        wick: 'M' + cx.toFixed(1) + ' ' + py(d.h).toFixed(1) + 'V' + py(d.l).toFixed(1),
+        x: (cx - bw / 2).toFixed(1),
+        y: top.toFixed(1),
+        w: bw.toFixed(1),
+        h: Math.max(1.6, bot - top).toFixed(1)
+      };
+    });
+
+    const grid = [];
+    for (let i = 0; i <= 4; i++) {
+      const v = lo + (hi - lo) * i / 4;
+      const gy = py(v);
+      grid.push({ y: gy.toFixed(1), ty: (gy + 3.5).toFixed(1), label: self.num(v, 1) });
+    }
+
+    const maxV = Math.max.apply(null, data.map(function (d) { return d.v; }));
+    const vol = data.map(function (d, i) {
+      const h = d.v / maxV * 62;
+      return {
+        x: (x(i) - bw / 2).toFixed(1),
+        y: (72 - h).toFixed(1),
+        w: bw.toFixed(1),
+        h: Math.max(1.5, h).toFixed(1),
+        col: d.c >= d.o ? '#35C77F' : '#FF5C5C'
+      };
+    });
+
+    const rsiVals = this.rsiCalc(closes, 14);
+    const rsiScale = function (v) { return 96 - 8 - (v / 100) * 80; };
+
+    const e12 = this.ema(closes, 12), e26 = this.ema(closes, 26);
+    const macdVals = closes.map(function (c, i) { return e12[i] - e26[i]; });
+    const sigVals = this.ema(macdVals, 9);
+    const histVals = macdVals.map(function (m, i) { return m - sigVals[i]; });
+    const mAbs = Math.max.apply(null, macdVals.concat(histVals).map(Math.abs)) || 1;
+    const mScale = function (v) { return 48 - v / mAbs * 40; };
+    const hist = histVals.map(function (v, i) {
+      const y0 = mScale(0), y1 = mScale(v);
+      return {
+        x: (x(i) - bw / 2).toFixed(1),
+        y: Math.min(y0, y1).toFixed(1),
+        w: bw.toFixed(1),
+        h: Math.max(1.2, Math.abs(y1 - y0)).toFixed(1),
+        col: v >= 0 ? '#35C77F' : '#FF5C5C'
+      };
+    });
+
+    const railRaw = [
+      ['Tổng quan', 'Main.dc.html', 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z', false],
+      ['Biểu đồ và chỉ báo', 'Detail.dc.html', 'M4 20V11M9 20V4M14 20V14M19 20V8', true],
+      ['Bộ lọc cổ phiếu', 'Main.dc.html', 'M4 6h16M7 12h10M10 18h4', false],
+      ['Xây chiến lược', 'Main.dc.html', 'M6 4h5v5H6zM13 15h5v5h-5zM8.5 9v4a2 2 0 002 2h2.5', false],
+      ['Chế độ Replay', 'Replay.dc.html', 'M11 6L4 12l7 6V6zM20 6l-7 6 7 6V6z', false],
+      ['Giao dịch giấy', 'Portfolio.dc.html', 'M3 7h18v12H3zM3 7l3-4h12l3 4M16 13h2', false],
+      ['Trợ lý Quant', 'Main.dc.html', 'M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5z', false]
+    ];
+    const rail = railRaw.map(function (r) {
+      return {
+        label: r[0], href: r[1], d: r[2],
+        style: 'width: 44px; height: 44px; border-radius: 11px; display: flex; align-items: center; justify-content: center; color: ' +
+          (r[3] ? '#F3F0E9' : '#8A867E') + '; background: ' + (r[3] ? '#23231F' : 'transparent') + ';'
+      };
+    });
+
+    const frames = ['1 ngày', '1 tuần', '1 tháng', '3 tháng', '1 năm', '5 năm'].map(function (l, i) {
+      const on = i === 2;
+      return {
+        label: l,
+        style: 'box-sizing: border-box; height: 34px; padding: 0 13px; border: 1px solid ' + (on ? '#3C3C36' : '#2C2C28') +
+          '; border-radius: 9px; background: ' + (on ? '#2C2C28' : '#171715') + '; color: ' + (on ? '#F3F0E9' : '#8A867E') +
+          '; font-size: 12.5px; font-weight: ' + (on ? '600' : '500') + '; cursor: pointer;'
+      };
+    });
+
+    const chipRaw = [['SMA 20', '#E08A3C'], ['SMA 50', '#7FA2FF'], ['RSI 14', '#C08BFF'], ['MACD', '#4FD3E8']];
+    const chips = chipRaw.map(function (c) {
+      return {
+        label: c[0],
+        style: 'display: flex; align-items: center; gap: 7px; box-sizing: border-box; height: 28px; padding: 0 11px; border: 1px solid #2C2C28; border-radius: 8px; background: #1F1F1C; color: #D7D2C7; font-size: 11.5px;',
+        dot: 'width: 8px; height: 8px; border-radius: 2px; background: ' + c[1] + ';'
+      };
+    });
+
+    const types = ['LO', 'MP', 'ATC', 'Stop'].map(function (l, i) {
+      const on = i === 0;
+      return {
+        label: l,
+        style: 'flex-grow: 1; box-sizing: border-box; height: 36px; border: 1px solid ' + (on ? '#3C3C36' : '#2C2C28') +
+          '; border-radius: 9px; background: ' + (on ? '#2C2C28' : '#1F1F1C') + '; color: ' + (on ? '#F3F0E9' : '#8A867E') +
+          '; font-family: \'IBM Plex Mono\', ui-monospace, monospace; font-size: 12px; font-weight: 600; cursor: pointer;'
+      };
+    });
+
+    const bookRaw = [
+      ['', 129.0, '18.400'], ['', 128.9, '32.100'], ['', 128.6, '11.700'],
+      ['41.200', 128.5, ''], ['26.800', 128.4, ''], ['15.300', 128.2, '']
+    ];
+    const book = bookRaw.map(function (b, i) {
+      const mid = i === 3;
+      return {
+        bid: b[0], ask: b[2], price: self.num(b[1], 2),
+        priceStyle: 'padding: 6px 0; text-align: center; font-weight: 600; color: ' + (mid ? '#F0C243' : '#D7D2C7') + ';'
+      };
+    });
+
+    const fund = [
+      { k: 'Vốn hóa', v: '188,4 nghìn tỷ' }, { k: 'P/E', v: '22,4' },
+      { k: 'P/B', v: '5,8' }, { k: 'ROE', v: '27,9%' },
+      { k: 'EPS 4 quý', v: '5.740 ₫' }, { k: 'KL TB 20 phiên', v: '4,1 tr' }
+    ];
+
+    return {
+      rail: rail, frames: frames, chips: chips, types: types, book: book, fund: fund,
+      lots: ['25%', '50%', '75%', 'Tối đa'],
+      candles: candles, grid: grid, vol: vol, hist: hist,
+      sma20: this.poly(this.sma(closes, 20), x, py),
+      sma50: this.poly(this.sma(closes, 50), x, py),
+      rsi: this.poly(rsiVals, x, rsiScale),
+      macd: this.poly(macdVals, x, mScale),
+      signal: this.poly(sigVals, x, mScale),
+      lastY: py(128.5).toFixed(1),
+      lastBoxY: (py(128.5) - 8.5).toFixed(1),
+      lastTextY: (py(128.5) + 3.7).toFixed(1),
+      rsiLast: self.num(rsiVals[n - 1], 1),
+      macdLast: (macdVals[n - 1] >= 0 ? '+' : '−') + self.num(Math.abs(macdVals[n - 1]), 2)
+    };
+  }
+}
+</script>
+</body>
+</html>
