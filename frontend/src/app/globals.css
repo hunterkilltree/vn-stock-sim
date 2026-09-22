@@ -10,11 +10,50 @@
   --foreground: #171717;
 }
 
+/* Dark app-shell palette + VN price-color convention, from the design
+   canvas read for FULL-APP-PLAN.md (see phase-a.md) -- additive, does
+   NOT replace --background/--foreground above. Used only by the app
+   screens the canvas designed (SidebarNav/RailNav and the pages that use
+   them), never by the marketing/auth pages, which keep the light
+   luxalgo-style palette untouched. */
+:root {
+  --app-bg: #0f0f0e;
+  --app-card: #171715;
+  --app-border: #2c2c28;
+  --app-hover: #23231f;
+  --app-surface: #1a1a17;
+  --app-accent: #e08a3c;
+  --app-fg: #ededea;
+
+  --price-up: #35c77f;
+  --price-down: #ff5c5c;
+  --price-ref: #f0c243;
+  --price-ceiling: #c08bff;
+  --price-floor: #4fd3e8;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --color-app-bg: var(--app-bg);
+  --color-app-card: var(--app-card);
+  --color-app-border: var(--app-border);
+  --color-app-hover: var(--app-hover);
+  --color-app-surface: var(--app-surface);
+  --color-app-accent: var(--app-accent);
+  --color-app-fg: var(--app-fg);
+
+  --color-price-up: var(--price-up);
+  --color-price-down: var(--price-down);
+  --color-price-ref: var(--price-ref);
+  --color-price-ceiling: var(--price-ceiling);
+  --color-price-floor: var(--price-floor);
+
+  --font-serif: var(--font-lora);
+  --font-plex-mono: var(--font-plex-mono-raw);
 }
 
 body {

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getSymbolDetail, getBars, getIndicator, getInsight, type Bar, type IndicatorPoint, type Insight } from "@/lib/api";
 import StockChart from "@/components/StockChart";
 import AIInsightCard from "@/components/AIInsightCard";
+import RailNav from "@/components/RailNav";
 
 type Props = { params: Promise<{ symbol: string }> };
 
@@ -68,7 +69,9 @@ export default async function StockDetailPage({ params }: Props) {
   const changeColor = detail.change >= 0 ? "text-green-600" : "text-red-600";
 
   return (
-    <main className="mx-auto w-full max-w-6xl p-8 lg:p-12">
+    <div className="flex flex-1">
+      <RailNav />
+      <main className="mx-auto w-full max-w-6xl p-8 lg:p-12">
       {/* Single column on small screens; on lg+ the info panel becomes a
           fixed-width sidebar next to a wide chart, instead of everything
           squeezed into one narrow centered column. */}
@@ -142,6 +145,7 @@ export default async function StockDetailPage({ params }: Props) {
           <AIInsightCard insight={insight} />
         </div>
       )}
-    </main>
+      </main>
+    </div>
   );
 }
