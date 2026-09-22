@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SidebarNav from "@/components/SidebarNav";
 import { searchSymbols, type Symbol } from "@/lib/api";
 
 export const metadata = { title: "Stocks — VN Stock Sim" };
@@ -16,7 +17,9 @@ export default async function StocksPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl p-8 lg:p-12">
+    <div className="flex flex-1">
+      <SidebarNav />
+      <main className="mx-auto w-full max-w-5xl p-8 lg:p-12">
       <h1 className="mb-1 text-2xl font-medium tracking-tight text-neutral-900 lg:text-3xl">
         Vietnamese Stocks
       </h1>
@@ -54,6 +57,7 @@ export default async function StocksPage() {
           </tbody>
         </table>
       </div>
-    </main>
+      </main>
+    </div>
   );
 }
