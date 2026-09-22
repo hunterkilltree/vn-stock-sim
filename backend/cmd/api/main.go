@@ -45,7 +45,7 @@ func main() {
 	orderSvc := order.NewService(order.NewMemoryStore(), portfolioStore, symbolSvc, portfolioSvc)
 	backtestSvc := backtest.NewService(backtest.NewMemoryStore(), marketSvc)
 	insightSvc := insight.NewService(symbolSvc, marketSvc)
-	screenerSvc := screener.NewService(symbolSvc)
+	screenerSvc := screener.NewService(symbolSvc, marketSvc)
 
 	router := gin.Default()
 	v1 := router.Group("/api/v1")

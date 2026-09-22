@@ -5,11 +5,20 @@ import { usePathname } from "next/navigation";
 import { navItems } from "@/lib/navItems";
 import { LogoMark, AvatarPlaceholder } from "@/components/icons";
 
+function RailIcon({ d }: { d: string }) {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={d} />
+    </svg>
+  );
+}
+
 // Collapsed 72px icon-only rail -- used on Detail/Replay/Settings/
 // Quant-Chart per design/DESIGN-SYSTEM.md section 4 ("Icon rail item":
-// 44x44, 11px radius, 19px icon). Corrected in phase-design-alignment.md
-// to use the chrome background and the spec's active-state rule (text
-// on surface-3, not accent-colored icon).
+// 44x44, 11px radius, 19px icon). Icon data now shares navItems.ts's
+// exact `d` path list (see phase-c.md) -- full rail-specific spec
+// fidelity (its own icon set/ordering, if it differs from the sidebar's)
+// is checked against design/screens/Detail.dc.html in Phase D.
 export default function RailNav() {
   const pathname = usePathname();
 
@@ -21,7 +30,6 @@ export default function RailNav() {
 
       <nav className="flex flex-1 flex-col items-center gap-1">
         {navItems.map((item) => {
-          const Icon = item.icon;
           const active = pathname === item.href;
 
           if (item.kind !== "built") {
@@ -31,7 +39,7 @@ export default function RailNav() {
                 title={`${item.label} — designed, not built yet`}
                 className="flex h-11 w-11 cursor-not-allowed items-center justify-center rounded-[11px] text-app-text-muted"
               >
-                <Icon width={19} height={19} />
+                <RailIcon d={item.d} />
               </div>
             );
           }
@@ -42,11 +50,13 @@ export default function RailNav() {
               href={item.href}
               title={item.label}
               aria-label={item.label}
-              className={`flex h-11 w-11 items-center justify-center rounded-[11px] transition-colors ${
-                active ? "bg-app-surface-3 text-app-text" : "text-app-text-3 hover:bg-app-surface-3/50 hover:text-app-text"
-              }`}
+              className="flex h-11 w-11 items-center justify-center rounded-[11px] transition-colors"
+              style={{
+                color: active ? "var(--app-text)" : "var(--app-text-3)",
+                background: active ? "var(--app-surface-3)" : "transparent",
+              }}
             >
-              <Icon width={19} height={19} />
+              <RailIcon d={item.d} />
             </Link>
           );
         })}
