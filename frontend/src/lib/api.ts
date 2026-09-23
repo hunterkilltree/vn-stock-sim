@@ -20,8 +20,15 @@ export type SymbolDetail = Symbol & {
   marketCap: number;
   peRatio: number;
   pbRatio: number;
+  roe: number;
   eps: number;
   dividendYield: number;
+  // Reference/Ceiling/Floor have existed on the backend since Phase B
+  // but were never added to this client type until Phase D's Detail
+  // screen needed them.
+  reference: number;
+  ceiling: number;
+  floor: number;
 };
 
 type Paged<T> = {
@@ -89,6 +96,30 @@ export function getIndicator(
 ): Promise<{ data: IndicatorPoint[] }> {
   const qs = `symbol=${encodeURIComponent(symbol)}&resolution=${encodeURIComponent(resolution)}&indicator=${indicator}&period=${period}&from=${from}&to=${to}`;
   return apiFetch<{ data: IndicatorPoint[] }>(`/api/v1/market/indicators?${qs}`);
+}
+
+export type IndicatorMultiPoint = {
+  time: number;
+  values: Record<string, number>;
+};
+
+export function getMACD(
+  symbol: string,
+  resolution: string,
+  from: number,
+  to: number,
+  fast = 12,
+  slow = 26,
+  signal = 9,
+): Promise<{ data: IndicatorMultiPoint[] }> {
+  const qs = `symbol=${encodeURIComponent(symbol)}&resolution=${encodeURIComponent(resolution)}&from=${from}&to=${to}&fast=${fast}&slow=${slow}&signal=${signal}`;
+  return apiFetch<{ data: IndicatorMultiPoint[] }>(`/api/v1/market/macd?${qs}`);
+}
+
+export type PriceLevel = { price: number; volume: number };
+
+export function getOrderBook(symbol: string): Promise<{ data: { bids: PriceLevel[]; asks: PriceLevel[] } }> {
+  return apiFetch<{ data: { bids: PriceLevel[]; asks: PriceLevel[] } }>(`/api/v1/market/orderbook?symbol=${encodeURIComponent(symbol)}`);
 }
 
 export type InsightSignal = {

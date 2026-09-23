@@ -1,37 +1,66 @@
 import { notFound } from "next/navigation";
-import { getSymbolDetail, getBars, getIndicator, getInsight, type Bar, type IndicatorPoint, type Insight } from "@/lib/api";
-import StockChart from "@/components/StockChart";
-import AIInsightCard from "@/components/AIInsightCard";
+import {
+  getSymbolDetail,
+  getBars,
+  getIndicator,
+  getMACD,
+  getOrderBook,
+  getInsight,
+  getPortfolioSummary,
+  type Bar,
+  type IndicatorPoint,
+  type IndicatorMultiPoint,
+  type PriceLevel,
+  type Insight,
+} from "@/lib/api";
 import RailNav from "@/components/RailNav";
+import PriceBandChips from "@/components/PriceBandChips";
+import TimeframePills, { TIMEFRAMES, type TimeframeKey } from "@/components/TimeframePills";
+import DetailChart from "@/components/DetailChart";
+import OrderTicket from "@/components/OrderTicket";
+import OrderBookPanel from "@/components/OrderBookPanel";
+import FundamentalsGrid from "@/components/FundamentalsGrid";
+import AIInsightCard from "@/components/AIInsightCard";
+import { formatThousandsVN, signVN, tone } from "@/lib/format";
+import { getSessionToken, getSessionUser } from "@/lib/session";
 
-type Props = { params: Promise<{ symbol: string }> };
+type Props = {
+  params: Promise<{ symbol: string }>;
+  searchParams: Promise<{ tf?: string }>;
+};
 
-const SIX_MONTHS_SECONDS = 180 * 24 * 60 * 60;
+const INDICATOR_CHIPS: { label: string; color: string }[] = [
+  { label: "SMA 20", color: "#E08A3C" },
+  { label: "SMA 50", color: "#7FA2FF" },
+  { label: "RSI 14", color: "#C08BFF" },
+  { label: "MACD", color: "#4FD3E8" },
+];
+
+// resolution/range per timeframe pill -- see phase-d.md decision 6.
+const TF_RANGES: Record<TimeframeKey, { resolution: string; days: number }> = {
+  "1d": { resolution: "5", days: 1 },
+  "1w": { resolution: "60", days: 7 },
+  "1m": { resolution: "1D", days: 30 },
+  "3m": { resolution: "1D", days: 90 },
+  "1y": { resolution: "1D", days: 365 },
+  "5y": { resolution: "1D", days: 1825 },
+};
 
 // Pulled out of the component body: eslint-config-next's react-hooks/purity
-// rule flags Date.now() called directly inside a component/hook, even
-// though this is a Server Component that only ever runs once per request,
-// not re-rendered like a Client Component.
-function lastSixMonthsRange(): { from: number; to: number } {
+// rule flags Date.now() called directly inside a component, even for a
+// Server Component that only ever runs once per request (same fix
+// already applied elsewhere in this repo, e.g. the home page hero).
+function rangeFor(days: number): { from: number; to: number } {
   const to = Math.floor(Date.now() / 1000);
-  return { from: to - SIX_MONTHS_SECONDS, to };
+  return { from: to - days * 24 * 60 * 60, to };
 }
 
-// Makes it visually explicit that the chart's last bar is current (as of
-// today, UTC) rather than something the user has to infer from the x-axis
-// labels, which only show month names (see StockChart.tsx's
-// timeVisible: false) -- not obviously "today" at a glance.
-function formatUTCDate(unixSeconds: number): string {
-  return new Date(unixSeconds * 1000).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  }) + " UTC";
-}
-
-export default async function StockDetailPage({ params }: Props) {
+export default async function StockDetailPage({ params, searchParams }: Props) {
   const { symbol } = await params;
+  const { tf: tfParam } = await searchParams;
+  const tf: TimeframeKey = TIMEFRAMES.some((f) => f.key === tfParam) ? (tfParam as TimeframeKey) : "1m";
+  const { resolution, days } = TF_RANGES[tf];
+
   let detail;
   try {
     detail = await getSymbolDetail(symbol);
@@ -39,113 +68,141 @@ export default async function StockDetailPage({ params }: Props) {
     notFound();
   }
 
-  // Fetched separately from the detail lookup above: a chart data outage
-  // shouldn't take down the whole page when the price/fundamentals load
-  // fine, so failures here degrade to an empty chart instead of notFound().
+  const { from, to } = rangeFor(days);
+
   let bars: Bar[] = [];
   let sma20: IndicatorPoint[] = [];
+  let sma50: IndicatorPoint[] = [];
+  let rsi: IndicatorPoint[] = [];
+  let macd: IndicatorMultiPoint[] = [];
   try {
-    const { from, to } = lastSixMonthsRange();
-    const [barsRes, smaRes] = await Promise.all([
-      getBars(symbol, "1D", from, to),
-      getIndicator(symbol, "1D", "sma", 20, from, to),
+    const [barsRes, sma20Res, sma50Res, rsiRes, macdRes] = await Promise.all([
+      getBars(symbol, resolution, from, to),
+      getIndicator(symbol, resolution, "sma", 20, from, to),
+      getIndicator(symbol, resolution, "sma", 50, from, to),
+      getIndicator(symbol, resolution, "rsi", 14, from, to),
+      getMACD(symbol, resolution, from, to),
     ]);
     bars = barsRes.data;
-    sma20 = smaRes.data;
+    sma20 = sma20Res.data;
+    sma50 = sma50Res.data;
+    rsi = rsiRes.data;
+    macd = macdRes.data;
   } catch {
-    // leave bars/sma20 empty; the chart section below handles this.
+    // leave chart series empty; DetailChart's own empty-state handles it.
   }
 
-  // Also independent: the insight panel degrades to nothing (not an
-  // error) if the backend can't produce one, rather than blocking the
-  // rest of the page.
+  const avgVolume20d =
+    bars.length > 0 ? bars.slice(-20).reduce((sum, b) => sum + b.volume, 0) / Math.min(20, bars.length) : null;
+
+  let orderBook: { bids: PriceLevel[]; asks: PriceLevel[] } = { bids: [], asks: [] };
+  try {
+    orderBook = (await getOrderBook(symbol)).data;
+  } catch {
+    // leave empty; OrderBookPanel renders an empty ladder rather than failing.
+  }
+
   let insight: Insight | null = null;
   try {
     insight = await getInsight(symbol);
   } catch {
-    // leave insight null; the section below just doesn't render.
+    // leave insight null.
   }
 
-  const changeColor = detail.change >= 0 ? "text-green-600" : "text-red-600";
+  const user = await getSessionUser();
+  let buyingPower: number | null = null;
+  if (user) {
+    try {
+      const token = await getSessionToken();
+      if (token) buyingPower = (await getPortfolioSummary(token)).cashBalance;
+    } catch {
+      // leave buyingPower null; OrderTicket falls back to its guest treatment.
+    }
+  }
+
+  const changeColor = tone(detail.changePercent);
 
   return (
-    <div className="flex flex-1">
+    <div className="flex flex-1 bg-app-bg text-app-text">
       <RailNav />
-      <main className="mx-auto w-full max-w-6xl p-8 lg:p-12">
-      {/* Single column on small screens; on lg+ the info panel becomes a
-          fixed-width sidebar next to a wide chart, instead of everything
-          squeezed into one narrow centered column. */}
-      <div className="lg:grid lg:grid-cols-[340px_1fr] lg:items-start lg:gap-12">
-        <div>
-          <p className="text-sm text-neutral-500">{detail.exchange} · {detail.sector}</p>
-          <h1 className="mb-1 text-3xl font-medium tracking-tight text-neutral-900 lg:text-4xl">
-            {detail.symbol}
-          </h1>
-          <p className="mb-6 text-neutral-500">{detail.companyName}</p>
 
-          <div className="mb-8 flex items-baseline gap-3">
-            <span className="text-4xl font-medium text-neutral-900">
-              {detail.lastPrice.toLocaleString("vi-VN")}
-            </span>
-            <span className={`text-lg font-medium ${changeColor}`}>
-              {detail.change >= 0 ? "+" : ""}
-              {detail.change.toLocaleString("vi-VN")} ({detail.changePercent.toFixed(2)}%)
-            </span>
-          </div>
-
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-4 rounded-2xl border border-neutral-200 p-5 text-sm">
-            <div>
-              <dt className="text-neutral-500">Market Cap</dt>
-              <dd className="font-medium text-neutral-900">{detail.marketCap.toLocaleString("vi-VN")} VND</dd>
-            </div>
-            <div>
-              <dt className="text-neutral-500">P/E</dt>
-              <dd className="font-medium text-neutral-900">{detail.peRatio}</dd>
-            </div>
-            <div>
-              <dt className="text-neutral-500">P/B</dt>
-              <dd className="font-medium text-neutral-900">{detail.pbRatio}</dd>
-            </div>
-            <div>
-              <dt className="text-neutral-500">EPS</dt>
-              <dd className="font-medium text-neutral-900">{detail.eps.toLocaleString("vi-VN")}</dd>
-            </div>
-            <div>
-              <dt className="text-neutral-500">Dividend Yield</dt>
-              <dd className="font-medium text-neutral-900">{detail.dividendYield}%</dd>
-            </div>
-          </dl>
-        </div>
-
-        <div className="mt-8 rounded-2xl border border-neutral-800 bg-neutral-950 p-6 lg:mt-0">
-          <div className="mb-4 flex items-baseline justify-between">
-            <h2 className="text-sm font-medium text-neutral-300">
-              Price (6mo, daily) <span className="ml-2 text-blue-400">— SMA(20)</span>
-            </h2>
-            {bars.length > 0 && (
-              <span className="text-xs text-neutral-500">
-                Data through {formatUTCDate(bars[bars.length - 1].time)}
+      <div className="flex min-w-0 flex-1 flex-col gap-4 p-[20px_24px]">
+        <header className="flex items-center justify-between gap-6">
+          <div className="flex items-center gap-[22px]">
+            <div className="flex flex-col gap-[3px]">
+              <div className="flex items-center gap-[9px]">
+                <h1 className="m-0 font-display text-[26px] font-bold tracking-[-0.01em]">{detail.symbol}</h1>
+                <span className="rounded-[5px] border border-app-border px-[7px] py-[2px] text-[10.5px] text-app-text-3">{detail.exchange}</span>
+              </div>
+              <span className="text-[12.5px] text-app-text-muted">
+                {detail.companyName} · {detail.sector}
               </span>
-            )}
+            </div>
+            <div className="flex items-baseline gap-[10px]">
+              <span className="font-plex-mono text-[30px] font-semibold tracking-[-0.02em]" style={{ color: changeColor }}>
+                {formatThousandsVN(detail.lastPrice)}
+              </span>
+              <span className="font-plex-mono text-sm font-semibold" style={{ color: changeColor }}>
+                {signVN(detail.change / 1000, 2)} ({signVN(detail.changePercent, 2)}%)
+              </span>
+            </div>
+            <PriceBandChips ceiling={detail.ceiling} reference={detail.reference} floor={detail.floor} />
           </div>
-          {bars.length > 0 ? (
-            <StockChart bars={bars} sma20={sma20} theme="dark" />
-          ) : (
-            <p className="py-16 text-center text-sm text-neutral-500">
-              Chart data unavailable right now — the backend may be starting up or
-              unreachable. Indicators beyond SMA/EMA are not implemented yet, see
-              RESUME.md.
-            </p>
-          )}
+          <div className="flex items-center gap-[10px]">
+            <button
+              type="button"
+              disabled
+              title="Sắp ra mắt"
+              className="box-border flex h-11 cursor-not-allowed items-center gap-2 rounded-[11px] border border-app-border bg-app-surface px-[15px] text-[13px] font-medium text-app-text opacity-70"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              <span>Thêm chỉ báo</span>
+            </button>
+            <button
+              type="button"
+              disabled
+              title="Sắp ra mắt"
+              className="box-border flex h-11 cursor-not-allowed items-center gap-2 rounded-[11px] border border-app-accent-border bg-app-accent-surface px-[15px] text-[13px] font-semibold text-app-accent opacity-80"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M11 6L4 12l7 6V6zM20 6l-7 6 7 6V6z" />
+              </svg>
+              <span>Replay mã này</span>
+            </button>
+          </div>
+        </header>
+
+        <div className="flex min-h-0 flex-1 gap-5">
+          <div className="flex min-w-0 flex-1 flex-col gap-[14px]">
+            <div className="flex items-center justify-between gap-4">
+              <TimeframePills symbol={symbol} active={tf} />
+              <div className="flex items-center gap-2">
+                {INDICATOR_CHIPS.map((c) => (
+                  <span
+                    key={c.label}
+                    className="flex h-7 items-center gap-[7px] rounded-lg border border-app-border bg-app-surface-2 px-[11px] text-[11.5px] text-app-text-2"
+                  >
+                    <span className="h-2 w-2 rounded-[2px]" style={{ background: c.color }} />
+                    {c.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <DetailChart bars={bars} sma20={sma20} sma50={sma50} rsi={rsi} macd={macd} />
+
+            {insight && <AIInsightCard insight={insight} />}
+          </div>
+
+          <div className="flex w-[344px] shrink-0 flex-col gap-4">
+            <OrderTicket symbol={detail.symbol} lastPrice={detail.lastPrice} buyingPower={buyingPower} />
+            <OrderBookPanel bids={orderBook.bids} asks={orderBook.asks} />
+            <FundamentalsGrid detail={detail} avgVolume20d={avgVolume20d} />
+          </div>
         </div>
       </div>
-
-      {insight && (
-        <div className="mt-8">
-          <AIInsightCard insight={insight} />
-        </div>
-      )}
-      </main>
     </div>
   );
 }
