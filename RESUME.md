@@ -12,6 +12,59 @@ Last updated: 2026-09-23.
 
 ---
 
+## ⚠ TOP PRIORITY FOR THE NEXT SESSION (user decision, 2026-09-23)
+
+The user's explicit instruction: **"next time we take data from provider
+tradingview api as already plan"** — do this FIRST in the next session,
+before continuing the FULL-APP-PLAN.md phase sequence (Phase E onward).
+
+**Read this note in full before starting** -- there is a real mismatch
+between the instruction and what "already plan" (charting-library-
+integration.md) actually documents, flagged to the user in-session but
+worth re-stating here so it isn't missed:
+
+- charting-library-integration.md's existing plan is a `TVDatafeedAdapter`
+  implementing `IDatafeedChartApi`/`IExternalDatafeed` -- this swaps the
+  **charting widget** (from `lightweight-charts` / the public embed) for
+  TradingView's self-hosted Charting Library. In that plan, the Datafeed
+  adapter still pulls bars from **this app's own backend**
+  (`GET /api/v1/market/bars`), which is still backed by
+  `market.MockProvider`'s synthetic generator. TradingView does not
+  become the source of real Vietnamese market data in that plan -- it
+  only changes which UI library renders whatever data our backend
+  provides.
+- TradingView does not offer a self-serve "give me real HOSE/HNX/UPCOM
+  data" API the way a licensed market-data vendor does. Their real data
+  integrations are broker/data-feed partnerships, a business
+  relationship to set up, not just an API key to request.
+- The self-hosted Charting Library itself also still needs TradingView's
+  GitHub-gated access approval (a human -- the user -- has to request
+  this; not something a session can do autonomously). Not yet requested
+  as of this note.
+- Separately: RESUME.md's own "Plan" section item #3 (a real Vietnamese
+  market-data vendor for `market.MockProvider` to be replaced with) is
+  still a genuinely open, distinct decision this instruction does not
+  resolve on its own.
+
+**Before writing any code next session**, get clarity from the user on
+which of these they actually want:
+
+1. Proceed with the charting-library-integration.md plan as documented
+   (TradingView Charting Library as the chart *widget*, still fed by
+   this app's own mock backend data) -- if so, the concrete first step
+   is the user requesting TradingView's GitHub-gated Charting Library
+   access (an action only the user can take, outside this session).
+2. Something else the user means by "take data from provider tradingview
+   api" -- e.g. an actual TradingView data/broker integration, which
+   would need its own research into whether that's even available
+   without a broker partnership, separate from
+   charting-library-integration.md's existing (UI-only) plan.
+
+Do not silently assume (1) resolves the real-data-source gap; confirm
+with the user first per this repo's standing verification discipline.
+
+---
+
 ## Done
 
 Backend (backend/) — Go + Gin, V1 MVP feature set, scaffolded and
