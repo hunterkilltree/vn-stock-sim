@@ -64,6 +64,7 @@ func (s *Service) Create(userID string, req createRequest) (Order, error) {
 
 	if req.Type != "market" {
 		o.Status = "queued"
+		o.Price = req.Price
 		return s.store.Append(userID, o), nil
 	}
 
@@ -83,6 +84,28 @@ func round2(v float64) float64 {
 
 func (s *Service) List(userID string) []Order {
 	return s.store.List(userID)
+}
+
+// FilledOrders satisfies portfolio.OrdersPort -- see phase-e.md item 2.
+// Only "filled" orders carry a real FilledPrice/FilledAt (queued
+// limit/atc/stop orders never fill in V1, see Create above), so those
+// are the only ones portfolio.Service's FIFO trade reconstruction needs.
+func (s *Service) FilledOrders(userID, portfolioID string) []portfolio.OrderRecord {
+	all := s.store.List(userID)
+	out := make([]portfolio.OrderRecord, 0, len(all))
+	for _, o := range all {
+		if o.PortfolioID != portfolioID || o.Status != "filled" {
+			continue
+		}
+		out = append(out, portfolio.OrderRecord{
+			Symbol:      o.Symbol,
+			Side:        o.Side,
+			Quantity:    o.Quantity,
+			FilledPrice: o.FilledPrice,
+			FilledAt:    o.FilledAt,
+		})
+	}
+	return out
 }
 
 func (s *Service) Get(userID, id string) (Order, error) {

@@ -25,6 +25,10 @@ export async function placeOrderAction(_prevState: OrderFormState, formData: For
     side: String(formData.get("side") ?? "buy"),
     type: String(formData.get("type") ?? "market"),
     quantity: Number(formData.get("quantity") ?? 0),
+    // Price is only meaningful for non-market orders (see
+    // OrderTicket.tsx's hidden "price" field) -- the backend ignores it
+    // for "market", which always fills at the live quote instead.
+    price: Number(formData.get("price") ?? 0),
   };
 
   if (!body.symbol || body.quantity <= 0) {
@@ -58,4 +62,34 @@ export async function placeOrderAction(_prevState: OrderFormState, formData: For
     error: null,
     success: { status: payload.status, filledPrice: payload.filledPrice, fee: payload.fee },
   };
+}
+
+// Cancels a still-queued order from the Portfolio page's "Lệnh chờ khớp"
+// panel (POST /orders/:id/cancel already existed server-side since
+// Phase B -- see phase-e.md item 4 -- this just wires a real button to
+// it instead of leaving the panel display-only).
+export async function cancelOrderAction(orderId: string): Promise<{ error: string | null }> {
+  const token = await getSessionToken();
+  if (!token) {
+    return { error: "Bạn cần đăng nhập để huỷ lệnh." };
+  }
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE_URL}/api/v1/orders/${encodeURIComponent(orderId)}/cancel`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+  } catch {
+    return { error: "Không thể kết nối tới máy chủ." };
+  }
+
+  if (!res.ok) {
+    const payload = await res.json().catch(() => null);
+    return { error: payload?.message ?? "Huỷ lệnh thất bại." };
+  }
+
+  revalidatePath("/portfolio");
+  return { error: null };
 }

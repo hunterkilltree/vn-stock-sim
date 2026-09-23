@@ -3,13 +3,20 @@ package order
 import "time"
 
 type Order struct {
-	ID          string  `json:"id"`
-	PortfolioID string  `json:"portfolioId"`
-	Symbol      string  `json:"symbol"`
-	Side        string  `json:"side"`
-	Type        string  `json:"type"`
-	Quantity    int64   `json:"quantity"`
-	Status      string  `json:"status"`
+	ID          string `json:"id"`
+	PortfolioID string `json:"portfolioId"`
+	Symbol      string `json:"symbol"`
+	Side        string `json:"side"`
+	Type        string `json:"type"`
+	Quantity    int64  `json:"quantity"`
+	Status      string `json:"status"`
+	// Price is the requested limit/stop trigger price for a non-market
+	// order -- zero (omitted) for "market", which fills at whatever the
+	// live quote is instead. Added in Phase E: the order ticket
+	// (OrderTicket.tsx) always collected this, but it was never sent to
+	// or stored by the backend, so a queued order's own Pending panel
+	// had no real price to show -- a found gap, not a Phase E feature.
+	Price       float64 `json:"price,omitempty"`
 	FilledPrice float64 `json:"filledPrice,omitempty"`
 	// Fee is the simulated 0.15% trading fee (FeeRate), charged only on an
 	// actual fill -- a queued order (limit/atc/stop, none of which fill
@@ -36,6 +43,9 @@ type createRequest struct {
 	// no real matching engine yet (see RESUME.md future work).
 	Type     string `json:"type" binding:"required,oneof=market limit atc stop"`
 	Quantity int64  `json:"quantity" binding:"required,gt=0"`
+	// Price is required for non-market types (see Order.Price above);
+	// market orders ignore it and fill at the live quote instead.
+	Price float64 `json:"price"`
 }
 
 func formatTime(t time.Time) string {

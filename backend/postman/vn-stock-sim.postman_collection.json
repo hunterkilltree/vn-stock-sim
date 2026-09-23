@@ -494,6 +494,42 @@
               "path": ["api", "v1", "portfolios", "{{portfolioId}}", "positions"]
             }
           }
+        },
+        {
+          "name": "Get Portfolio Equity History",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/portfolios/{{portfolioId}}/equity-history",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "portfolios", "{{portfolioId}}", "equity-history"]
+            },
+            "description": "Phase E addition. One (timestamp, nav) point per fill against this portfolio, plus a seed point at creation -- backs the Portfolio screen's equity-curve chart."
+          }
+        },
+        {
+          "name": "Get Portfolio Allocation",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/portfolios/{{portfolioId}}/allocation",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "portfolios", "{{portfolioId}}", "allocation"]
+            },
+            "description": "Phase E addition. Current NAV grouped by sector (via the existing symbol data) plus a trailing \"Tiền mặt\" (cash) bucket -- backs the Portfolio screen's sector allocation bars."
+          }
+        },
+        {
+          "name": "Get Portfolio Stats",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/portfolios/{{portfolioId}}/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "portfolios", "{{portfolioId}}", "stats"]
+            },
+            "description": "Phase E addition. Real KPIs (win rate, profit factor, max drawdown, avg win/loss, best/worst trade) computed by FIFO-matching this portfolio's actual filled buy/sell orders into closed trades -- backs the Portfolio screen's KPI row and journal grid."
+          }
         }
       ]
     },
@@ -550,14 +586,14 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"portfolioId\": \"{{portfolioId}}\",\n  \"symbol\": \"{{symbol}}\",\n  \"side\": \"buy\",\n  \"type\": \"limit\",\n  \"quantity\": 100\n}"
+              "raw": "{\n  \"portfolioId\": \"{{portfolioId}}\",\n  \"symbol\": \"{{symbol}}\",\n  \"side\": \"buy\",\n  \"type\": \"limit\",\n  \"quantity\": 100,\n  \"price\": 20000\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/orders",
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "orders"]
             },
-            "description": "type can also be \"atc\" or \"stop\" (LO/ATC/Stop from the design's order ticket) -- all three behave identically today: accepted, status \"queued\", fee 0, never actually filled (no matching engine yet). Its test script overwrites {{orderId}} with this queued order's id (not the market order's above), so the default top-to-bottom run demonstrates a real successful Cancel below rather than a 409."
+            "description": "price is the requested limit/stop trigger price (Phase E addition -- previously collected by the order ticket UI but never sent to or stored by the backend). type can also be \"atc\" or \"stop\" (LO/ATC/Stop from the design's order ticket) -- all three behave identically today: accepted, status \"queued\", fee 0, never actually filled (no matching engine yet). Its test script overwrites {{orderId}} with this queued order's id (not the market order's above), so the default top-to-bottom run demonstrates a real successful Cancel below rather than a 409."
           },
           "event": [
             {

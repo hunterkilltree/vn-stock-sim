@@ -36,7 +36,10 @@ type MemoryStore struct {
 	accounts      map[string]*account
 	byUser        map[string][]string
 	byUserDefault map[string]string
-	nextID        int
+	// equity indexes each portfolio's EquityPoint history -- see
+	// AppendEquitySnapshot and phase-e.md item 1.
+	equity map[string][]EquityPoint
+	nextID int
 }
 
 func NewMemoryStore() *MemoryStore {
@@ -45,6 +48,7 @@ func NewMemoryStore() *MemoryStore {
 		accounts:      make(map[string]*account),
 		byUser:        make(map[string][]string),
 		byUserDefault: make(map[string]string),
+		equity:        make(map[string][]EquityPoint),
 	}
 }
 
@@ -70,7 +74,47 @@ func (s *MemoryStore) Create(userID, name, market string, startingCapital float6
 	s.portfolios[p.ID] = &p
 	s.accounts[p.ID] = &account{cash: startingCapital, positions: make(map[string]*position)}
 	s.byUser[userID] = append(s.byUser[userID], p.ID)
+	// Seed one equity point at creation so a brand-new portfolio's
+	// history is never empty (its NAV is just its starting capital).
+	s.equity[p.ID] = []EquityPoint{{Timestamp: p.CreatedAt, NAV: startingCapital}}
 	return p
+}
+
+// AppendEquitySnapshot records a portfolio's current NAV at "now" --
+// called by Service.ApplyFill after every successful fill (see
+// service.go), not on a schedule, per phase-e.md item 1's simplest-for-V1
+// approach.
+func (s *MemoryStore) AppendEquitySnapshot(portfolioID string, nav float64) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.equity[portfolioID] = append(s.equity[portfolioID], EquityPoint{
+		Timestamp: time.Now().UTC().Format("2006-01-02T15:04:05Z"),
+		NAV:       nav,
+	})
+}
+
+func (s *MemoryStore) EquityHistory(portfolioID string) []EquityPoint {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	out := make([]EquityPoint, len(s.equity[portfolioID]))
+	copy(out, s.equity[portfolioID])
+	return out
+}
+
+// OwnerOf returns the userID that owns portfolioID, without requiring
+// the caller to already know it -- Service.Stats/Positions need this to
+// call OrdersPort.FilledOrders(userID, ...), since order.MemoryStore is
+// keyed by userID, not portfolioID. Callers only reach here after a
+// handler has already authorized the request via GetPortfolio(userID,
+// id), so this doesn't itself enforce ownership.
+func (s *MemoryStore) OwnerOf(portfolioID string) (string, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	p, ok := s.portfolios[portfolioID]
+	if !ok {
+		return "", false
+	}
+	return p.UserID, true
 }
 
 // DefaultFor returns the lazily-created default portfolio ID for userID,

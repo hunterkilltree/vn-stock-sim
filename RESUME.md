@@ -1014,30 +1014,134 @@ RSI/MACD/ROE all return real data directly from the backend container.
 
 Branch: phase-d-detail-screen (off master, after PR #18 merged).
 
+**Phase E (rebuild the Portfolio/"Giao dịch giấy" screen) -- DONE.** Plan:
+phase-e.md, written against `design/screens/Portfolio.dc.html` as the
+literal spec.
+
+- **Backend: real equity history.** `portfolio.MemoryStore` gained an
+  `EquityPoint` history per portfolio, seeded at creation and appended to
+  on every fill. This required moving the `Ledger` dependency
+  `order.Service` calls from the bare `*portfolio.MemoryStore` to
+  `*portfolio.Service` (`Service.ApplyFill` now wraps the store's ledger
+  op with a real mark-to-market `Summary().TotalEquity` snapshot) --
+  main.go now wires `portfolioSvc`, not `portfolioStore`, as `order`'s
+  Ledger. `GET /api/v1/portfolios/:id/equity-history`.
+- **Backend: real sector allocation.** `Service.Allocation` groups
+  positions' market value by `symbol.Detail.Sector` (already available
+  via the existing `QuotePort`, no new dependency) plus a trailing
+  "Tiền mặt" cash bucket. `GET /api/v1/portfolios/:id/allocation`.
+- **Backend: real KPIs/journal (Stats).** `Service.Stats` FIFO-matches a
+  portfolio's actual filled buy/sell orders into closed trades to compute
+  win rate, profit factor (0, not a fabricated ratio, when there are no
+  losses to divide by), avg win/loss %, avg holding days, best/worst
+  trade, and max drawdown (largest peak-to-trough decline across the
+  equity-history series). Needed order history inside `portfolio`, solved
+  with a `portfolio.OrdersPort` interface `order.Service` satisfies
+  (`order` already depends on `portfolio` for its Ledger error types, so
+  this isn't a new dependency direction), wired via
+  `Service.SetOrdersPort` after both services exist (avoids an import
+  cycle). `GET /api/v1/portfolios/:id/stats`. The same FIFO
+  reconstruction also backs `Position.OpenSince` (the design's "Nắm giữ"
+  days-held column).
+- **Found and fixed a real, pre-existing gap, not itself Phase E scope:**
+  `OrderTicket.tsx` (Phase D) always collected a limit/stop trigger price
+  from the user, but `orderActions.ts` never sent it and
+  `order.Order`/`createRequest` had no `Price` field to receive it even if
+  it had -- a queued order's real target price was silently discarded end
+  to end. Fixed (needed for the Pending Orders panel to show a real
+  price): `Order`/`createRequest` gained `Price`, `Service.Create` stores
+  it for non-market orders, `OrderTicket.tsx` and `orderActions.ts` now
+  actually send it. Updated the Postman collection's
+  "Create Order (Limit, queued)" example to match.
+- **Frontend:** new `frontend/src/app/portfolio/page.tsx` (Server
+  Component, auth-gated with a sign-in prompt for guests, matching the
+  guest-first pattern used elsewhere) parallel-fetches everything above
+  for the user's default portfolio and hands it to `PortfolioTabs.tsx` (a
+  Client Component) for the design's 4 tabs (Tổng quan/Vị thế/Lệnh chờ/Sổ
+  giao dịch) -- fetched once, tab-switch client-side with no reload. New
+  presentational components, one per design panel: `KpiRow.tsx`,
+  `EquityCurveChart.tsx` (real inline-SVG area+line chart, range-filterable
+  by real timestamps), `SectorAllocationCard.tsx`, `HoldingsTable.tsx`,
+  `PendingOrdersCard.tsx` (first real UI caller of the existing
+  `POST /orders/:id/cancel`, via a new `cancelOrderAction` Server Action),
+  `JournalCard.tsx`. `navItems.ts`'s `/portfolio` entry moved from
+  `kind: "soon"` to `"built"`.
+- Documented deviations (all in phase-e.md): no VN-Index benchmark line on
+  the equity chart (V1 has no historical VN-Index series aligned to the
+  account's own real, sparse fill timestamps -- dropped rather than
+  faked); equity history is real but sparse (one point per fill, not per
+  trading day -- no scheduled snapshot job exists); holdings table shows
+  ticker only, no company name (avoids N extra per-symbol requests, same
+  class as MoversTable); "Nắm giữ" is labeled in calendar days ("ngày"),
+  not trading sessions ("phiên"), since this app has no real session
+  calendar; the journal's "Từ Replay" cell is dropped (Replay doesn't
+  exist yet) in favor of a real closed-trade count. Also flagged, not
+  fixed here (pre-existing since Phase B/D, touches the fill model itself
+  rather than this screen): `order.Service.Create` computes `Fee` for
+  display but never actually deducts it from the portfolio's cash ledger.
+
+Verified, not just written: `go build ./... && go vet ./...` clean (real
+local Go 1.24 in this session's sandbox, not Docker -- no Docker daemon
+available here, unlike prior sessions; `gofmt -l` shows no new
+non-compliant files). `npx tsc --noEmit`, `npx eslint .`, `npm run build`
+all clean (hit and fixed one more `react-hooks/purity` violation --
+`Date.now()` inside `EquityCurveChart.tsx`'s `useMemo` -- the same fix
+pattern as before: pulled into a plain helper function). Backend: curled a
+real register + buy 100 VNM + sell 40 VNM + queue a limit HPG order
+sequence and hand-verified `equity-history`/`allocation`/`stats`/
+`positions` (cash 96,312,009.4 + market value 3,687,990.6 = exactly
+100,000,000, since the quote didn't move between the two same-second
+fills; `openSince` matched the original buy's `filledAt`). Full Postman
+collection via `npx newman run ...`: 36 requests, 0 failures, including
+the 3 new endpoints and the updated Limit order body. Real browser
+verification (Playwright against this sandbox's pre-installed headless
+Chromium, driving the actual `next dev` + `go run` servers -- not a static
+read of the code): registered a real account through the real `/register`
+form, placed real market buy/sell orders and a real queued limit order
+through the real `OrderTicket.tsx`, then screenshotted all 4 tabs --
+confirmed real KPIs, a real equity curve, real sector allocation matching
+hand-computed position weights, a real positions table, and a real
+pending order. **Actually exercised the cancel button**, not just read the
+code: clicked it in the browser, confirmed the order disappeared and the
+tab's badge count dropped from 1 to 0.
+
+Branch: none yet -- this session has no PR workflow set up; changes are on
+`claude/next-phase-q7mqr6` directly. Docker verification (this repo's
+usual habit) was not possible in this session's sandbox (no Docker
+daemon) -- worth re-running `docker compose build && docker compose up`
++ curl in an environment that has it, before assuming parity with every
+prior phase's Docker-verified state.
+
 ---
 
 ## Plan (where to pick up)
 
-Roughly in priority order for reaching a demoable V1 MVP
-(vn-stock-sim-version-highlights.md, Version 1 section):
+Phases A-E of FULL-APP-PLAN.md's 20-screen rebuild are now done (see the
+Done section above). Next up, in that plan's own order:
 
-1. Build out the remaining V1 frontend pages against the backend (the
-   stock browser slice, the candlestick chart, and auth above are done):
-   - Watchlist table, portfolio summary/positions, paper trade order
-     form, trade history, and a basic backtest form+result view. All of
-     these need session.getSessionToken() attached as the Authorization
-     header (see the auth section above for the pattern -- api.ts's
-     apiFetch already accepts a token option, added for GET /auth/me).
-2. Wire a real Postgres database behind auth, watchlist, portfolio, and
-   order (currently all in-memory MemoryStores that reset on restart).
-   Each store already sits behind a small interface-shaped API (not
-   literally a Go interface everywhere yet, but close) — swapping the
-   backing store is the intended seam, not a rewrite. Add it as a db
-   service in docker-compose.yml alongside backend/frontend.
-3. Replace the market-data mock with the real thing: sign up for a
-   licensed Vietnamese market-data provider (api-spec.md explicitly rules
-   out scraped data), write an adapter implementing symbol.Provider and
-   market.MarketDataProvider, same pattern the mock already follows.
+1. **Phase F -- Replay Mode** (`design/screens/Replay.dc.html`): candle-by-
+   candle historical replay with masked future bars and a skill score.
+   Not built at all yet. FULL-APP-PLAN.md section 2.5 already proposes a
+   concrete scoring formula (entry/exit quality vs. the best achievable
+   price in a small window, stop-loss discipline, position-sizing
+   variance) -- read that before starting, plus phase-e.md's Stats/
+   equity-history machinery (reusable: a Replay session is really just
+   another sequence of fills against a portfolio, scored after the fact).
+2. **Phase G** (Account-Menu.dc.html, Signup's capital picker): the
+   multi-portfolio switcher UI -- the backend (`portfolios` plural API,
+   Phase B) has supported this since before Phase E; only the frontend
+   picker/switcher never got built. Phase E's Portfolio page still only
+   ever reads `portfolios[0]` (the lazily-created default) -- worth
+   revisiting once Account-Menu exists.
+3. **Phase H** (Settings-AI.dc.html, then Quant.dc.html): BYOK LLM
+   provider settings, then the actual Quant chat -- read FULL-APP-PLAN.md
+   section 2.2 first, this is explicitly bring-your-own-key, not a
+   company-funded model call.
+4. Independently of the lettered phases: wire a real Postgres database
+   behind auth/watchlist/portfolio/order (all in-memory MemoryStores that
+   reset on restart today), and replace the VCI market-data adapter with
+   a licensed vendor if the user decides to pursue that (see the VCI
+   entry above for why VCI was chosen as an interim, swappable adapter).
 
 ---
 
