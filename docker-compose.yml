@@ -10,6 +10,11 @@ services:
     environment:
       PORT: "8080"
       JWT_SECRET: dev-secret-change-me
+      # "vci" (default if unset) is the real, live market-data adapter
+      # against Vietcap Securities' own trading-platform API -- see
+      # phase-vci-market-data.md. Set to "mock" here for a fully
+      # offline demo (e.g. no outbound network access).
+      MARKET_DATA_SOURCE: vci
 
   frontend:
     build:

@@ -28,7 +28,19 @@ func main() {
 	cfg := config.Load()
 	tokens := authtoken.NewIssuer(cfg.JWTSecret, 24*time.Hour)
 
-	marketProvider := market.NewMockProvider()
+	// MarketDataProvider adapter selection -- see phase-vci-market-data.md.
+	// "vci" (default) is a real, live adapter against Vietcap Securities'
+	// own trading-platform API, wrapped in LiveProvider so any failure
+	// (this is an unofficial, undocumented upstream) falls back to the
+	// deterministic mock generator per-call instead of breaking a page.
+	mockProvider := market.NewMockProvider()
+	var marketProvider market.MarketDataProvider = mockProvider
+	if cfg.MarketDataSource == "vci" {
+		marketProvider = market.NewLiveProvider(market.NewVCIProvider(), mockProvider)
+		log.Printf("market data source: vci (live, with mock fallback)")
+	} else {
+		log.Printf("market data source: mock (MARKET_DATA_SOURCE=%q)", cfg.MarketDataSource)
+	}
 	marketSvc := market.NewService(marketProvider)
 
 	// symbol.Service depends on marketSvc (via QuotePort) so a symbol's
