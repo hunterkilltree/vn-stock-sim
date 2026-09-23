@@ -35,6 +35,8 @@ func (s *Service) GetIndicator(sym, resolution, indicator string, period int, fr
 		return sma(bars, period)
 	case "ema":
 		return ema(bars, period)
+	case "rsi":
+		return rsi(bars, period)
 	default:
 		return []IndicatorPoint{}
 	}

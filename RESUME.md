@@ -12,13 +12,63 @@ Last updated: 2026-09-23.
 
 ---
 
+## ⚠ TOP PRIORITY FOR THE NEXT SESSION (user decision, 2026-09-23)
+
+The user's explicit instruction: **"next time we take data from provider
+tradingview api as already plan"**, clarified in-session to mean option
+(2) below -- they want TradingView itself to be the actual source of
+market data, not just the charting widget. Researched via WebSearch/
+WebFetch in this session (not guessed); findings below.
+
+**Research findings (2026-09-23):**
+
+- TradingView does not sell a self-serve "market data API" the way a
+  licensed data vendor (SSI, VNDIRECT, TCBS, etc.) does. Their three
+  real developer surfaces are: the Charting Library (free, self-hosted
+  chart widget -- you supply the data), the Datafeed API (the spec for
+  piping data INTO that widget from your own source), and the Broker
+  REST API (for brokerages applying to let TradingView's own users trade
+  through them -- not a way to pull data out).
+- TradingView's own platform DOES cover Vietnamese exchanges -- HOSE and
+  HNX (which UPCoM listings fall under) are both listed on
+  https://www.tradingview.com/data-coverage/. So the data exists on
+  their platform; the question is only whether/how it can be licensed
+  out to a third-party app like this one.
+- That page has no self-serve licensing/API-access flow for third-party
+  applications -- it only shows individual-user subscription tiers
+  (delayed / non-professional real-time / professional real-time). The
+  only stated path is **contacting TradingView's sales/partnerships team
+  directly** -- a business conversation the user has to initiate, with
+  unknown pricing/terms, not something this session can request or
+  estimate.
+- Search results also surfaced third-party services (e.g. a site
+  branded "TradingView Data API" with $0-$80/mo tiers, and an
+  unofficial GitHub scraper hitting TradingView's undocumented internal
+  endpoints) claiming to resell/scrape TradingView's data. **These are
+  explicitly out of scope for this project** -- api-spec.md already
+  rules out scraped data, and neither is an official, licensed
+  TradingView product.
+
+**Bottom line at the time this was written: there was no code to write
+yet** -- the only real next action was the user contacting TradingView's
+sales/partnerships team. Separately, still true and unresolved: the
+self-hosted Charting Library (the UI-only path from charting-library-
+integration.md, distinct from this data-source question) still needs
+TradingView's GitHub-gated access approval, which the user has not
+requested.
+
+**Resolved below, same day:** rather than wait on that business
+conversation, the user redirected to a different, real, free-to-access
+Vietnamese data source found via further research (VCI). See the next
+entry.
+
+---
+
 ## Real market-data adapter (VCI) — DONE, 2026-09-23
 
-Supersedes the "next session top priority" note that was going to live
-here (that note was written on a different, still-open branch --
-`phase-d-detail-screen` -- and never made it to master; if you're
-reconciling branches, this entry is the resolution of that note, not a
-duplicate to merge around).
+Resolution of the TradingView note above -- the user chose not to wait
+on TradingView's sales/partnerships process and redirected to a
+different real data source instead.
 
 **User's explicit decision**, verbatim: "go with this way" (accepting
 the unofficial/undocumented-endpoint category `api-spec.md` otherwise
@@ -865,6 +915,104 @@ now demonstrates a real 200 OK cancel; re-ran the full collection after
 the fix and confirmed Cancel Order returns 200.
 
 Branch: postman-api-collection (off master, after PR #17 merged).
+Merged as PR #18.
+
+**Phase D (rebuild the Detail/ticker screen) -- DONE.** Plan: phase-d.md,
+written against `design/screens/Detail.dc.html` as the literal spec.
+The largest phase so far -- required two real backend indicator
+additions and a full chart-rendering rewrite, not just new components
+over existing endpoints.
+
+- **Charts are now real inline SVG, not a chart library.**
+  design/DESIGN-SYSTEM.md section 5 requires this; the old page used
+  `StockChart.tsx` (wraps `lightweight-charts`). New
+  `frontend/src/components/DetailChart.tsx` ports the design's own
+  candle/SMA/RSI/MACD pixel geometry (`py()` scale, `poly()` builder,
+  volume/RSI/MACD panel math) directly from Detail.dc.html's script
+  block, fed real backend data. Verified in the browser pane via
+  `document.querySelectorAll('canvas').length === 0` and 18 real `<svg>`
+  elements present -- not just a visual screenshot check.
+  `StockChart.tsx` itself is untouched (still used by the home-page
+  hero).
+- **Backend gained real RSI and MACD**, finishing already-planned V1
+  scope (RESUME.md's own "Not built yet" list, vn-stock-sim-summary.md's
+  original indicator list) that this screen could not be built
+  faithfully without:
+  - `market` package: `rsi()` (Wilder smoothing, ported from the
+    design's `rsiCalc`), wired into `GetIndicator`'s existing `sma`/
+    `ema` switch as a third case -- no API shape change.
+  - `market`: `GetMACD` + `GET /api/v1/market/macd` (new endpoint,
+    finally using `IndicatorMultiPoint`, which had been defined in
+    types.go since Phase B but never used by anything) -- MACD needs
+    three series per point (macd/signal/histogram), which doesn't fit
+    the single-value `IndicatorPoint` shape.
+  - `symbol.Detail` gained `ROE` (hand-seeded per mock symbol, same
+    treatment as the existing MarketCap/PERatio/PBRatio/EPS/
+    DividendYield -- FPT's value, 27.9%, deliberately matches the
+    design's own FPT sample exactly).
+- **Real order ticket**, not a static panel: new `OrderTicket.tsx`
+  (Client Component: Mua/Ban toggle, LO/MP/ATC/Stop order type, price/
+  qty inputs, 25/50/75/Toi da lot quick-fill computed from real buying
+  power, live fee calc) + new `orderActions.ts` Server Action (same
+  httpOnly-cookie pattern as `authActions.ts`, posting to the existing
+  `POST /api/v1/orders`). Guest state (no session) replaces the submit
+  area with a sign-in prompt instead of inventing a modal design/
+  SCREENS.md explicitly lists as not-yet-designed.
+- New `OrderBookPanel.tsx` (3 levels each side of Phase B's 6-level
+  `GetOrderBook`, matching the design's row count without changing the
+  backend's), `FundamentalsGrid.tsx` (20-day average volume computed
+  from the already-fetched bars, not a new endpoint), `PriceBandChips.tsx`,
+  `TimeframePills.tsx` (real `searchParams`-driven navigation, not
+  client state -- 1 ngay/1 tuan/1 thang/3 thang/1 nam/5 nam each mapping
+  to a real resolution+range).
+- New `lib/format.ts` helpers: `formatThousandsVN` (the Detail screen
+  quotes every price in thousands of VND, matching its own "Gia
+  (nghin d)" label -- this app's backend returns raw VND everywhere) and
+  `formatMarketCapVN`.
+- Existing AI Insight panel kept, rendered below the design's own
+  frame rather than deleted -- the design not drawing a feature this
+  repo already built isn't grounds to remove it.
+- Deliberate, flagged deviation: RailNav keeps the same shared 10-item
+  nav list SidebarNav uses, rather than forking a second list to match
+  Detail.dc.html's own smaller 7-item rail -- that discrepancy reads as
+  an artifact of two independently-drawn artboards, not documented
+  IA intent anywhere in design/DESIGN-SYSTEM.md.
+
+Hit and fixed a real bug during verification, not just by reading the
+code: the MACD panel initially rendered as a flat line pinned near the
+baseline. Root cause was a unit mismatch -- `macdAbs` (the value used to
+scale the y-axis) was computed from the backend's raw-VND-scale MACD
+values, while the polylines/histogram it scaled had already been
+converted to thousands-VND scale, so real values (~4) were divided by a
+~1000x-too-large denominator (~4000) and collapsed near zero. Fixed by
+converting to thousands before computing `macdAbs` too; re-verified in
+the browser pane that both the MACD and signal lines now visibly
+diverge and the histogram bars have real height.
+
+Verified end to end, not just written: `go build ./... && go vet ./...`
+clean (Docker); curled `/market/indicators?indicator=rsi` and
+`/market/macd` directly and sanity-checked real values (RSI in [0,100],
+MACD/signal/histogram numeric and trending). `npx tsc --noEmit`,
+`npx eslint .`, `npm run build` all clean (hit and fixed one
+react-hooks/purity violation the same way this repo already fixed it
+once before -- `Date.now()` pulled out of the component body into a
+helper function). Browser-pane check at 1440x960: switched timeframe
+pills and confirmed the chart actually re-fetched a different candle
+count/range (30d vs 90d, both real); registered a real test account,
+confirmed the order ticket switches from the guest sign-in prompt to
+real buying power once logged in, and placed a real limit order through
+the actual UI -- confirmed via the dev server's own request log that
+`placeOrderAction` fired and posted to the backend, and the ticket
+displayed "Lenh da duoc dat va dang cho khop" (order placed, pending),
+matching a queued (non-market) order's real backend status. Also
+updated backend/postman/vn-stock-sim.postman_collection.json with the
+new RSI/MACD requests, keeping the earlier explicit "document the API"
+deliverable accurate. Full Docker rebuild + curl: all 7 routes return
+200, the Detail screen's real content (order ticket, order book,
+fundamentals, RSI/MACD panel labels) is present in the served HTML, and
+RSI/MACD/ROE all return real data directly from the backend container.
+
+Branch: phase-d-detail-screen (off master, after PR #18 merged).
 
 ---
 

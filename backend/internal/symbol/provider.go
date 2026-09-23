@@ -22,11 +22,11 @@ type MockProvider struct {
 // against before a licensed data feed is wired up.
 func NewMockProvider() *MockProvider {
 	seed := []Detail{
-		{Symbol: Symbol{Symbol: "VNM", CompanyName: "Vietnam Dairy Products JSC", Exchange: "HOSE", Sector: "Consumer Staples", TickSize: 100}, LastPrice: 68500, Change: 500, ChangePercent: 0.74, MarketCap: 143200000000000, PERatio: 16.2, PBRatio: 4.1, EPS: 4228, DividendYield: 5.8},
-		{Symbol: Symbol{Symbol: "VCB", CompanyName: "Joint Stock Commercial Bank for Foreign Trade of Vietnam", Exchange: "HOSE", Sector: "Financials", TickSize: 100}, LastPrice: 91200, Change: -300, ChangePercent: -0.33, MarketCap: 480500000000000, PERatio: 14.8, PBRatio: 2.9, EPS: 6162, DividendYield: 1.2},
-		{Symbol: Symbol{Symbol: "HPG", CompanyName: "Hoa Phat Group JSC", Exchange: "HOSE", Sector: "Materials", TickSize: 100}, LastPrice: 27650, Change: 150, ChangePercent: 0.55, MarketCap: 160900000000000, PERatio: 11.4, PBRatio: 1.6, EPS: 2426, DividendYield: 2.9},
-		{Symbol: Symbol{Symbol: "FPT", CompanyName: "FPT Corporation", Exchange: "HOSE", Sector: "Information Technology", TickSize: 100}, LastPrice: 134000, Change: 1200, ChangePercent: 0.9, MarketCap: 176300000000000, PERatio: 22.1, PBRatio: 6.7, EPS: 6063, DividendYield: 1.1},
-		{Symbol: Symbol{Symbol: "SHB", CompanyName: "Saigon Hanoi Commercial Bank", Exchange: "HNX", Sector: "Financials", TickSize: 100}, LastPrice: 12300, Change: 0, ChangePercent: 0, MarketCap: 45200000000000, PERatio: 8.9, PBRatio: 1.1, EPS: 1382, DividendYield: 3.4},
+		{Symbol: Symbol{Symbol: "VNM", CompanyName: "Vietnam Dairy Products JSC", Exchange: "HOSE", Sector: "Consumer Staples", TickSize: 100}, LastPrice: 68500, Change: 500, ChangePercent: 0.74, MarketCap: 143200000000000, PERatio: 16.2, PBRatio: 4.1, ROE: 25.3, EPS: 4228, DividendYield: 5.8},
+		{Symbol: Symbol{Symbol: "VCB", CompanyName: "Joint Stock Commercial Bank for Foreign Trade of Vietnam", Exchange: "HOSE", Sector: "Financials", TickSize: 100}, LastPrice: 91200, Change: -300, ChangePercent: -0.33, MarketCap: 480500000000000, PERatio: 14.8, PBRatio: 2.9, ROE: 19.7, EPS: 6162, DividendYield: 1.2},
+		{Symbol: Symbol{Symbol: "HPG", CompanyName: "Hoa Phat Group JSC", Exchange: "HOSE", Sector: "Materials", TickSize: 100}, LastPrice: 27650, Change: 150, ChangePercent: 0.55, MarketCap: 160900000000000, PERatio: 11.4, PBRatio: 1.6, ROE: 14.1, EPS: 2426, DividendYield: 2.9},
+		{Symbol: Symbol{Symbol: "FPT", CompanyName: "FPT Corporation", Exchange: "HOSE", Sector: "Information Technology", TickSize: 100}, LastPrice: 134000, Change: 1200, ChangePercent: 0.9, MarketCap: 176300000000000, PERatio: 22.1, PBRatio: 6.7, ROE: 27.9, EPS: 6063, DividendYield: 1.1},
+		{Symbol: Symbol{Symbol: "SHB", CompanyName: "Saigon Hanoi Commercial Bank", Exchange: "HNX", Sector: "Financials", TickSize: 100}, LastPrice: 12300, Change: 0, ChangePercent: 0, MarketCap: 45200000000000, PERatio: 8.9, PBRatio: 1.1, ROE: 12.4, EPS: 1382, DividendYield: 3.4},
 	}
 	p := &MockProvider{details: make(map[string]Detail, len(seed))}
 	for _, d := range seed {

@@ -18,6 +18,7 @@ type Detail struct {
 	MarketCap     int64   `json:"marketCap"`
 	PERatio       float64 `json:"peRatio"`
 	PBRatio       float64 `json:"pbRatio"`
+	ROE           float64 `json:"roe"`
 	EPS           float64 `json:"eps"`
 	DividendYield float64 `json:"dividendYield"`
 	// Reference (tham chieu), Ceiling (tran), and Floor (san) are the real

@@ -18,7 +18,31 @@ func RegisterRoutes(v1 *gin.RouterGroup, svc *Service) {
 	group.GET("/indicators", indicatorsHandler(svc))
 	group.GET("/indices", indicesHandler(svc))
 	group.GET("/orderbook", orderBookHandler(svc))
+	group.GET("/macd", macdHandler(svc))
 	v1.GET("/time", timeHandler())
+}
+
+// macdHandler mirrors indicatorsHandler's query-param shape (symbol/
+// resolution/from/to) plus fast/slow/signal periods, defaulting to the
+// conventional MACD(12,26,9) Detail.dc.html's chart uses.
+func macdHandler(svc *Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		sym := c.Query("symbol")
+		resolution := c.DefaultQuery("resolution", "1D")
+		from, to, ok := parseRange(c)
+		if sym == "" || !ok {
+			httpx.ValidationError(c, "symbol, from, and to are required", nil)
+			return
+		}
+		fast, _ := strconv.Atoi(c.DefaultQuery("fast", "12"))
+		slow, _ := strconv.Atoi(c.DefaultQuery("slow", "26"))
+		signal, _ := strconv.Atoi(c.DefaultQuery("signal", "9"))
+		points := svc.GetMACD(sym, resolution, fast, slow, signal, from, to)
+		if points == nil {
+			points = []IndicatorMultiPoint{}
+		}
+		c.JSON(http.StatusOK, gin.H{"data": points})
+	}
 }
 
 // indicesHandler returns all four tracked indices (Main.dc.html's index
