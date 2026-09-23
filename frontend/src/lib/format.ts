@@ -46,6 +46,18 @@ export function formatThousandsVN(rawVnd: number, decimals = 2): string {
   return formatVN(rawVnd / 1000, decimals);
 }
 
+// Sector palette for the Portfolio page's allocation bars
+// (Portfolio.dc.html's allocRaw), cycled by first-seen order since the
+// backend returns sector names, not colors. "Tiền mặt" (cash) always
+// gets the fixed muted gray the design uses for it, matching allocRaw's
+// own ['Tiền mặt', 19.8, '#6F6C63'].
+const SECTOR_PALETTE = ["#E08A3C", "#4FD3E8", "#7FA2FF", "#C08BFF", "#35C77F", "#F0C243"];
+
+export function sectorColor(sector: string, index: number): string {
+  if (sector === "Tiền mặt") return "#6F6C63";
+  return SECTOR_PALETTE[index % SECTOR_PALETTE.length];
+}
+
 // Market cap short form, matching design/DESIGN-SYSTEM.md section 8's
 // "Short forms: tr / ty / nghin ty" (million/billion/thousand-billion).
 export function formatMarketCapVN(rawVnd: number): string {

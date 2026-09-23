@@ -33,6 +33,9 @@ func RegisterRoutes(v1 *gin.RouterGroup, svc *Service, tokens *authtoken.Issuer)
 	portfolios.GET("/:id", getPortfolioHandler(svc))
 	portfolios.GET("/:id/summary", portfolioSummaryHandler(svc))
 	portfolios.GET("/:id/positions", portfolioPositionsHandler(svc))
+	portfolios.GET("/:id/equity-history", portfolioEquityHistoryHandler(svc))
+	portfolios.GET("/:id/allocation", portfolioAllocationHandler(svc))
+	portfolios.GET("/:id/stats", portfolioStatsHandler(svc))
 }
 
 func portfolioSummaryHandler(svc *Service) gin.HandlerFunc {
@@ -56,6 +59,42 @@ func portfolioPositionsHandler(svc *Service) gin.HandlerFunc {
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"data": svc.Positions(p.ID)})
+	}
+}
+
+func portfolioEquityHistoryHandler(svc *Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID := c.GetString(middleware.ContextUserIDKey)
+		p, ok := svc.GetPortfolio(userID, c.Param("id"))
+		if !ok {
+			httpx.Error(c, http.StatusNotFound, "not_found", "portfolio not found")
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"data": svc.EquityHistory(p.ID)})
+	}
+}
+
+func portfolioAllocationHandler(svc *Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID := c.GetString(middleware.ContextUserIDKey)
+		p, ok := svc.GetPortfolio(userID, c.Param("id"))
+		if !ok {
+			httpx.Error(c, http.StatusNotFound, "not_found", "portfolio not found")
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"data": svc.Allocation(p.ID)})
+	}
+}
+
+func portfolioStatsHandler(svc *Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID := c.GetString(middleware.ContextUserIDKey)
+		p, ok := svc.GetPortfolio(userID, c.Param("id"))
+		if !ok {
+			httpx.Error(c, http.StatusNotFound, "not_found", "portfolio not found")
+			return
+		}
+		c.JSON(http.StatusOK, svc.Stats(p.ID, p.StartingCapital))
 	}
 }
 

@@ -208,6 +208,9 @@ export type Position = {
   lastPrice: number;
   marketValue: number;
   unrealizedPnl: number;
+  // OpenSince (Phase E) is the fill time of the oldest still-open buy
+  // lot for this symbol, empty if unknown.
+  openSince?: string;
 };
 
 export function getPortfolioPositions(token: string): Promise<{ data: Position[] }> {
@@ -226,4 +229,73 @@ export type Portfolio = {
 
 export function getPortfolios(token: string): Promise<{ data: Portfolio[] }> {
   return apiFetch<{ data: Portfolio[] }>("/api/v1/portfolios", { token });
+}
+
+export function getPortfolioByID(id: string, token: string): Promise<Portfolio> {
+  return apiFetch<Portfolio>(`/api/v1/portfolios/${encodeURIComponent(id)}`, { token });
+}
+
+export function getPortfolioSummaryByID(id: string, token: string): Promise<PortfolioSummary> {
+  return apiFetch<PortfolioSummary>(`/api/v1/portfolios/${encodeURIComponent(id)}/summary`, { token });
+}
+
+export function getPortfolioPositionsByID(id: string, token: string): Promise<{ data: Position[] }> {
+  return apiFetch<{ data: Position[] }>(`/api/v1/portfolios/${encodeURIComponent(id)}/positions`, { token });
+}
+
+// -- Phase E endpoints (backend/internal/portfolio's equity-history/
+// allocation/stats, backend/internal/order's list/cancel) --
+
+export type EquityPoint = { timestamp: string; nav: number };
+
+export function getEquityHistory(portfolioId: string, token: string): Promise<{ data: EquityPoint[] }> {
+  return apiFetch<{ data: EquityPoint[] }>(`/api/v1/portfolios/${encodeURIComponent(portfolioId)}/equity-history`, { token });
+}
+
+export type Allocation = { sector: string; value: number; percent: number };
+
+export function getAllocation(portfolioId: string, token: string): Promise<{ data: Allocation[] }> {
+  return apiFetch<{ data: Allocation[] }>(`/api/v1/portfolios/${encodeURIComponent(portfolioId)}/allocation`, { token });
+}
+
+export type ClosedTradeSummary = { symbol: string; pnlPercent: number; pnlAmount: number };
+
+export type PortfolioStats = {
+  totalEquity: number;
+  totalPnl: number;
+  totalPnlPercent: number;
+  closedTradeCount: number;
+  wins: number;
+  losses: number;
+  winRate: number;
+  profitFactor: number;
+  avgWinPercent: number;
+  avgLossPercent: number;
+  avgHoldingDays: number;
+  maxDrawdownPercent: number;
+  bestTrade?: ClosedTradeSummary;
+  worstTrade?: ClosedTradeSummary;
+};
+
+export function getPortfolioStats(portfolioId: string, token: string): Promise<PortfolioStats> {
+  return apiFetch<PortfolioStats>(`/api/v1/portfolios/${encodeURIComponent(portfolioId)}/stats`, { token });
+}
+
+export type Order = {
+  id: string;
+  portfolioId: string;
+  symbol: string;
+  side: "buy" | "sell";
+  type: "market" | "limit" | "atc" | "stop";
+  quantity: number;
+  status: "filled" | "queued" | "cancelled";
+  price?: number;
+  filledPrice?: number;
+  fee: number;
+  filledAt?: string;
+  createdAt: string;
+};
+
+export function getOrders(token: string): Promise<{ data: Order[] }> {
+  return apiFetch<{ data: Order[] }>("/api/v1/orders", { token });
 }

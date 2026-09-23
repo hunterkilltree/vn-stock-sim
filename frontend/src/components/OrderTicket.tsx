@@ -177,6 +177,7 @@ export default function OrderTicket({ symbol, lastPrice, buyingPower }: Props) {
           <input type="hidden" name="side" value={side} />
           <input type="hidden" name="type" value={type} />
           <input type="hidden" name="quantity" value={quantity} />
+          <input type="hidden" name="price" value={priceVnd} />
           {state.error && (
             <p className="rounded-lg border border-app-warn-border bg-app-warn-surface px-3 py-2 text-xs text-app-warn-text">{state.error}</p>
           )}

@@ -62,7 +62,7 @@ export const navItems: NavItem[] = [
     href: "/portfolio",
     label: "Giao dịch giấy",
     d: "M3 7h18v12H3zM3 7l3-4h12l3 4M16 13h2",
-    kind: "soon",
+    kind: "built",
   },
   {
     href: "/replay",

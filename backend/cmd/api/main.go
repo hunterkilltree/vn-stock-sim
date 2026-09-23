@@ -54,7 +54,14 @@ func main() {
 	watchlistSvc := watchlist.NewService(watchlist.NewMemoryStore(), symbolSvc)
 	portfolioStore := portfolio.NewMemoryStore()
 	portfolioSvc := portfolio.NewService(portfolioStore, symbolSvc)
-	orderSvc := order.NewService(order.NewMemoryStore(), portfolioStore, symbolSvc, portfolioSvc)
+	// Ledger is portfolioSvc, not the bare store -- portfolioSvc.ApplyFill
+	// wraps the store's ledger op with a real equity-history snapshot on
+	// every fill (see phase-e.md item 1 and portfolio/service.go).
+	orderSvc := order.NewService(order.NewMemoryStore(), portfolioSvc, symbolSvc, portfolioSvc)
+	// SetOrdersPort closes the reverse dependency (portfolioSvc.Stats
+	// needs order history) after both services exist, avoiding an import
+	// cycle -- see portfolio/types.go's OrdersPort comment.
+	portfolioSvc.SetOrdersPort(orderSvc)
 	backtestSvc := backtest.NewService(backtest.NewMemoryStore(), marketSvc)
 	insightSvc := insight.NewService(symbolSvc, marketSvc)
 	screenerSvc := screener.NewService(symbolSvc, marketSvc)
