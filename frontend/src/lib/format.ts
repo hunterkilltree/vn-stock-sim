@@ -35,3 +35,22 @@ export function tone(value: number): string {
 export function formatVolumeVN(volume: number): string {
   return `${formatVN(volume / 1_000_000, 1)} tr`;
 }
+
+// The Detail screen (design/screens/Detail.dc.html) quotes every price
+// in thousands of VND (its own order-ticket label is "Gia (nghin d)"),
+// e.g. FPT at "128,50" means 128,500 VND -- this app's backend returns
+// raw VND everywhere (symbol.Detail.LastPrice etc.), so every Detail-
+// screen price display divides by 1000 through this one helper rather
+// than each component reimplementing the convention ad hoc.
+export function formatThousandsVN(rawVnd: number, decimals = 2): string {
+  return formatVN(rawVnd / 1000, decimals);
+}
+
+// Market cap short form, matching design/DESIGN-SYSTEM.md section 8's
+// "Short forms: tr / ty / nghin ty" (million/billion/thousand-billion).
+export function formatMarketCapVN(rawVnd: number): string {
+  if (rawVnd >= 1_000_000_000_000) {
+    return `${formatVN(rawVnd / 1_000_000_000_000, 1)} nghìn tỷ`;
+  }
+  return `${formatVN(rawVnd / 1_000_000_000, 1)} tỷ`;
+}

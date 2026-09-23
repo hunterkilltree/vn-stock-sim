@@ -205,13 +205,56 @@
               "query": [
                 { "key": "symbol", "value": "{{symbol}}" },
                 { "key": "resolution", "value": "1D" },
-                { "key": "indicator", "value": "sma", "description": "sma | ema -- others return [] in V1 (RSI/MACD/Bollinger/VWAP not implemented yet)" },
+                { "key": "indicator", "value": "sma", "description": "sma | ema | rsi -- Bollinger/VWAP are not implemented (V1 scope is only what design/screens/Detail.dc.html's chart shows)" },
                 { "key": "period", "value": "20" },
                 { "key": "from", "value": "{{from180dTs}}" },
                 { "key": "to", "value": "{{nowTs}}" }
               ]
             },
             "description": "-> { data: IndicatorPoint[] } (time/value)."
+          }
+        },
+        {
+          "name": "Get Indicator (RSI)",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/market/indicators?symbol={{symbol}}&resolution=1D&indicator=rsi&period=14&from={{from180dTs}}&to={{nowTs}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "market", "indicators"],
+              "query": [
+                { "key": "symbol", "value": "{{symbol}}" },
+                { "key": "resolution", "value": "1D" },
+                { "key": "indicator", "value": "rsi" },
+                { "key": "period", "value": "14" },
+                { "key": "from", "value": "{{from180dTs}}" },
+                { "key": "to", "value": "{{nowTs}}" }
+              ]
+            },
+            "description": "-> { data: IndicatorPoint[] }, Wilder-smoothed RSI, values in [0,100]. Added Phase D for the Detail screen's RSI(14) panel."
+          }
+        },
+        {
+          "name": "Get MACD",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/market/macd?symbol={{symbol}}&resolution=1D&from={{from180dTs}}&to={{nowTs}}&fast=12&slow=26&signal=9",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "market", "macd"],
+              "query": [
+                { "key": "symbol", "value": "{{symbol}}" },
+                { "key": "resolution", "value": "1D" },
+                { "key": "from", "value": "{{from180dTs}}" },
+                { "key": "to", "value": "{{nowTs}}" },
+                { "key": "fast", "value": "12" },
+                { "key": "slow", "value": "26" },
+                { "key": "signal", "value": "9" }
+              ]
+            },
+            "description": "-> { data: IndicatorMultiPoint[] }, each { time, values: { macd, signal, histogram } }. Added Phase D for the Detail screen's MACD(12,26,9) panel -- doesn't fit the single-value IndicatorPoint shape the other indicators use, hence its own endpoint."
           }
         },
         {
