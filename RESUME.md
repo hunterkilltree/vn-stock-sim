@@ -15,50 +15,58 @@ Last updated: 2026-09-23.
 ## ⚠ TOP PRIORITY FOR THE NEXT SESSION (user decision, 2026-09-23)
 
 The user's explicit instruction: **"next time we take data from provider
-tradingview api as already plan"** — do this FIRST in the next session,
-before continuing the FULL-APP-PLAN.md phase sequence (Phase E onward).
+tradingview api as already plan"**, clarified in-session to mean option
+(2) below -- they want TradingView itself to be the actual source of
+market data, not just the charting widget. Researched via WebSearch/
+WebFetch in this session (not guessed); findings below. Do this FIRST in
+the next session, before continuing the FULL-APP-PLAN.md phase sequence
+(Phase E onward) -- but read the findings first, there is no free
+self-serve path here.
 
-**Read this note in full before starting** -- there is a real mismatch
-between the instruction and what "already plan" (charting-library-
-integration.md) actually documents, flagged to the user in-session but
-worth re-stating here so it isn't missed:
+**Research findings (2026-09-23):**
 
-- charting-library-integration.md's existing plan is a `TVDatafeedAdapter`
-  implementing `IDatafeedChartApi`/`IExternalDatafeed` -- this swaps the
-  **charting widget** (from `lightweight-charts` / the public embed) for
-  TradingView's self-hosted Charting Library. In that plan, the Datafeed
-  adapter still pulls bars from **this app's own backend**
-  (`GET /api/v1/market/bars`), which is still backed by
-  `market.MockProvider`'s synthetic generator. TradingView does not
-  become the source of real Vietnamese market data in that plan -- it
-  only changes which UI library renders whatever data our backend
-  provides.
-- TradingView does not offer a self-serve "give me real HOSE/HNX/UPCOM
-  data" API the way a licensed market-data vendor does. Their real data
-  integrations are broker/data-feed partnerships, a business
-  relationship to set up, not just an API key to request.
-- The self-hosted Charting Library itself also still needs TradingView's
-  GitHub-gated access approval (a human -- the user -- has to request
-  this; not something a session can do autonomously). Not yet requested
-  as of this note.
-- Separately: RESUME.md's own "Plan" section item #3 (a real Vietnamese
-  market-data vendor for `market.MockProvider` to be replaced with) is
-  still a genuinely open, distinct decision this instruction does not
-  resolve on its own.
+- TradingView does not sell a self-serve "market data API" the way a
+  licensed data vendor (SSI, VNDIRECT, TCBS, etc.) does. Their three
+  real developer surfaces are: the Charting Library (free, self-hosted
+  chart widget -- you supply the data), the Datafeed API (the spec for
+  piping data INTO that widget from your own source), and the Broker
+  REST API (for brokerages applying to let TradingView's own users trade
+  through them -- not a way to pull data out).
+- TradingView's own platform DOES cover Vietnamese exchanges -- HOSE and
+  HNX (which UPCoM listings fall under) are both listed on
+  https://www.tradingview.com/data-coverage/. So the data exists on
+  their platform; the question is only whether/how it can be licensed
+  out to a third-party app like this one.
+- That page has no self-serve licensing/API-access flow for third-party
+  applications -- it only shows individual-user subscription tiers
+  (delayed / non-professional real-time / professional real-time). The
+  only stated path is **contacting TradingView's sales/partnerships team
+  directly** -- a business conversation the user has to initiate, with
+  unknown pricing/terms, not something this session can request or
+  estimate.
+- Search results also surfaced third-party services (e.g. a site
+  branded "TradingView Data API" with $0-$80/mo tiers, and an
+  unofficial GitHub scraper hitting TradingView's undocumented internal
+  endpoints) claiming to resell/scrape TradingView's data. **These are
+  explicitly out of scope for this project** -- api-spec.md already
+  rules out scraped data, and neither is an official, licensed
+  TradingView product.
 
-**Before writing any code next session**, get clarity from the user on
-which of these they actually want:
+**Bottom line: there is no code for a session to write here yet.** The
+only real next action is the user contacting TradingView's sales/
+partnerships team to find out if third-party data licensing is even
+possible and at what cost -- the same kind of decision RESUME.md's
+"Plan" item #3 (a licensed Vietnamese market-data vendor) already
+required, just pointed at TradingView specifically instead of SSI/
+VNDIRECT/TCBS/etc. Once the user has an answer from TradingView (a real
+API/feed spec and terms, or a "no"), a future session can build the
+actual adapter against whatever that turns out to be. Until then, don't
+start implementation speculatively against an assumed API shape.
 
-1. Proceed with the charting-library-integration.md plan as documented
-   (TradingView Charting Library as the chart *widget*, still fed by
-   this app's own mock backend data) -- if so, the concrete first step
-   is the user requesting TradingView's GitHub-gated Charting Library
-   access (an action only the user can take, outside this session).
-2. Something else the user means by "take data from provider tradingview
-   api" -- e.g. an actual TradingView data/broker integration, which
-   would need its own research into whether that's even available
-   without a broker partnership, separate from
-   charting-library-integration.md's existing (UI-only) plan.
+Separately, still true and unresolved: the self-hosted Charting Library
+(the UI-only path from charting-library-integration.md, distinct from
+this data-source question) still needs TradingView's GitHub-gated access
+approval, which the user also has not requested yet.
 
 Do not silently assume (1) resolves the real-data-source gap; confirm
 with the user first per this repo's standing verification discipline.
