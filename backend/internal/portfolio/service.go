@@ -202,6 +202,14 @@ func (s *Service) reconstructTrades(portfolioID string) ([]ClosedTrade, map[stri
 		return nil, nil
 	}
 	fills := s.orders.FilledOrders(userID, portfolioID)
+	// FIFO matching below assumes fills arrive oldest-first. That's true
+	// by construction for ordinary real-time trading (orders are
+	// appended in the order they happen), but Phase F's Replay sessions
+	// append fills carrying a *simulated* historical FilledAt at real
+	// (later) wall-clock append time -- so append order and chronological
+	// order can disagree once Replay exists. Sorting defensively here
+	// costs nothing for the already-sorted real-trading case.
+	sort.SliceStable(fills, func(i, j int) bool { return fills[i].FilledAt < fills[j].FilledAt })
 
 	queues := make(map[string][]lot)
 	var closed []ClosedTrade

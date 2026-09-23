@@ -1112,32 +1112,127 @@ daemon) -- worth re-running `docker compose build && docker compose up`
 + curl in an environment that has it, before assuming parity with every
 prior phase's Docker-verified state.
 
+**Phase F (Replay Mode) -- DONE.** Plan: phase-f.md, written against
+`design/screens/Replay.dc.html`. The plan's own "single feature with no
+existing backend surface at all" -- a new `internal/replay` package plus
+a new `/replay` frontend page. Candle-by-candle historical replay with
+the future genuinely withheld server-side (not just visually masked) and
+a heuristic skill score.
+
+- **Backend `internal/replay`**, new package: `Start` fetches the full
+  historical bar range once (default anchor 2021-01-04, 120 daily bars --
+  matching the design's own caption exactly) via the existing
+  `market.Service.GetBars` (real for the VCI-backed live provider,
+  deterministic-synthetic for the mock fallback either way -- no new
+  data source needed) and stores the *entire* series in the session, but
+  a `SessionView` only ever serializes `Bars[:CurrentBar]` -- the actual
+  enforcement point for "cannot preview the future," not a client-side
+  visual trick. `Advance` reveals the next candle and auto-executes a
+  stop-loss if the new bar's low breaches it. `PlaceOrder` always fills
+  at the currently-revealed bar's close (no price field exists to send,
+  let alone validate). `End` computes final KPIs + a skill score,
+  callable at any point (an early exit is scored over however many bars
+  were actually played).
+- **Each session gets its own dedicated portfolio** (via the existing
+  `portfolio.Service.CreatePortfolio`), not the user's regular one --
+  considered and rejected booking historical-price fills against the
+  user's real portfolio, which would blend a symbol's average cost
+  across two unrelated time periods in Phase E's FIFO ledger. Replay
+  fills are logged as real `order.Order` records (via the existing
+  `*order.MemoryStore.Append`, no new method needed) with the *simulated*
+  historical bar date as `FilledAt`, not wall-clock time -- this is what
+  makes the design's "Tự động ghi vào Sổ giao dịch" copy literally true.
+  **Correctness fix this required:** Phase E's `reconstructTrades`
+  assumed a portfolio's orders arrive pre-sorted by fill time (true for
+  real trading, where append order == chronological order) -- Replay
+  fills carry historical dates but append in real (later) wall-clock
+  order, breaking that assumption. Fixed by sorting fills by parsed
+  `FilledAt` before FIFO-matching -- a no-op for the already-sorted real-
+  trading case, so this is backward-compatible, not just additive.
+- **Skill score is an explicit heuristic** (`source: "heuristic"`,
+  `final: false` until the session actually ends), matching the honesty
+  convention the existing rule-based AI Insight feature already
+  established: entry/exit quality (how close a fill was to the best
+  price in a +/-5-bar window), stop-loss discipline (was a stop set, and
+  did it actually trigger and close the position), position sizing
+  (consistency of bet size across fills), overall = plain average of the
+  four. The mid-session "provisional" score (the design's own framing,
+  "Điểm kỹ năng tạm tính") is computed the same way but with the scoring
+  window clamped to bars actually revealed so far, not the full known
+  series -- without that clamp, a mid-session score would leak future
+  prices into a number the client is allowed to see before the session
+  ends.
+- **Bug found and fixed during real browser verification, not caught by
+  curl:** `SessionView.Result.NAV` initially reused
+  `portfolio.Service.Stats()`'s `TotalEquity`, whose mark-to-market for
+  an *open* position values it at today's real, live market quote
+  (exactly correct for Phase E's real paper trading, wrong here) --
+  silently leaking today's live 2026 price into a session labeled
+  "Phiên mô phỏng bắt đầu 04/01/2021." Caught by watching a real session
+  in the browser (buying at the exact displayed "current" price produced
+  a nonzero, unexplained P&L). Fixed with `replayAccounting` (score.go):
+  walks the session's own fills against its own revealed bar closes,
+  the same accounting style `backtest/rule.go` already uses for a
+  historical simulation, with zero dependency on live market data.
+  `TotalTrades`/`Wins`/`Losses`/`ProfitFactor` remained safe to reuse
+  from `Stats` throughout (they come from closed trades' own historical
+  fill prices, never a live quote) -- only the open-position valuation
+  was contaminated.
+- **Frontend:** `frontend/src/app/replay/page.tsx` (guest gate) +
+  `ReplaySession.tsx` (the whole interactive session -- start form,
+  playback controls with auto-play/speed/keyboard Space-to-advance, order
+  ticket, fill log, results panel), `ReplayChart.tsx` (real inline SVG --
+  candles, the future-hidden mask, buy/sell markers, stop-loss line,
+  volume, following `DetailChart.tsx`'s established geometry approach
+  rather than a chart library, since the mask/markers need to live on the
+  same canvas), `ReplayResultsPanel.tsx` (KPI grid + skill donut).
+  Every mutation (start/advance/order/end) goes through a Server Action
+  in `replayActions.ts`, same reasoning as the rest of this app's
+  authenticated writes (httpOnly session cookie, Docker hostname
+  resolution) -- an auto-play loop is just more of these round-trips, not
+  a different mechanism. `navItems.ts`'s `/replay` moved to `"built"`.
+- Documented deviations (phase-f.md): one symbol per session, no short
+  selling, the replay portfolio doesn't appear in the main Portfolio
+  page's switcher yet (that's Phase G), no back-stepping (only forward
+  advance), no session resumption across a page reload.
+
+Verified: `go build ./... && go vet ./...` clean, `gofmt -l` no new
+issues; `npx tsc --noEmit`, `npx eslint .`, `npm run build` all clean.
+Backend via curl: a full start -> buy-with-stop -> advance-until-
+triggered -> end sequence returned correct fills/auto-exit/final score;
+confirmed 409 error paths for selling with no position and acting on a
+completed session. Full Postman collection (5 new Replay requests added):
+41 requests, 0 failures. Real browser (Playwright against this sandbox's
+pre-installed headless Chromium, driving the actual `next dev` + `go run`
+servers): registered a real account, started a real HPG session,
+watched the real chart render correctly (candles/mask/volume/progress),
+placed a real buy with a stop-loss and watched it really auto-trigger on
+the next candle (via the session log's "Tự động cắt lỗ" note, not just a
+successful request), ran real auto-play, ended the session and confirmed
+the skill panel's copy actually flips from provisional to final and every
+mutating control becomes really disabled (checked the DOM `disabled`
+attribute directly). Re-verified the NAV fix specifically: buying at the
+exact price shown as "current" now leaves NAV/P&L at exactly 0,00% until
+the price moves within the replay's own history, with no live-quote leak.
+
 ---
 
 ## Plan (where to pick up)
 
-Phases A-E of FULL-APP-PLAN.md's 20-screen rebuild are now done (see the
+Phases A-F of FULL-APP-PLAN.md's 20-screen rebuild are now done (see the
 Done section above). Next up, in that plan's own order:
 
-1. **Phase F -- Replay Mode** (`design/screens/Replay.dc.html`): candle-by-
-   candle historical replay with masked future bars and a skill score.
-   Not built at all yet. FULL-APP-PLAN.md section 2.5 already proposes a
-   concrete scoring formula (entry/exit quality vs. the best achievable
-   price in a small window, stop-loss discipline, position-sizing
-   variance) -- read that before starting, plus phase-e.md's Stats/
-   equity-history machinery (reusable: a Replay session is really just
-   another sequence of fills against a portfolio, scored after the fact).
-2. **Phase G** (Account-Menu.dc.html, Signup's capital picker): the
+1. **Phase G** (Account-Menu.dc.html, Signup's capital picker): the
    multi-portfolio switcher UI -- the backend (`portfolios` plural API,
    Phase B) has supported this since before Phase E; only the frontend
    picker/switcher never got built. Phase E's Portfolio page still only
    ever reads `portfolios[0]` (the lazily-created default) -- worth
    revisiting once Account-Menu exists.
-3. **Phase H** (Settings-AI.dc.html, then Quant.dc.html): BYOK LLM
+2. **Phase H** (Settings-AI.dc.html, then Quant.dc.html): BYOK LLM
    provider settings, then the actual Quant chat -- read FULL-APP-PLAN.md
    section 2.2 first, this is explicitly bring-your-own-key, not a
    company-funded model call.
-4. Independently of the lettered phases: wire a real Postgres database
+3. Independently of the lettered phases: wire a real Postgres database
    behind auth/watchlist/portfolio/order (all in-memory MemoryStores that
    reset on restart today), and replace the VCI market-data adapter with
    a licensed vendor if the user decides to pursue that (see the VCI

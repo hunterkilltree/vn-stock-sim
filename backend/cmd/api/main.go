@@ -19,6 +19,7 @@ import (
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/market"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/order"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/portfolio"
+	"github.com/hunterkilltree/vn-stock-sim/backend/internal/replay"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/screener"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/symbol"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/watchlist"
@@ -54,10 +55,14 @@ func main() {
 	watchlistSvc := watchlist.NewService(watchlist.NewMemoryStore(), symbolSvc)
 	portfolioStore := portfolio.NewMemoryStore()
 	portfolioSvc := portfolio.NewService(portfolioStore, symbolSvc)
+	// orderStore is a named variable (not inlined) because Phase F's
+	// replaySvc below also needs it, to log Replay fills as real
+	// order.Order records -- see phase-f.md decision 5.
+	orderStore := order.NewMemoryStore()
 	// Ledger is portfolioSvc, not the bare store -- portfolioSvc.ApplyFill
 	// wraps the store's ledger op with a real equity-history snapshot on
 	// every fill (see phase-e.md item 1 and portfolio/service.go).
-	orderSvc := order.NewService(order.NewMemoryStore(), portfolioSvc, symbolSvc, portfolioSvc)
+	orderSvc := order.NewService(orderStore, portfolioSvc, symbolSvc, portfolioSvc)
 	// SetOrdersPort closes the reverse dependency (portfolioSvc.Stats
 	// needs order history) after both services exist, avoiding an import
 	// cycle -- see portfolio/types.go's OrdersPort comment.
@@ -65,6 +70,12 @@ func main() {
 	backtestSvc := backtest.NewService(backtest.NewMemoryStore(), marketSvc)
 	insightSvc := insight.NewService(symbolSvc, marketSvc)
 	screenerSvc := screener.NewService(symbolSvc, marketSvc)
+	// replaySvc reuses marketSvc (historical bars are just GetBars with a
+	// date range in the past), portfolioSvc (each session gets its own
+	// dedicated portfolio, see phase-f.md decision 4), and orderStore
+	// (Replay fills are logged as real orders, decision 5) -- no new
+	// dependency surface on any existing package.
+	replaySvc := replay.NewService(replay.NewMemoryStore(), marketSvc, portfolioSvc, orderStore)
 
 	router := gin.Default()
 	v1 := router.Group("/api/v1")
@@ -78,6 +89,7 @@ func main() {
 	backtest.RegisterRoutes(v1, backtestSvc, tokens)
 	insight.RegisterRoutes(v1, insightSvc)
 	screener.RegisterRoutes(v1, screenerSvc)
+	replay.RegisterRoutes(v1, replaySvc, tokens)
 
 	log.Printf("VN Stock Sim API listening on :%s", cfg.Port)
 	if err := router.Run(":" + cfg.Port); err != nil {
