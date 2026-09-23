@@ -15,6 +15,7 @@
     { "key": "portfolioId", "value": "", "type": "string" },
     { "key": "orderId", "value": "", "type": "string" },
     { "key": "backtestId", "value": "", "type": "string" },
+    { "key": "replaySessionId", "value": "", "type": "string" },
     { "key": "nowTs", "value": "", "type": "string" },
     { "key": "from10dTs", "value": "", "type": "string" },
     { "key": "from180dTs", "value": "", "type": "string" }
@@ -690,6 +691,94 @@
               "path": ["api", "v1", "backtests", "{{backtestId}}"]
             },
             "description": "Run \"Create Backtest\" first to populate {{backtestId}}."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Replay",
+      "description": "backend/internal/replay (Phase F). Authenticated. Each session gets its own dedicated portfolio (created automatically) so historical replay fills never mix with the user's real paper-trading account -- see phase-f.md decision 4. A fill always executes at the currently-revealed candle's close; there is no price field to send. Run \"Start Session\" first to populate {{replaySessionId}}.",
+      "item": [
+        {
+          "name": "Start Session",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"symbol\": \"{{symbol}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/replay/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "replay", "sessions"]
+            },
+            "description": "resolution/totalBars/startDate are all optional -- default to \"1D\"/120/\"2021-01-04\" (matching design/screens/Replay.dc.html's own caption exactly). -> 201 SessionView with the first 20 candles already revealed."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('replaySessionId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Session",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/replay/sessions/{{replaySessionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "replay", "sessions", "{{replaySessionId}}"]
+            }
+          }
+        },
+        {
+          "name": "Place Order (buy with stop-loss)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"side\": \"buy\",\n  \"quantity\": 1000,\n  \"stopLoss\": 30000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/replay/sessions/{{replaySessionId}}/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "replay", "sessions", "{{replaySessionId}}", "orders"]
+            },
+            "description": "stopLoss is optional and only meaningful on a buy -- if the low of a later revealed candle breaches it, Advance auto-sells the whole position at the stop price. Fills always at Bars[currentBar-1].Close, never a client-supplied price."
+          }
+        },
+        {
+          "name": "Advance",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/replay/sessions/{{replaySessionId}}/advance",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "replay", "sessions", "{{replaySessionId}}", "advance"]
+            },
+            "description": "Reveals the next candle. Safe to call repeatedly past the last candle (done stays true, no error)."
+          }
+        },
+        {
+          "name": "End Session",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/replay/sessions/{{replaySessionId}}/end",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "replay", "sessions", "{{replaySessionId}}", "end"]
+            },
+            "description": "Callable at any point, not just once all candles are revealed -- an early exit is scored over however many bars were actually played. result.skill.final becomes true; it's already present (and honest about only using revealed bars) on every response before this, per the design's \"provisional score\" panel."
           }
         }
       ]

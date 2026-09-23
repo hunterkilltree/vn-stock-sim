@@ -68,7 +68,7 @@ export const navItems: NavItem[] = [
     href: "/replay",
     label: "Chế độ Replay",
     d: "M11 6L4 12l7 6V6zM20 6l-7 6 7 6V6z",
-    kind: "soon",
+    kind: "built",
   },
   {
     href: "/journal",

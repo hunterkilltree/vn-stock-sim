@@ -299,3 +299,62 @@ export type Order = {
 export function getOrders(token: string): Promise<{ data: Order[] }> {
   return apiFetch<{ data: Order[] }>("/api/v1/orders", { token });
 }
+
+// -- Phase F: Replay Mode (backend/internal/replay) --
+
+export type ReplayFill = {
+  barIndex: number;
+  date: string;
+  side: "buy" | "sell";
+  quantity: number;
+  price: number;
+  stopSet?: number;
+  note?: string;
+};
+
+// Skill scoring is an explicit heuristic (source is always "heuristic",
+// never presented as a validated skill assessment) -- see phase-f.md.
+// "final" is false until the session is actually ended; the numbers are
+// real and computed the same way either way, just clamped to bars
+// actually revealed so far while the session is still active (see the
+// backend's score.go).
+export type ReplaySkillScore = {
+  source: string;
+  final: boolean;
+  overall: number;
+  entryQuality: number;
+  exitQuality: number;
+  stopDiscipline: number;
+  positionSizing: number;
+};
+
+export type ReplayResult = {
+  nav: number;
+  pnlPercent: number;
+  totalTrades: number;
+  wins: number;
+  losses: number;
+  maxDrawdownPercent: number;
+  profitFactor: number;
+  skill: ReplaySkillScore;
+};
+
+// The one response shape every Replay endpoint returns -- see
+// backend/internal/replay/types.go's SessionView.
+export type ReplaySession = {
+  id: string;
+  symbol: string;
+  resolution: string;
+  portfolioId: string;
+  currentBar: number;
+  totalBars: number;
+  done: boolean;
+  status: "active" | "completed";
+  bars: Bar[];
+  sma20: IndicatorPoint[];
+  fills: ReplayFill[];
+  stopLoss?: number;
+  positionQty: number;
+  avgCost?: number;
+  result: ReplayResult;
+};
