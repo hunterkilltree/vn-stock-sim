@@ -45,3 +45,9 @@ func rsiFromAvg(avgGain, avgLoss float64) float64 {
 	rs := avgGain / avgLoss
 	return 100 - 100/(1+rs)
 }
+
+// RSI and SMA are exported for packages that already hold bars (backtest,
+// quant) so they don't re-implement the same indicator math.
+func RSI(bars []Bar, period int) []IndicatorPoint { return rsi(bars, period) }
+
+func SMA(bars []Bar, period int) []IndicatorPoint { return sma(bars, period) }

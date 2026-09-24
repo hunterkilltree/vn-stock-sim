@@ -36,7 +36,7 @@ func createHandler(svc *Service) gin.HandlerFunc {
 		bt, err := svc.Create(userID, req)
 		if err != nil {
 			if errors.Is(err, ErrUnsupportedRule) {
-				httpx.ValidationError(c, "unsupported rule type", []httpx.FieldError{{Field: "rule.type", Reason: "only ema_crossover is supported in V1"}})
+				httpx.ValidationError(c, "unsupported rule type", []httpx.FieldError{{Field: "rule.type", Reason: "supported: ema_crossover, rsi_reversion"}})
 				return
 			}
 			httpx.Error(c, http.StatusBadRequest, "invalid_range", "invalid from/to date range")
