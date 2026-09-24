@@ -80,7 +80,7 @@ export const navItems: NavItem[] = [
     href: "/quant",
     label: "Trợ lý Quant",
     d: "M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5z",
-    kind: "soon",
+    kind: "built",
   },
 ];
 

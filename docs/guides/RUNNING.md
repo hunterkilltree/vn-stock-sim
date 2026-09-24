@@ -6,7 +6,7 @@ directly on your machine, with hot reload.
 
 ## Prerequisites
 
-- Go 1.22 or newer (`go version`)
+- Go 1.24 or newer (`go version`) -- required by the Anthropic Go SDK used by Trợ lý Quant
 - Node.js 20 or newer and npm (`node --version`, `npm --version`)
 
 The backend has only been built and run inside Docker so far (see
@@ -26,13 +26,15 @@ go run ./cmd/api
 Serves the API on `http://localhost:8080`. Everything is in-memory (see
 RESUME.md) -- state resets every time you restart this process.
 
-Environment variables (both optional, with defaults from
+Environment variables (all optional, with defaults from
 `internal/config/config.go`):
 
-| Variable     | Default                 | Purpose                              |
-| ------------ | ------------------------ | ------------------------------------- |
-| `PORT`       | `8080`                   | HTTP port                             |
-| `JWT_SECRET` | `dev-secret-change-me`   | HMAC signing key for bearer tokens    |
+| Variable                        | Default                | Purpose |
+| ------------------------------- | ---------------------- | ------- |
+| `PORT`                          | `8080`                 | HTTP port |
+| `JWT_SECRET`                    | `dev-secret-change-me` | HMAC signing key for bearer tokens |
+| `MARKET_DATA_SOURCE`            | `vci`                  | `vci` (live, falls back to mock) or `mock` |
+| `QUANT_ALLOW_PRIVATE_ENDPOINTS` | unset (off)            | `true` lets Trợ lý Quant's "Máy chủ riêng" provider reach localhost/private addresses (e.g. Ollama on the same machine). Leave off on any shared server. |
 
 Verify it is up:
 

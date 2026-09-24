@@ -26,35 +26,52 @@ func NewService(store *MemoryStore, bars BarsPort) *Service {
 // Create runs the requested rule synchronously (see store.go's note on the
 // deferred worker pool) and stores the completed result.
 func (s *Service) Create(userID string, req createRequest) (Backtest, error) {
-	if req.Rule.Type != "ema_crossover" {
-		return Backtest{}, ErrUnsupportedRule
-	}
 	from, to, err := parseDateRange(req.From, req.To)
 	if err != nil {
 		return Backtest{}, err
 	}
 	bars := s.bars.GetBars(req.Symbol, "1D", from, to)
 
-	fast := req.Rule.Params["fast"]
-	slow := req.Rule.Params["slow"]
-	if fast <= 0 {
-		fast = 20
-	}
-	if slow <= 0 {
-		slow = 50
+	var result runResult
+	switch req.Rule.Type {
+	case "ema_crossover":
+		fast := paramOr(req.Rule.Params, "fast", 20)
+		slow := paramOr(req.Rule.Params, "slow", 50)
+		result = runEMACrossover(bars, fast, slow, req.StartingCapital)
+	case "rsi_reversion":
+		result = runRSIReversion(bars, rsiReversionParams{
+			period:          paramOr(req.Rule.Params, "period", 14),
+			entry:           float64(paramOr(req.Rule.Params, "entry", 35)),
+			exit:            float64(paramOr(req.Rule.Params, "exit", 70)),
+			stopLossPercent: float64(paramOr(req.Rule.Params, "stopLossPercent", 0)),
+			trendSMA:        paramOr(req.Rule.Params, "trendSma", 0),
+		}, req.StartingCapital)
+	default:
+		return Backtest{}, ErrUnsupportedRule
 	}
 
-	result := runEMACrossover(bars, fast, slow, req.StartingCapital)
 	bt := Backtest{
-		Symbol:        req.Symbol,
-		Status:        "completed",
-		CreatedAt:     time.Now().UTC().Format("2006-01-02T15:04:05Z"),
-		FinalCapital:  round2(result.finalCapital),
-		ReturnPercent: round2(result.returnPercent),
-		TotalTrades:   result.totalTrades,
-		WinRate:       round2(result.winRate),
+		Symbol:             req.Symbol,
+		Status:             "completed",
+		CreatedAt:          time.Now().UTC().Format("2006-01-02T15:04:05Z"),
+		FinalCapital:       round2(result.finalCapital),
+		ReturnPercent:      round2(result.returnPercent),
+		TotalTrades:        result.totalTrades,
+		WinRate:            round2(result.winRate),
+		RuleType:           req.Rule.Type,
+		MaxDrawdownPercent: round2(result.maxDrawdownPercent),
+		ProfitFactor:       round2(result.profitFactor),
 	}
 	return s.store.Append(userID, bt), nil
+}
+
+// paramOr reads an int rule parameter, falling back to def when it's
+// missing or not positive.
+func paramOr(params map[string]int, key string, def int) int {
+	if v, ok := params[key]; ok && v > 0 {
+		return v
+	}
+	return def
 }
 
 func (s *Service) List(userID string) []Backtest {

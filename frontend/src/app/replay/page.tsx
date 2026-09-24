@@ -13,15 +13,18 @@ export const metadata = { title: "Chế độ Replay — VN Stock Sim" };
 // play), so this page is a thin Server Component wrapper that only
 // handles the guest gate -- the actual work is ReplaySession.tsx, a
 // Client Component.
-export default async function ReplayPage() {
+export default async function ReplayPage({ searchParams }: PageProps<"/replay">) {
   const user = await getSessionUser();
+  // "Chạy thử bằng Replay" from Quant links here with ?symbol=.
+  const raw = (await searchParams).symbol;
+  const initialSymbol = typeof raw === "string" && /^[A-Za-z0-9]{1,10}$/.test(raw) ? raw.toUpperCase() : "HPG";
 
   return (
     <div className="flex flex-1 bg-app-bg text-app-text">
       <RailNav account={<AccountMenuButton placement="right" />} />
       <div className="flex min-w-0 flex-1 flex-col p-[20px_24px]">
         {user ? (
-          <ReplaySession />
+          <ReplaySession initialSymbol={initialSymbol} />
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
             <span className="text-[11px] uppercase tracking-[0.09em] text-app-text-muted">Chế độ Replay</span>

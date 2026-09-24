@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { navItems, settingsItem } from "@/lib/navItems";
@@ -11,6 +12,9 @@ type Props = {
   // summary -- omitted entirely (not a fake "0") for a guest, per
   // phase-c.md decision 5.
   cashBalance?: number;
+  // Page-specific block under the Settings link, e.g. Quant's
+  // "Hội thoại gần đây" list (Quant.dc.html).
+  children?: ReactNode;
 };
 
 function NavIcon({ d }: { d: string }) {
@@ -27,7 +31,7 @@ function NavIcon({ d }: { d: string }) {
 // 10-item nav list, a separate Settings link outside the loop, and a
 // balance card wired to real portfolio data instead of the mockup's
 // static sample. See phase-c.md.
-export default function SidebarNav({ cashBalance }: Props) {
+export default function SidebarNav({ cashBalance, children }: Props) {
   const pathname = usePathname();
 
   return (
@@ -87,6 +91,8 @@ export default function SidebarNav({ cashBalance }: Props) {
         <NavIcon d={settingsItem.d} />
         <span className="text-[13.5px] font-medium">{settingsItem.label}</span>
       </Link>
+
+      {children}
 
       {cashBalance !== undefined && (
         <div className="flex flex-col gap-[6px] rounded-xl border border-app-border bg-app-surface-2 p-[14px]">

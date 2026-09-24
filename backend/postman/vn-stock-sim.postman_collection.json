@@ -709,6 +709,32 @@
           ]
         },
         {
+          "name": "Create Backtest (rsi_reversion)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"symbol\": \"{{symbol}}\",\n  \"from\": \"2021-01-01\",\n  \"to\": \"2026-09-01\",\n  \"startingCapital\": 100000000,\n  \"rule\": {\n    \"type\": \"rsi_reversion\",\n    \"params\": { \"period\": 14, \"entry\": 35, \"exit\": 70, \"stopLossPercent\": 7, \"trendSma\": 0 }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/backtests",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "backtests"]
+            },
+            "description": "Phase H rule (phase-h.md decision 3): buy when RSI(period) crosses up through entry (and price > SMA(trendSma) if set), sell when RSI > exit or the price is stopLossPercent below entry. Both rules now also return maxDrawdownPercent and profitFactor."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('returns 202', function () { pm.response.to.have.status(202); });"]
+              }
+            }
+          ]
+        },
+        {
           "name": "Get Backtest",
           "request": {
             "method": "GET",
@@ -834,6 +860,64 @@
             },
             "description": "Callable at any point, not just once all candles are revealed -- an early exit is scored over however many bars were actually played. result.skill.final becomes true; it's already present (and honest about only using revealed bars) on every response before this, per the design's \"provisional score\" panel."
           }
+        }
+      ]
+    },
+    {
+      "name": "Quant",
+      "description": "backend/internal/quant (Phase H). Authenticated. Bring-your-own-key: every request carries the user's own model key (provider claude | openai | custom), which is used for that one call and never stored or logged. The model only turns the question into structured conditions / a strategy draft; the backend runs them against its own data. These requests are written to pass without a real key (they assert the error paths); put your own key in apiKey to see a real answer. See docs/roadmap/phases/phase-h.md.",
+      "item": [
+        {
+          "name": "Test Connection (no key -> 400)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider\": \"claude\",\n  \"apiKey\": \"\",\n  \"model\": \"claude-opus-5\",\n  \"timeoutSeconds\": 60,\n  \"temperature\": 0.2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/quant/test",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "quant", "test"]
+            },
+            "description": "One real round trip on the sample question 'Lọc HOSE có RSI dưới 35 và ROE trên 15%.' -> 200 { ok, latencyMs, usage, understood, expected: 3, labels, models }. With an empty apiKey it fails fast with 400 missing_connection and no model call. A wrong key returns 502 provider_error with the provider's own message and providerStatus."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('returns 400', function () { pm.response.to.have.status(400); });"]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Chat (endpoint URL refused -> 400)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider\": \"custom\",\n  \"baseUrl\": \"ftp://169.254.169.254/v1\",\n  \"model\": \"any\",\n  \"messages\": [{ \"role\": \"user\", \"content\": \"Lọc HOSE có RSI dưới 35 và ROE trên 15%\" }],\n  \"scope\": { \"prices\": true, \"indicators\": true, \"watchlist\": true, \"positions\": false },\n  \"defaultExchange\": \"HOSE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/quant/chat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "quant", "chat"]
+            },
+            "description": "Self-hosted endpoints are user-supplied URLs the server connects to, so only http(s) URLs are accepted and loopback/private/link-local addresses (e.g. http://169.254.169.254) are refused with 400 endpoint_not_allowed unless the backend runs with QUANT_ALLOW_PRIVATE_ENDPOINTS=true. This example uses a non-http scheme so it is refused under either setting. On success: 200 { reply, screen: { labels, universe, matches[] }, strategy, dropped[], plan, usage, latencyMs, model, temperatureApplied }."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('returns 400', function () { pm.response.to.have.status(400); });"]
+              }
+            }
+          ]
         }
       ]
     }

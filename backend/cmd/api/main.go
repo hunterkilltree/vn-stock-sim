@@ -19,6 +19,7 @@ import (
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/market"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/order"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/portfolio"
+	"github.com/hunterkilltree/vn-stock-sim/backend/internal/quant"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/replay"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/screener"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/symbol"
@@ -76,6 +77,7 @@ func main() {
 	// (Replay fills are logged as real orders, decision 5) -- no new
 	// dependency surface on any existing package.
 	replaySvc := replay.NewService(replay.NewMemoryStore(), marketSvc, portfolioSvc, orderStore)
+	quantSvc := quant.NewService(quant.DefaultClients(cfg.QuantAllowPrivateEndpoints), symbolSvc, marketSvc, watchlistSvc, portfolioSvc)
 
 	router := gin.Default()
 	v1 := router.Group("/api/v1")
@@ -90,6 +92,7 @@ func main() {
 	insight.RegisterRoutes(v1, insightSvc)
 	screener.RegisterRoutes(v1, screenerSvc)
 	replay.RegisterRoutes(v1, replaySvc, tokens)
+	quant.RegisterRoutes(v1, quantSvc, tokens)
 
 	log.Printf("VN Stock Sim API listening on :%s", cfg.Port)
 	if err := router.Run(":" + cfg.Port); err != nil {

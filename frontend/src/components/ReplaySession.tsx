@@ -16,9 +16,9 @@ const AUTOPLAY_BASE_MS = 900;
 // from the backend after every action (see backend/internal/replay's
 // SessionView -- the "future hidden" guarantee is enforced there, not
 // by anything this component chooses not to render).
-export default function ReplaySession() {
+export default function ReplaySession({ initialSymbol }: { initialSymbol: string }) {
   const [session, setSession] = useState<Session | null>(null);
-  const [symbol, setSymbol] = useState("HPG");
+  const [symbol, setSymbol] = useState(initialSymbol);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [autoPlay, setAutoPlay] = useState(false);

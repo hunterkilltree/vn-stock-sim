@@ -1279,22 +1279,85 @@ Branch: `phase-g-account-menu` (off master after PR #22). Phase F also
 has its own named branch, `phase-f-replay-mode`, pointing at its merged
 commit.
 
+**Phase H (AI Model settings, bring-your-own-key, and Trợ lý Quant) --
+DONE.** Plan: docs/roadmap/phases/phase-h.md, against
+`design/screens/Settings-AI.dc.html` and `design/screens/Quant.dc.html`.
+Branch: `phase-h-quant` (stacked on `docs-structure`, which is stacked on
+`phase-g-account-menu` -- none merged yet).
+
+- **Bring your own key, as FULL-APP-PLAN.md 2.2 requires.** The key is
+  kept only in the browser (`localStorage`) and sent with each request
+  through Next.js Route Handlers (`/api/quant/*`, not Server Actions,
+  because `next dev` prints Server Action arguments) and the Go backend
+  straight to the provider; neither server stores or logs it. "Quant
+  Cloud" (a company-paid tier) is shown disabled. The UI copy says exactly
+  this instead of the design's "encrypted, VN Stock Sim can't read it",
+  which a server-side proxy doesn't make literally true.
+- **New `internal/quant` package.** Providers: Claude via the official Go
+  SDK (`anthropic-sdk-go`, structured JSON outputs, refusal fallbacks for
+  `claude-opus-5`, never picks up server-side credentials), OpenAI (strict
+  `json_schema` output), and any self-hosted OpenAI-compatible endpoint
+  (behind an SSRF guard: private/loopback/metadata addresses refused
+  unless `QUANT_ALLOW_PRIVATE_ENDPOINTS=true`). The model only returns a
+  structured plan -- screen conditions and/or a strategy draft -- which
+  the backend validates (drops and reports what it can't run) and then
+  executes itself on real app data (prices/RSI/SMA/volume from the
+  market service, fundamentals from the symbol service). The optional
+  context sent to the model follows the Settings "data sent to the model"
+  toggles. `POST /api/v1/quant/test` runs the design's sample question
+  and scores it (x/3 conditions understood) plus lists the key's models;
+  `POST /api/v1/quant/chat` is the conversation.
+- **Backtest engine**: new `rsi_reversion` rule (the design's "buy when
+  RSI crosses up 35, sell above 70 or at −7%"), plus max drawdown and
+  profit factor on both rules.
+- **Frontend**: the full Settings › Mô hình AI form (provider cards, key +
+  test, Claude model tiers `claude-opus-5` / `claude-sonnet-5` /
+  `claude-haiku-4-5` plus the key's own model list, timeout, creativity
+  slider with an honest "this model ignores it" note -- current Claude
+  models reject `temperature` --, auto-backtest toggle, data-scope
+  checkboxes, per-browser monthly token counter, "try before saving",
+  unsaved-changes footer with undo/save) and `/quant` (chat thread with
+  condition chips and result summary, strategy card with auto-backtest,
+  results panel with CSV export / add to watchlist / multi-symbol
+  backtest / open in Replay, recent conversations in the sidebar, scope
+  chips). Main's "Hỏi Quant" card and "Chạy thử bằng Replay" now link
+  through with the question/symbol pre-filled. WILL-badged: "Mã Python"
+  tab, "Lưu chiến lược", letting Quant place paper orders, private trade
+  notes as model context. Quant-Chart (radial menu) not started.
+- Go 1.24 now required (SDK), Dockerfile updated. First unit tests in the
+  repo (`go test ./...`, 18 tests).
+
+Verified (details in phase-h.md): unit tests; curl through a local
+OpenAI-compatible stub model, including the screen's RSI numbers matching
+`/market/indicators` exactly; a real call to Anthropic's API with a
+deliberately invalid key surfacing Anthropic's own error; SSRF refusals;
+Newman 46/0; a full Playwright run on the production build covering
+settings → test → save → screen → strategy → backtests → history →
+cross-screen links, no page errors, keys absent from all logs. **Not yet
+done: a successful live round trip with a real Claude/OpenAI key** --
+that needs the user's own key.
+
 ---
 
 ## Plan (where to pick up)
 
-Phases A-G of FULL-APP-PLAN.md's 20-screen rebuild are now done (see the
-Done section above). Next up, in that plan's own order:
+Phases A-H of FULL-APP-PLAN.md's rebuild are now done (see the Done
+section above). Next up:
 
-1. **Phase H** (Settings-AI.dc.html's form, then Quant.dc.html): BYOK LLM
-   provider settings inside the `/settings/ai` shell Phase G built, then
-   the actual Quant chat -- read FULL-APP-PLAN.md section 2.2 first, this
-   is explicitly bring-your-own-key, not a company-funded model call.
-2. Independently of the lettered phases: wire a real Postgres database
+1. **Merge the stacked branches** in order: `phase-g-account-menu` →
+   `docs-structure` → `phase-h-quant` (no PRs opened yet).
+2. **Try Quant with a real key** (Settings › Mô hình AI → Claude → paste a
+   key → Kiểm tra) -- the one Phase H check this sandbox couldn't do.
+3. **Phase I** (Crypto-Main/Detail/Replay.dc.html): a parallel
+   `internal/crypto` feature set per FULL-APP-PLAN.md 2.3; also enables
+   the disabled 10.000 USDT signup option.
+4. **Phase J** (mobile layouts) and **Phase K** (WILL items, English);
+   Quant-Chart is Phase H's deferred stretch item.
+5. Independently of the lettered phases: wire a real Postgres database
    behind auth/watchlist/portfolio/order (all in-memory MemoryStores that
-   reset on restart today), and replace the VCI market-data adapter with
-   a licensed vendor if the user decides to pursue that (see the VCI
-   entry above for why VCI was chosen as an interim, swappable adapter).
+   reset on restart today -- also what free hosts other than an always-on
+   VM need), and replace the VCI market-data adapter with a licensed
+   vendor if the user decides to pursue that.
 
 ---
 
