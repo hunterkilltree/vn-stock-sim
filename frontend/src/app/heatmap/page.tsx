@@ -58,13 +58,13 @@ export default async function HeatmapPage({ searchParams }: PageProps<"/heatmap"
   };
 
   return (
-    <div className="flex h-dvh overflow-hidden bg-app-bg text-app-text">
+    <div className="flex flex-1 bg-app-bg text-app-text lg:h-dvh lg:overflow-hidden">
       <SidebarNav mode={market} />
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 p-[24px_28px]">
-        <header className="flex items-end justify-between gap-6">
-          <div className="flex flex-col gap-[5px]">
-            <h1 className="m-0 font-display text-[27px] font-bold tracking-[-0.015em]">Bản đồ nhiệt</h1>
-            <span className="text-[12.5px] text-app-text-muted">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 px-[18px] pb-4 pt-[22px] lg:p-[24px_28px]">
+        <header className="flex items-center justify-between gap-6 lg:items-end">
+          <div className="flex min-w-0 flex-col gap-[5px]">
+            <h1 className="m-0 font-display text-[23px] font-bold tracking-[-0.015em] lg:text-[27px]">Bản đồ nhiệt</h1>
+            <span className="text-[11.5px] text-app-text-muted lg:text-[12.5px]">
               {market === "crypto"
                 ? "Biến động 24 giờ theo nhóm coin · giao dịch 24/7, không có biên độ trần–sàn"
                 : `Biến động ${PERIODS.find((p) => p.id === period)?.label} theo ngành · ${exchange === "ALL" ? "HOSE, HNX, UPCOM" : exchange}`}
@@ -73,8 +73,9 @@ export default async function HeatmapPage({ searchParams }: PageProps<"/heatmap"
           <AccountMenuButton placement="below" />
         </header>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div role="group" aria-label="Thị trường" className="flex gap-1 rounded-[10px] border border-app-border p-[3px]">
+        {/* One scrolling row on phones instead of wrapping onto three lines. */}
+        <div className="-mx-[18px] flex items-center gap-3 overflow-x-auto px-[18px] lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0">
+          <div role="group" aria-label="Thị trường" className="flex shrink-0 gap-1 rounded-[10px] border border-app-border p-[3px]">
             <Link href={href({ market: "stock" })} {...pill(market === "stock")} aria-current={market === "stock" ? "page" : undefined}>
               Cổ phiếu
             </Link>
@@ -84,14 +85,14 @@ export default async function HeatmapPage({ searchParams }: PageProps<"/heatmap"
           </div>
           {market === "stock" ? (
             <>
-              <div role="group" aria-label="Sàn" className="flex gap-1 rounded-[10px] border border-app-border p-[3px]">
+              <div role="group" aria-label="Sàn" className="flex shrink-0 gap-1 rounded-[10px] border border-app-border p-[3px]">
                 {EXCHANGES.map((e) => (
                   <Link key={e.id} href={href({ exchange: e.id })} {...pill(exchange === e.id)} aria-current={exchange === e.id ? "true" : undefined}>
                     {e.label}
                   </Link>
                 ))}
               </div>
-              <div role="group" aria-label="Khoảng thời gian" className="flex gap-1 rounded-[10px] border border-app-border p-[3px]">
+              <div role="group" aria-label="Khoảng thời gian" className="flex shrink-0 gap-1 rounded-[10px] border border-app-border p-[3px]">
                 {PERIODS.map((p) => (
                   <Link key={p.id} href={href({ period: p.id })} {...pill(period === p.id)} aria-current={period === p.id ? "true" : undefined}>
                     {p.label}
@@ -100,7 +101,7 @@ export default async function HeatmapPage({ searchParams }: PageProps<"/heatmap"
               </div>
             </>
           ) : (
-            <span className="flex h-9 items-center rounded-[10px] border border-app-border px-3 text-[12.5px] text-app-text-3">24 giờ</span>
+            <span className="flex h-9 shrink-0 items-center rounded-[10px] border border-app-border px-3 text-[12.5px] text-app-text-3">24 giờ</span>
           )}
         </div>
 

@@ -155,7 +155,8 @@ func (s *Service) GetTopMovers(direction string, limit int) []TickerChange {
 	universe := s.universe("")
 	out := make([]TickerChange, 0, len(universe))
 	for _, d := range universe {
-		tc := TickerChange{Symbol: d.Symbol.Symbol, ChangePercent: round2(d.ChangePercent)}
+		// Name and exchange feed the phone movers list (Mobile-Market.dc.html).
+		tc := TickerChange{Symbol: d.Symbol.Symbol, ChangePercent: round2(d.ChangePercent), CompanyName: d.CompanyName, Exchange: d.Exchange}
 		if price, volume, ok := s.market.LatestQuote(d.Symbol.Symbol); ok {
 			tc.Price = round2(price)
 			tc.Volume = volume

@@ -7,6 +7,8 @@ import CryptoMoversTable from "@/components/CryptoMoversTable";
 import CryptoSearch from "@/components/CryptoSearch";
 import OpenCryptoWalletButton from "@/components/OpenCryptoWalletButton";
 import WillBadge from "@/components/WillBadge";
+import MarketSwitch from "@/components/MarketSwitch";
+import { MobileChips, MobileHero, MobileMoverList, MobileSectionHead, MobileTileGrid } from "@/components/MobileMarket";
 import {
   getCryptoHeatmap,
   getCryptoMovers,
@@ -76,21 +78,31 @@ export default async function CryptoMainPage() {
   const source = overview?.btc.source === "binance" ? "Binance" : "dữ liệu mô phỏng";
   const pnlPct = wallet && summary ? ((summary.totalEquity - wallet.startingCapital) / wallet.startingCapital) * 100 : 0;
 
+  const searchPairs = pairs.map((p) => ({ symbol: p.symbol, base: p.base, name: p.name }));
+  // Phone view (phase-j.md decision 13, following Mobile-Market): the 9
+  // largest coins as tiles.
+  const bigNine = heat
+    .flatMap((g) => g.tickers)
+    .sort((a, b) => (b.marketCap ?? 0) - (a.marketCap ?? 0))
+    .slice(0, 9);
+
   return (
     <div className="flex flex-1 bg-app-bg text-app-text">
       <SidebarNav mode="crypto" cashBalance={summary?.cashBalance} />
-      <div className="flex min-w-0 flex-1 flex-col gap-5 p-[24px_28px]">
-        <header className="flex items-end justify-between gap-6">
-          <div className="flex flex-col gap-[5px]">
-            <h1 className="m-0 font-display text-[27px] font-bold tracking-[-0.015em]">Thị trường crypto</h1>
-            <div className="flex items-center gap-2 text-[12.5px] text-app-text-3">
-              <span className="h-[7px] w-[7px] rounded-full bg-price-up" />
-              <span>{nowLabel()} · giao dịch 24/7, không có phiên và không có biên độ trần–sàn · {source}</span>
+      <div className="flex min-w-0 flex-1 flex-col gap-[14px] px-[18px] pb-4 pt-[22px] lg:gap-5 lg:p-[24px_28px]">
+        <header className="flex items-center justify-between gap-6 lg:items-end">
+          <div className="flex min-w-0 flex-col gap-[5px]">
+            <h1 className="m-0 font-display text-[23px] font-bold tracking-[-0.015em] lg:text-[27px]">Thị trường crypto</h1>
+            <div className="flex items-start gap-2 text-[11.5px] text-app-text-3 lg:items-center lg:text-[12.5px]">
+              <span className="mt-[5px] h-[7px] w-[7px] shrink-0 rounded-full bg-price-up lg:mt-0" />
+              <span>
+                {nowLabel()} · giao dịch 24/7<span className="hidden lg:inline">, không có phiên và không có biên độ trần–sàn</span> · {source}
+              </span>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <CryptoSearch pairs={pairs.map((p) => ({ symbol: p.symbol, base: p.base, name: p.name }))} />
-            <Link href="/crypto/replay" className="flex h-11 items-center gap-2 rounded-[11px] bg-app-accent px-4 text-[13.5px] font-semibold text-app-accent-ink">
+          <div className="flex shrink-0 items-center gap-3">
+            <CryptoSearch pairs={searchPairs} className="hidden lg:flex" />
+            <Link href="/crypto/replay" className="hidden h-11 items-center gap-2 lg:flex rounded-[11px] bg-app-accent px-4 text-[13.5px] font-semibold text-app-accent-ink">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M11 6L4 12l7 6V6zM20 6l-7 6 7 6V6z" />
               </svg>
@@ -106,8 +118,60 @@ export default async function CryptoMainPage() {
           </p>
         )}
 
+        <MarketSwitch mode="crypto" />
+        <CryptoSearch pairs={searchPairs} className="lg:hidden" />
+
         {overview && (
-          <div className="grid grid-cols-4 gap-4">
+          <div className="flex flex-col gap-[14px] lg:hidden">
+            <MobileHero
+              name="BTC / USDT"
+              value={formatCryptoPrice(overview.btc.lastPrice)}
+              changePercent={overview.btc.changePercent}
+              changeText={`${signVN(overview.btc.changePercent, 2)}% trong 24 giờ`}
+              sparkline={overview.btcSparkline}
+              foot={
+                <>
+                  <span>KL 24h {formatCompact(overview.btc.quoteVolume24h, "USDT")}</span>
+                  <span>Thống trị {formatVN(overview.btcDominancePercent, 1)}%</span>
+                </>
+              }
+            />
+            <MobileChips
+              chips={[
+                { name: "ETH", value: formatCryptoPrice(overview.eth.lastPrice), changePercent: overview.eth.changePercent, href: "/crypto/ETHUSDT" },
+                { name: "Vốn hoá", value: `${formatVN(overview.totalMarketCap / 1e9, 0)} tỷ`, changePercent: overview.totalMarketCapChangePercent },
+                { name: "BTC.D", value: `${formatVN(overview.btcDominancePercent, 1)}%`, changePercent: overview.btc.changePercent - overview.totalMarketCapChangePercent },
+              ]}
+            />
+            <section className="flex flex-col gap-[10px]">
+              <MobileSectionHead
+                title="Bản đồ nhiệt 24 giờ"
+                right={
+                  <Link href="/heatmap?market=crypto" className="-my-3 py-3 text-[12px] font-medium text-app-accent">
+                    Toàn bộ
+                  </Link>
+                }
+              />
+              <MobileTileGrid range={12} decimals={1} tiles={bigNine.map((t) => ({ symbol: t.symbol, changePercent: t.changePercent, href: `/crypto/${t.symbol}USDT` }))} />
+            </section>
+            <section className="flex flex-col gap-[10px]">
+              <MobileSectionHead title="Tăng mạnh nhất 24h" />
+              <MobileMoverList
+                rows={up.map((r) => ({
+                  symbol: r.symbol,
+                  label: `${r.base}/USDT`,
+                  name: r.name,
+                  price: formatCryptoPrice(r.lastPrice),
+                  changePercent: r.changePercent,
+                  href: `/crypto/${r.symbol}`,
+                }))}
+              />
+            </section>
+          </div>
+        )}
+
+        {overview && (
+          <div className="hidden grid-cols-4 gap-4 lg:grid">
             <CryptoStatCard
               name="BTC / USDT"
               value={formatCryptoPrice(overview.btc.lastPrice)}
@@ -141,8 +205,8 @@ export default async function CryptoMainPage() {
           </div>
         )}
 
-        <div className="flex min-h-0 flex-1 gap-5">
-          <div className="flex min-w-0 flex-1 flex-col gap-5">
+        <div className="flex min-h-0 flex-1 flex-col gap-5 lg:flex-row">
+          <div className="hidden min-w-0 flex-1 flex-col gap-5 lg:flex">
             <SectorHeatmap sectors={heat} market="crypto" />
             <section className="flex shrink-0 gap-6 rounded-2xl border border-app-border bg-app-surface p-[18px_20px]">
               <CryptoMoversTable title="Tăng mạnh nhất 24h" rows={up} />
@@ -150,7 +214,7 @@ export default async function CryptoMainPage() {
             </section>
           </div>
 
-          <div className="flex w-[372px] shrink-0 flex-col gap-4">
+          <div id="vi-crypto" className="flex w-full scroll-mt-4 flex-col gap-4 lg:w-[372px] lg:shrink-0">
             {!user ? (
               <section className="flex flex-col gap-3 rounded-2xl border border-app-border bg-app-surface p-[18px_20px]">
                 <span className="text-[11px] uppercase tracking-[0.09em] text-app-text-muted">Ví giấy</span>
@@ -236,7 +300,7 @@ export default async function CryptoMainPage() {
               </>
             )}
 
-            <section className="flex flex-col gap-3 rounded-2xl border border-app-accent-border bg-app-accent-surface p-[18px_20px]">
+            <section className="hidden flex-col gap-3 rounded-2xl border border-app-accent-border bg-app-accent-surface p-[18px_20px] lg:flex">
               <span className="text-[11px] uppercase tracking-[0.09em] text-app-accent">Chế độ Replay</span>
               <p className="m-0 font-display text-[18px] font-semibold leading-[1.35]">&ldquo;Giao dịch quá khứ trước khi giao dịch tương lai.&rdquo;</p>
               <p className="m-0 text-[12.5px] leading-[1.5] text-app-text-3">
@@ -246,7 +310,7 @@ export default async function CryptoMainPage() {
                 Bắt đầu phiên Replay
               </Link>
             </section>
-            <section title="Quant hiện chỉ lọc cổ phiếu" className="flex items-center gap-3 rounded-2xl border border-app-border bg-app-surface p-[14px_16px] opacity-70">
+            <section title="Quant hiện chỉ lọc cổ phiếu" className="hidden items-center lg:flex gap-3 rounded-2xl border border-app-border bg-app-surface p-[14px_16px] opacity-70">
               <div className="flex min-w-0 flex-1 flex-col gap-[1px]">
                 <span className="flex items-center gap-2 text-[13px] font-semibold">
                   Hỏi Quant <WillBadge />

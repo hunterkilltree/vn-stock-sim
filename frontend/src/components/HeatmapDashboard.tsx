@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import type { SectorGroup, TickerChange } from "@/lib/api";
 import { formatCompact, formatCryptoPrice, formatThousandsVN, signVN, tone } from "@/lib/format";
 import { squarify, type Rect } from "@/lib/treemap";
+import { MobileTileGrid } from "@/components/MobileMarket";
 
 type Market = "stock" | "crypto";
 type Props = { groups: SectorGroup[]; market: Market };
@@ -61,8 +62,29 @@ export default function HeatmapDashboard({ groups, market }: Props) {
   const capText = (t: TickerChange) => (market === "crypto" ? formatCompact(t.marketCap ?? 0, "USD") : formatCompact(t.marketCap ?? 0, "₫"));
 
   return (
-    <div className="flex min-h-0 flex-1 gap-5">
-      <section className="flex min-w-0 flex-1 flex-col gap-3 rounded-2xl border border-app-border bg-app-surface p-[16px_18px]">
+    <div className="flex min-h-0 flex-1 flex-col gap-5 lg:flex-row">
+      {/* Phones: one 3-column tile grid per sector, Mobile-Market's own
+          heatmap -- the treemap can't label 40 tiles in 354px
+          (phase-j.md decision 12). */}
+      <section className="flex flex-col gap-4 lg:hidden" aria-label="Bản đồ nhiệt theo nhóm">
+        {groups.map((g) => (
+          <div key={g.sector} className="flex flex-col gap-2">
+            <div className="flex items-baseline justify-between gap-2">
+              <h2 className="m-0 truncate text-[13.5px] font-semibold text-app-text-2">{g.sector}</h2>
+              <span className="shrink-0 font-plex-mono text-[12px] font-semibold" style={{ color: tone(g.avgChangePercent) }}>
+                {signVN(g.avgChangePercent, 2)}%
+              </span>
+            </div>
+            <MobileTileGrid
+              range={market === "crypto" ? 12 : 5}
+              decimals={market === "crypto" ? 1 : 2}
+              tiles={g.tickers.map((t) => ({ symbol: t.symbol, changePercent: t.changePercent, href: hrefFor(t) }))}
+            />
+          </div>
+        ))}
+      </section>
+
+      <section className="hidden min-w-0 flex-1 flex-col gap-3 rounded-2xl border border-app-border bg-app-surface p-[16px_18px] lg:flex">
         <div className="flex items-center justify-between gap-4">
           <span className="text-[12px] text-app-text-muted">
             {all.length} {market === "crypto" ? "coin" : "mã"} · kích thước theo {sizeBy === "cap" ? "vốn hoá" : "số lượng (bằng nhau)"}
@@ -151,8 +173,8 @@ export default function HeatmapDashboard({ groups, market }: Props) {
         </div>
       </section>
 
-      <aside className="flex w-[300px] shrink-0 flex-col gap-4 overflow-y-auto">
-        <section className="flex flex-col gap-3 rounded-2xl border border-app-border bg-app-surface p-4">
+      <aside className="flex w-full flex-col gap-4 lg:w-[300px] lg:shrink-0 lg:overflow-y-auto">
+        <section className="hidden flex-col gap-3 rounded-2xl border border-app-border bg-app-surface p-4 lg:flex">
           <span className="text-[11px] uppercase tracking-[0.09em] text-app-text-muted">{hover ? "Đang xem" : "Di chuột lên một ô để xem chi tiết"}</span>
           {hover && (
             <>
@@ -232,7 +254,7 @@ export default function HeatmapDashboard({ groups, market }: Props) {
             <div key={col.title} className="flex flex-col gap-[6px]">
               <h3 className="m-0 text-[12.5px] font-semibold text-app-text-2">{col.title}</h3>
               {col.rows.map((t) => (
-                <Link key={t.symbol} href={hrefFor(t)} className="flex justify-between text-[12.5px] text-app-text">
+                <Link key={t.symbol} href={hrefFor(t)} className="flex justify-between py-[7px] text-[12.5px] text-app-text lg:py-0">
                   <span className="font-plex-mono font-semibold">{t.symbol}</span>
                   <span className="font-plex-mono" style={{ color: tone(t.changePercent) }}>
                     {signVN(t.changePercent, 2)}%

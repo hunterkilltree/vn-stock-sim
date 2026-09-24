@@ -57,7 +57,7 @@ export default function EquityCurveChart({ points, startingCapital }: Props) {
 
   if (filtered.length === 0) {
     return (
-      <section className="flex h-[306px] shrink-0 flex-col gap-3 rounded-2xl border border-app-border bg-app-surface p-[18px_20px]">
+      <section className="flex shrink-0 flex-col gap-3 lg:h-[306px] rounded-2xl border border-app-border bg-app-surface p-[18px_20px]">
         <h2 className="m-0 text-[15px] font-semibold">Đường giá trị tài khoản</h2>
         <p className="text-[12.5px] text-app-text-muted">Chưa có dữ liệu -- đặt lệnh đầu tiên để bắt đầu theo dõi.</p>
       </section>
@@ -82,12 +82,22 @@ export default function EquityCurveChart({ points, startingCapital }: Props) {
   });
 
   const color = latestPct >= 0 ? "#35C77F" : "#FF5C5C";
+  // Phone copy in Mobile-Portfolio.dc.html's 322-wide space, no axis
+  // labels (phase-j.md decision 9); the zero line marks the starting capital.
+  const PW = 322;
+  const PH = 96;
+  // A single point (a new account) is drawn as a flat line across.
+  const series = pct.length === 1 ? [pct[0], pct[0]] : pct;
+  const px = (i: number) => (i / (series.length - 1)) * PW;
+  const pyp = (v: number) => 6 + ((hi - v) / (hi - lo || 1)) * (PH - 12);
+  const phoneLine = series.map((v, i) => `${px(i).toFixed(1)},${pyp(v).toFixed(1)}`).join(" ");
+  const phoneArea = `M0,${pyp(series[0]).toFixed(1)} ${series.map((v, i) => `L${px(i).toFixed(1)},${pyp(v).toFixed(1)}`).join(" ")} L${PW},${PH} L0,${PH} Z`;
   const first = new Date(filtered[0].timestamp);
   const last = new Date(filtered[filtered.length - 1].timestamp);
 
   return (
-    <section className="flex h-[306px] shrink-0 flex-col gap-3 rounded-2xl border border-app-border bg-app-surface p-[18px_20px]">
-      <div className="flex items-center justify-between">
+    <section className="flex shrink-0 flex-col gap-3 lg:h-[306px] rounded-2xl border border-app-border bg-app-surface p-[18px_20px]">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-[3px]">
           <h2 className="m-0 text-[15px] font-semibold">Đường giá trị tài khoản</h2>
           <span className="text-[11.5px] text-app-text-muted">So với vốn ban đầu · dữ liệu thực từ lịch sử khớp lệnh</span>
@@ -103,7 +113,7 @@ export default function EquityCurveChart({ points, startingCapital }: Props) {
                 key={r.label}
                 type="button"
                 onClick={() => setRange(r.days)}
-                className="h-[30px] rounded-lg border px-[11px] text-[11.5px]"
+                className="h-9 whitespace-nowrap rounded-lg border px-[11px] text-[11.5px] lg:h-[30px]"
                 style={
                   range === r.days
                     ? { borderColor: "var(--app-border-strong)", background: "var(--app-border)", color: "var(--app-text)" }
@@ -117,7 +127,12 @@ export default function EquityCurveChart({ points, startingCapital }: Props) {
         </div>
       </div>
 
-      <svg viewBox={`0 0 1000 ${H}`} width="100%" height={H} fill="none" role="img" aria-label={`Đường giá trị tài khoản ${signVN(latestPct, 2)}% so với vốn ban đầu`}>
+      <svg viewBox={`0 0 ${PW} ${PH}`} width="100%" height={PH} preserveAspectRatio="none" fill="none" aria-hidden="true" className="lg:hidden">
+        <line x1="0" y1={pyp(0).toFixed(1)} x2={PW} y2={pyp(0).toFixed(1)} stroke="var(--app-hairline)" strokeWidth={1} strokeDasharray="4 3" />
+        <path d={phoneArea} fill={color} opacity="0.1" />
+        <polyline points={phoneLine} stroke={color} strokeWidth="1.9" strokeLinejoin="round" />
+      </svg>
+      <svg viewBox={`0 0 1000 ${H}`} width="100%" height={H} fill="none" className="hidden lg:block" role="img" aria-label={`Đường giá trị tài khoản ${signVN(latestPct, 2)}% so với vốn ban đầu`}>
         {gridLines.map((g, i) => (
           <g key={i}>
             <line x1="0" y1={g.y} x2="944" y2={g.y} stroke="var(--app-hairline)" strokeWidth={1} />

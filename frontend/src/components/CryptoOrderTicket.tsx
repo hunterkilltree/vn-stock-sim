@@ -12,6 +12,8 @@ type Props = {
   // null = guest; undefined = signed in without a crypto wallet yet.
   usdtBalance: number | null | undefined;
   positionQty: number;
+  // Phone bottom bar preselects a side (phase-j.md decision 6).
+  initialSide?: "buy" | "sell";
 };
 
 const TYPES = [
@@ -29,9 +31,9 @@ function parseVN(s: string): number {
 }
 
 // Crypto-Detail.dc.html's "Đặt lệnh giấy" panel (phase-i.md decision 8).
-export default function CryptoOrderTicket({ symbol, base, lastPrice, usdtBalance, positionQty }: Props) {
+export default function CryptoOrderTicket({ symbol, base, lastPrice, usdtBalance, positionQty, initialSide = "buy" }: Props) {
   const [state, formAction, pending] = useActionState<CryptoOrderState, FormData>(placeCryptoOrderAction, { error: null, success: null });
-  const [side, setSide] = useState<"buy" | "sell">("buy");
+  const [side, setSide] = useState<"buy" | "sell">(initialSide);
   const [type, setType] = useState<(typeof TYPES)[number]["value"]>("market");
   const [priceIn, setPriceIn] = useState(formatCryptoPrice(lastPrice));
   const [stopIn, setStopIn] = useState("");

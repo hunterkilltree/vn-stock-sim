@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Lora, Be_Vietnam_Pro, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -36,6 +36,16 @@ const plexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "VN Stock Sim",
   description: "Trade the past before you trade the future — simulate Vietnamese stock trading.",
+};
+
+// viewport-fit=cover lets the phone shell pad itself with
+// env(safe-area-inset-*) instead of leaving bars under the home
+// indicator (phase-j.md decision 15).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#0f0f0e",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

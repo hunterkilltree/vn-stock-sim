@@ -157,21 +157,24 @@ export default function QuantChat({ initialQuestion }: { initialQuestion: string
   }
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-[18px] p-[24px_28px]">
-      <header className="flex items-center justify-between gap-6">
-        <div className="flex items-center gap-[14px]">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-app-accent-border bg-app-accent-surface">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-[14px] px-[18px] pt-[22px] lg:gap-[18px] lg:p-[24px_28px]">
+      <header className="flex items-center justify-between gap-3 lg:gap-6">
+        <div className="flex min-w-0 items-center gap-3 lg:gap-[14px]">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-app-accent-border bg-app-accent-surface">
             <SparkIcon size={20} />
           </span>
-          <div className="flex flex-col gap-[3px]">
-            <h1 className="m-0 font-display text-[25px] font-bold tracking-[-0.015em]">Trợ lý Quant</h1>
-            <span className="text-[12.5px] text-app-text-muted">Lọc cổ phiếu và dựng chiến lược bằng câu tiếng Việt · HOSE, HNX, UPCOM</span>
+          <div className="flex min-w-0 flex-col gap-[3px]">
+            <h1 className="m-0 font-display text-[20px] font-bold tracking-[-0.015em] lg:text-[25px]">Trợ lý Quant</h1>
+            <span className="truncate text-[11.5px] text-app-text-muted lg:text-[12.5px]">
+              <span className="lg:hidden">Lọc và dựng chiến lược bằng tiếng Việt</span>
+              <span className="hidden lg:inline">Lọc cổ phiếu và dựng chiến lược bằng câu tiếng Việt · HOSE, HNX, UPCOM</span>
+            </span>
           </div>
         </div>
-        <div className="flex items-center gap-[10px]">
+        <div className="flex shrink-0 items-center gap-[10px]">
           <Link
             href="/settings/ai"
-            className="flex h-[34px] items-center gap-[7px] rounded-[9px] border border-app-border bg-app-surface px-3 text-[11.5px] text-app-text-3"
+            className="hidden h-[34px] items-center gap-[7px] lg:flex rounded-[9px] border border-app-border bg-app-surface px-3 text-[11.5px] text-app-text-3"
           >
             <span className="h-[7px] w-[7px] rounded-full" style={{ background: configured ? "var(--price-up)" : "var(--app-text-faint)" }} />
             <span>{configured ? `${PROVIDER_NAMES[settings.provider]} · ${settings.models[settings.provider]}` : "Chưa kết nối mô hình"}</span>
@@ -179,19 +182,23 @@ export default function QuantChat({ initialQuestion }: { initialQuestion: string
           <button
             type="button"
             onClick={() => activeConversationStore.write(null)}
-            className="flex h-10 items-center gap-2 rounded-[10px] border border-app-border bg-app-surface-2 px-[14px] text-[13px] font-medium text-app-text"
+            aria-label="Hội thoại mới"
+            className="flex h-11 w-11 items-center justify-center gap-2 rounded-[10px] border border-app-border bg-app-surface-2 text-[13px] font-medium text-app-text lg:h-10 lg:w-auto lg:px-[14px]"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" aria-hidden="true">
               <path d="M12 5v14M5 12h14" />
             </svg>
-            <span>Hội thoại mới</span>
+            <span className="hidden lg:inline">Hội thoại mới</span>
           </button>
         </div>
       </header>
 
-      <div className="flex min-h-0 flex-1 gap-5">
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
-          <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto pr-1" aria-live="polite">
+      {/* Phones: one column -- thread, results, suggestions, then the
+          question box pinned above the tab bar; the chat column is
+          display:contents there so the results panel can sit between. */}
+      <div className="flex min-h-0 flex-1 flex-col gap-3 lg:flex-row lg:gap-5">
+        <div className="contents lg:flex lg:min-h-0 lg:min-w-0 lg:flex-1 lg:flex-col lg:gap-3">
+          <div className="order-1 flex min-h-0 flex-1 flex-col gap-5 lg:overflow-y-auto lg:pr-1" aria-live="polite">
             {!configured && (
               <div className="flex flex-col gap-2 rounded-[14px] border border-app-accent-border bg-app-accent-surface p-4">
                 <span className="text-[14px] font-semibold">Kết nối một mô hình AI để bắt đầu</span>
@@ -246,14 +253,14 @@ export default function QuantChat({ initialQuestion }: { initialQuestion: string
             <div ref={threadEnd} />
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="order-3 -mx-[18px] flex gap-2 overflow-x-auto px-[18px] lg:mx-0 lg:flex-wrap lg:px-0">
             {SUGGESTIONS.map((s) => (
               <button
                 key={s}
                 type="button"
                 disabled={!configured || pending}
                 onClick={() => send(s)}
-                className="h-8 rounded-full border border-app-border bg-app-surface px-3 text-[12px] text-app-text-3 disabled:opacity-50"
+                className="h-9 shrink-0 whitespace-nowrap rounded-full border border-app-border bg-app-surface px-3 text-[12px] text-app-text-3 disabled:opacity-50 lg:h-8"
               >
                 {s}
               </button>
@@ -265,7 +272,7 @@ export default function QuantChat({ initialQuestion }: { initialQuestion: string
               e.preventDefault();
               send(input);
             }}
-            className="flex flex-col gap-2 rounded-[14px] border border-app-border bg-app-surface p-[12px_14px]"
+            className="sticky bottom-[calc(var(--tabbar-h)+8px)] z-20 order-4 flex flex-col gap-2 rounded-[14px] border border-app-border bg-app-surface p-[12px_14px] shadow-[0_-8px_24px_rgba(15,15,14,0.9)] lg:static lg:shadow-none"
           >
             <label htmlFor="ask" className="sr-only">Câu hỏi cho trợ lý Quant</label>
             <textarea
@@ -283,24 +290,24 @@ export default function QuantChat({ initialQuestion }: { initialQuestion: string
               placeholder="Hỏi bằng tiếng Việt: điều kiện lọc, ý tưởng chiến lược, giải thích chỉ báo…"
               className="resize-none border-0 bg-transparent text-[13.5px] leading-[1.5] text-app-text outline-none placeholder:text-app-text-faint"
             />
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={() => setExchange(EXCHANGES[(EXCHANGES.indexOf(exchange) + 1) % EXCHANGES.length])}
-                className="h-8 rounded-lg border border-app-border px-[10px] text-[12px] text-app-text-3"
+                className="h-9 rounded-lg border border-app-border px-[10px] text-[12px] text-app-text-3 lg:h-8"
               >
                 Sàn: {exchange === "ALL" ? "Tất cả" : exchange}
               </button>
               <button
                 type="button"
                 onClick={() => setYears(YEARS[(YEARS.indexOf(years) + 1) % YEARS.length])}
-                className="h-8 rounded-lg border border-app-border px-[10px] text-[12px] text-app-text-3"
+                className="h-9 rounded-lg border border-app-border px-[10px] text-[12px] text-app-text-3 lg:h-8"
               >
                 Khoảng: {years} năm
               </button>
-              <span className="flex h-8 items-center rounded-lg border border-app-hairline px-[10px] text-[12px] text-app-text-faint">Nến: ngày</span>
+              <span className="hidden h-8 items-center rounded-lg border border-app-hairline px-[10px] text-[12px] text-app-text-faint sm:flex">Nến: ngày</span>
               <div className="flex-1" />
-              <span className="text-[11.5px] text-app-text-faint">Enter để gửi</span>
+              <span className="hidden text-[11.5px] text-app-text-faint lg:inline">Enter để gửi</span>
               <button
                 type="submit"
                 aria-label="Gửi câu hỏi"
@@ -315,7 +322,9 @@ export default function QuantChat({ initialQuestion }: { initialQuestion: string
           </form>
         </div>
 
-        <QuantResultsPanel key={conversation?.id ?? "none"} screen={screen} strategy={strategy} years={years} />
+        <div className={`order-2 lg:flex lg:min-h-0 lg:shrink-0 ${screen || strategy ? "flex" : "hidden"}`}>
+          <QuantResultsPanel key={conversation?.id ?? "none"} screen={screen} strategy={strategy} years={years} />
+        </div>
       </div>
     </div>
   );

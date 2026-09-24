@@ -1397,16 +1397,52 @@ Not verified: live Binance/VCI data. This sandbox's network policy
 blocks both hosts, so everything ran on the mock fallback. Still open
 from phase-e.md: trading fees are shown but not deducted from cash.
 
+**Phase J (mobile layouts) -- branch `phase-j-mobile`, stacked on
+`phase-i-crypto`, 2026-09-24.** Plan, decisions and verification:
+phase-j.md.
+
+- **Phone shell** below `lg` (1024 px):
+  - The sidebar/rail hides and `MobileTabBar` takes over: Thị trường,
+    Biểu đồ, the raised Replay button, Danh mục (Ví in crypto), Quant.
+  - `viewport-fit=cover` with safe-area padding.
+  - The body keeps room for the bar through `body:has([data-mobile-tabbar])`.
+- **Every built screen is responsive** (responsive classes on the
+  existing pages, no separate mobile pages), following
+  `design/screens/Mobile-*.dc.html`:
+  - Market: VN-Index hero, index chips, 9-tile heatmap, gainer cards,
+    with a market switch in the header.
+  - Detail: compact chart, 4 stats, sticky Replay/Mua/Bán bar that opens
+    the ticket with that side selected.
+  - Replay: compact masked chart, big step controls, 4 stats, sticky
+    buy/sell bar that replaces the tab bar during a session.
+  - Portfolio: NAV + 2 × 2 KPIs, phone equity curve, holding cards.
+  - Quant: one column with the composer pinned above the tab bar.
+  - Settings: scrolling section tabs, and the save footer pinned while
+    there are unsaved changes.
+  - Heatmap: per-sector 3-column tile grids instead of the treemap.
+  - Crypto overview, pair and Replay follow the matching stock screens.
+- **New components**: `CompactChart`, `MobileMarket`, `MobileActionBar`,
+  `MarketSwitch`, `MobileTabBar`.
+- **Backend**: movers include company name and exchange.
+
+Verified:
+- 0 overflowing views at 390/375/768 px across 16 routes, guest and
+  signed in.
+- A phone flow test (trade from Detail, Replay buy/sell, Quant with the
+  stub model, Settings save, heatmap filters).
+- The Phase I desktop suite still passes.
+
+Not verified: a real phone (only Chromium emulation here).
+
 ---
 
 ## Plan (where to pick up)
 
-Phases A-I of FULL-APP-PLAN.md's rebuild are now done (see the Done
+Phases A-J of FULL-APP-PLAN.md's rebuild are now done (see the Done
 section above). Next up:
 
-1. **Merge the stacked branches** in order: `phase-g-account-menu` →
-   `docs-structure` → `phase-h-quant` → `phase-i-crypto` (no PRs opened
-   yet).
+1. **Merge Phase I then Phase J**: PR #26 (`phase-i-crypto`, open), then
+   `phase-j-mobile` (stacked on it, no PR yet). G, docs and H are merged.
 2. **See real prices**: run with normal internet access (or allow
    `data-api.binance.vision` and `trading.vietcap.com.vn` in the cloud
    environment's network settings) -- the one Phase I check this sandbox
@@ -1415,10 +1451,11 @@ section above). Next up:
    key → Kiểm tra) -- the one Phase H check this sandbox couldn't do.
 4. **Deduct trading fees from cash** (the phase-e.md gap, now visible on
    crypto wallets too).
-5. **Phase J** (mobile layouts) and **Phase K** (WILL items, English);
-   Quant-Chart is Phase H's deferred stretch item; crypto Quant and a
-   crypto Portfolio page are Phase I's.
-6. Independently of the lettered phases: wire a real Postgres database
+5. **Check the phone layouts on a real device** (iOS Safari safe areas,
+   Android Chrome) -- the one Phase J check this sandbox couldn't do.
+6. **Phase K** (WILL items, English); Quant-Chart is Phase H's deferred
+   stretch item; crypto Quant and a crypto Portfolio page are Phase I's.
+7. Independently of the lettered phases: wire a real Postgres database
    behind auth/watchlist/portfolio/order (all in-memory MemoryStores that
    reset on restart today -- also what free hosts other than an always-on
    VM need), and replace the VCI market-data adapter with a licensed

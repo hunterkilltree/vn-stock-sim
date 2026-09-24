@@ -10,6 +10,8 @@ type Props = {
   lastPrice: number; // raw VND
   buyingPower: number | null; // raw VND cash balance, null when guest
   portfolioName: string | null; // the active portfolio this ticket trades
+  // Phone bottom bar's "Mua giấy"/"Bán giấy" preselect a side (phase-j.md decision 6).
+  initialSide?: "buy" | "sell";
 };
 
 const ORDER_TYPES: { label: string; value: "limit" | "market" | "atc" | "stop" }[] = [
@@ -29,11 +31,11 @@ const LOT_SIZE = 100;
 // the submit area with a sign-in prompt instead of a modal -- see
 // phase-d.md decision 5 (a modal over the order ticket is explicitly
 // listed as NOT YET DESIGNED in design/SCREENS.md).
-export default function OrderTicket({ symbol, lastPrice, buyingPower, portfolioName }: Props) {
+export default function OrderTicket({ symbol, lastPrice, buyingPower, portfolioName, initialSide = "buy" }: Props) {
   const initialState: OrderFormState = { error: null, success: null };
   const [state, formAction, pending] = useActionState(placeOrderAction, initialState);
 
-  const [side, setSide] = useState<"buy" | "sell">("buy");
+  const [side, setSide] = useState<"buy" | "sell">(initialSide);
   const [type, setType] = useState<(typeof ORDER_TYPES)[number]["value"]>("limit");
   const [priceK, setPriceK] = useState((lastPrice / 1000).toFixed(2));
   const [quantity, setQuantity] = useState(LOT_SIZE);

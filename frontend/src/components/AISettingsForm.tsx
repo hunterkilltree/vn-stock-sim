@@ -151,9 +151,9 @@ function Form({ saved }: { saved: QuantSettings }) {
 
   return (
     <>
-      <header className="flex items-end justify-between gap-6">
+      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
         <div className="flex flex-col gap-[5px]">
-          <h2 className="m-0 font-display text-[25px] font-bold tracking-[-0.015em]">Mô hình AI</h2>
+          <h2 className="m-0 font-display text-[21px] font-bold tracking-[-0.015em] lg:text-[25px]">Mô hình AI</h2>
           <span className="text-[12.5px] text-app-text-muted">Chọn mô hình chạy Trợ lý Quant và quyết định dữ liệu nào được gửi đi</span>
         </div>
         <span className="flex h-[34px] items-center gap-[7px] rounded-[9px] border border-app-border bg-app-surface px-3 text-[11.5px] text-app-text-3">
@@ -162,14 +162,14 @@ function Form({ saved }: { saved: QuantSettings }) {
         </span>
       </header>
 
-      <div className="flex min-h-0 flex-grow gap-5">
+      <div className="flex min-h-0 flex-grow flex-col gap-4 lg:flex-row lg:gap-5">
         <div className="flex min-w-0 flex-grow flex-col gap-4">
           <section className={`${card} gap-[13px]`}>
             <div className="flex flex-col gap-[3px]">
               <h3 className="m-0 text-[15px] font-semibold">Nhà cung cấp mô hình</h3>
               <span className="text-[11.5px] text-app-text-muted">Cắm khoá API của riêng bạn — mỗi câu hỏi được tính phí trực tiếp vào khoá đó</span>
             </div>
-            <div role="radiogroup" aria-label="Nhà cung cấp mô hình" className="grid grid-cols-2 gap-[10px]">
+            <div role="radiogroup" aria-label="Nhà cung cấp mô hình" className="grid grid-cols-1 gap-[10px] sm:grid-cols-2">
               {PROVIDERS.map((prov) => {
                 const disabled = prov.id === "cloud";
                 const checked = prov.id === p;
@@ -262,7 +262,7 @@ function Form({ saved }: { saved: QuantSettings }) {
               </span>
             </div>
 
-            <div className="grid grid-cols-[1.4fr_1fr] gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.4fr_1fr]">
               <div className="flex flex-col gap-[7px]">
                 <label htmlFor="model" className="text-xs text-app-text-3">Mô hình</label>
                 {p === "claude" ? (
@@ -379,7 +379,7 @@ function Form({ saved }: { saved: QuantSettings }) {
           </section>
         </div>
 
-        <div className="flex w-[348px] shrink-0 flex-col gap-4">
+        <div className="flex w-full flex-col gap-4 lg:w-[348px] lg:shrink-0">
           <section className={`${card} gap-[13px]`}>
             <div className="flex flex-col gap-[3px]">
               <h3 className="m-0 text-[15px] font-semibold">Dữ liệu gửi cho mô hình</h3>
@@ -469,7 +469,11 @@ function Form({ saved }: { saved: QuantSettings }) {
         </div>
       </div>
 
-      <footer className="flex shrink-0 items-center justify-between gap-5 border-t border-app-hairline pt-4">
+      {/* On phones, pinned above the tab bar while there is something to
+          save (Mobile-Settings.dc.html's footer), so Save stays reachable. */}
+      <footer
+        className={`${changes ? "sticky" : ""} bottom-[var(--tabbar-h)] z-20 -mx-[18px] flex shrink-0 flex-wrap items-center justify-between gap-x-5 gap-y-2 border-t border-app-hairline bg-app-bg px-[18px] py-3 lg:static lg:mx-0 lg:bg-transparent lg:px-0 lg:pb-0 lg:pt-4`}
+      >
         <span className="flex items-center gap-2 text-[12.5px]" style={{ color: changes ? "var(--price-ref)" : "var(--app-text-muted)" }}>
           <span className="h-[7px] w-[7px] rounded-full" style={{ background: changes ? "var(--price-ref)" : "var(--app-border-strong)" }} />
           <span>{changes ? `Có ${changes} thay đổi chưa lưu` : "Không có thay đổi"}</span>

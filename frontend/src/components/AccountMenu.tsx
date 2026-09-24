@@ -125,7 +125,7 @@ export default function AccountMenu({ placement, user, portfolios }: Props) {
         <div
           role="menu"
           aria-label="Menu tài khoản"
-          className={`absolute z-50 flex w-[360px] flex-col gap-[6px] rounded-2xl border border-app-border bg-app-surface p-2 text-app-text shadow-[0_18px_40px_rgba(0,0,0,0.55)] ${popoverPos}`}
+          className={`absolute z-50 flex w-[360px] max-w-[calc(100vw-36px)] flex-col gap-[6px] rounded-2xl border border-app-border bg-app-surface p-2 text-app-text shadow-[0_18px_40px_rgba(0,0,0,0.55)] ${popoverPos}`}
         >
           <div className="flex items-center gap-3 border-b border-app-hairline p-[12px_12px_14px]">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-app-border text-sm font-semibold">{user.initials}</span>

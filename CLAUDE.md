@@ -18,7 +18,7 @@ This repo is three things bundled together:
 | `docs/architecture/` | Technical design: API contract, charting integration, architecture diagram | `api-spec.md`, `charting-library-integration.md`, `vn-stock-sim.excalidraw` |
 | `docs/guides/` | How to run the app | `RUNNING.md` (local dev), `DOCKER.md` (one-command demo) |
 | `docs/roadmap/` | Forward plan and actual status | `FULL-APP-PLAN.md` (phases A–K), `RESUME.md` (what's built/verified/deferred) |
-| `docs/roadmap/phases/` | One planning + verification record per phase, written before that phase's code | `phase-a.md` … `phase-g.md`, `phase-design-alignment.md`, `phase-vci-market-data.md` |
+| `docs/roadmap/phases/` | One planning + verification record per phase, written before that phase's code | `phase-a.md` … `phase-j.md`, `phase-design-alignment.md`, `phase-vci-market-data.md` |
 | `design/` | Machine-readable design export — the literal visual spec | `DESIGN-SYSTEM.md`, `SCREENS.md`, `screens/*.dc.html`, tokens |
 | `tools/excalidraw-diagram/` | Diagram skill (upstream) | `SKILL.md`, `README.md`, `references/*` |
 

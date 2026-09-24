@@ -33,14 +33,22 @@ export default function KpiRow({ stats }: { stats: PortfolioStats }) {
   ];
 
   return (
-    <div className="grid grid-cols-5 gap-[14px]">
-      {kpis.map((k) => (
-        <section key={k.k} className="flex flex-col gap-2 rounded-[14px] border border-app-border bg-app-surface p-[15px_17px]">
-          <span className="text-[10.5px] uppercase tracking-[0.08em] text-app-text-muted">{k.k}</span>
-          <span className="font-plex-mono text-[19px] font-semibold tracking-[-0.01em]" style={{ color: k.color }}>
+    // Phones (Mobile-Portfolio.dc.html): account value full width, then
+    // the other four as a 2 x 2 grid; five across from lg up.
+    <div className="grid grid-cols-2 gap-[9px] lg:grid-cols-5 lg:gap-[14px]">
+      {kpis.map((k, i) => (
+        <section
+          key={k.k}
+          className={`flex min-w-0 flex-col gap-2 rounded-[14px] border border-app-border bg-app-surface p-[12px_14px] lg:p-[15px_17px] ${i === 0 ? "col-span-2 lg:col-span-1" : ""}`}
+        >
+          <span className="text-[10px] uppercase tracking-[0.06em] text-app-text-muted lg:text-[10.5px] lg:tracking-[0.08em]">{k.k}</span>
+          <span
+            className={`font-plex-mono font-semibold tracking-[-0.01em] ${i === 0 ? "text-[27px] lg:text-[19px]" : "text-[16px] lg:text-[19px]"}`}
+            style={{ color: k.color }}
+          >
             {k.v}
           </span>
-          <span className="text-[11.5px] text-app-text-muted">{k.note}</span>
+          <span className="text-[11px] text-app-text-muted lg:text-[11.5px]">{k.note}</span>
         </section>
       ))}
     </div>

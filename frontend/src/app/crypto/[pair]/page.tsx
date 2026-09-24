@@ -5,6 +5,8 @@ import AccountMenuButton from "@/components/AccountMenuButton";
 import DetailChart from "@/components/DetailChart";
 import CryptoOrderTicket from "@/components/CryptoOrderTicket";
 import CryptoOrderBook from "@/components/CryptoOrderBook";
+import CompactChart from "@/components/CompactChart";
+import MobileActionBar from "@/components/MobileActionBar";
 import {
   getCryptoBars,
   getCryptoOrderBook,
@@ -22,7 +24,7 @@ import { getActivePortfolio, getSessionToken, getSessionUser } from "@/lib/sessi
 
 type Props = {
   params: Promise<{ pair: string }>;
-  searchParams: Promise<{ tf?: string }>;
+  searchParams: Promise<{ tf?: string; side?: string }>;
 };
 
 // Crypto-Detail.dc.html's timeframe pills; "4 giờ" is the design's default.
@@ -66,7 +68,8 @@ export async function generateMetadata({ params }: Props) {
 // backend's indicator endpoints serve the stock market only.
 export default async function CryptoDetailPage({ params, searchParams }: Props) {
   const { pair } = await params;
-  const { tf: tfParam } = await searchParams;
+  const { tf: tfParam, side: sideParam } = await searchParams;
+  const initialSide = sideParam === "sell" ? "sell" : "buy";
   const frame = FRAMES.find((f) => f.key === tfParam) ?? FRAMES[3];
 
   let detail: CryptoPairDetail;
@@ -135,12 +138,57 @@ export default async function CryptoDetailPage({ params, searchParams }: Props) 
     { k: "Biến động 30 ngày", v: `${formatVN(detail.volatility30dPercentDay, 2)}%/ngày` },
   ];
 
+  const phoneBars = bars.slice(-40);
+  const phoneFrom = phoneBars[0]?.time ?? 0;
+  const ticketHref = (side: "buy" | "sell") => `/crypto/${detail.symbol}?tf=${frame.key}&side=${side}#dat-lenh`;
+
   return (
     <div className="flex flex-1 bg-app-bg text-app-text">
-      <RailNav mode="crypto" account={<AccountMenuButton placement="right" />} />
+      <RailNav mode="crypto" account={<AccountMenuButton placement="right" />} tabBar={false} />
 
-      <div className="flex min-w-0 flex-1 flex-col gap-4 p-[20px_24px]">
-        <header className="flex flex-wrap items-center justify-between gap-6">
+      <div className="flex min-w-0 flex-1 flex-col gap-[14px] px-[18px] pt-[22px] lg:gap-4 lg:p-[20px_24px]">
+        {/* Phone header + price block, following Mobile-Detail.dc.html (phase-j.md decision 13). */}
+        <header className="flex items-center gap-3 lg:hidden">
+          <Link
+            href="/crypto"
+            aria-label="Trở lại thị trường crypto"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-app-border bg-app-surface text-app-text-3"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M15 5l-7 7 7 7" />
+            </svg>
+          </Link>
+          <div className="flex min-w-0 flex-1 flex-col gap-[1px]">
+            <div className="flex items-center gap-2">
+              <h1 className="m-0 font-display text-[20px] font-bold">
+                {detail.base} / {detail.quote}
+              </h1>
+              <span className="rounded-[5px] border border-app-border px-[6px] py-[1px] text-[10px] text-app-text-muted">Giao ngay</span>
+            </div>
+            <span className="truncate text-[11.5px] text-app-text-muted">
+              {detail.name} · {live ? "Binance" : "dữ liệu mô phỏng"}
+            </span>
+          </div>
+          <AccountMenuButton placement="below" />
+        </header>
+        <div className="flex items-end justify-between gap-3 lg:hidden">
+          <div className="flex min-w-0 flex-col gap-[3px]">
+            <span className="font-plex-mono text-[30px] font-semibold tracking-[-0.02em]" style={{ color: changeColor }}>
+              {formatCryptoPrice(detail.lastPrice)}
+            </span>
+            <span className="font-plex-mono text-[13px]" style={{ color: changeColor }}>
+              {detail.change >= 0 ? "+" : "−"}
+              {formatCryptoPrice(Math.abs(detail.change))} ({signVN(detail.changePercent, 2)}%)
+            </span>
+          </div>
+          <div className="flex shrink-0 flex-col items-end gap-1 font-plex-mono text-[11px] text-app-text-3">
+            <span>Cao {formatCryptoPrice(detail.high24h)}</span>
+            <span>Thấp {formatCryptoPrice(detail.low24h)}</span>
+            <span style={{ color: tone(detail.distanceFromAthPercent) }}>ATH {signVN(detail.distanceFromAthPercent, 1)}%</span>
+          </div>
+        </div>
+
+        <header className="hidden flex-wrap items-center justify-between gap-6 lg:flex">
           <div className="flex flex-wrap items-center gap-[22px]">
             <div className="flex flex-col gap-[3px]">
               <div className="flex items-center gap-[9px]">
@@ -190,10 +238,10 @@ export default async function CryptoDetailPage({ params, searchParams }: Props) 
           </div>
         </header>
 
-        <div className="flex min-h-0 flex-1 gap-5">
+        <div className="flex min-h-0 flex-1 flex-col gap-5 lg:flex-row">
           <div className="flex min-w-0 flex-1 flex-col gap-[14px]">
             <div className="flex flex-wrap items-center justify-between gap-4">
-              <nav aria-label="Khung thời gian" className="flex gap-[6px]">
+              <nav aria-label="Khung thời gian" className="-mx-[18px] flex gap-[6px] overflow-x-auto px-[18px] lg:mx-0 lg:overflow-visible lg:px-0">
                 {FRAMES.map((f) => {
                   const on = f.key === frame.key;
                   return (
@@ -201,7 +249,7 @@ export default async function CryptoDetailPage({ params, searchParams }: Props) 
                       key={f.key}
                       href={`/crypto/${detail.symbol}?tf=${f.key}`}
                       aria-current={on ? "page" : undefined}
-                      className="box-border flex h-[34px] items-center rounded-[9px] border px-[13px] text-[12.5px]"
+                      className="box-border flex h-[34px] shrink-0 items-center whitespace-nowrap rounded-[9px] border px-[13px] text-[12.5px]"
                       style={{
                         borderColor: on ? "var(--app-border-strong)" : "var(--app-border)",
                         background: on ? "var(--app-border)" : "var(--app-surface)",
@@ -214,7 +262,7 @@ export default async function CryptoDetailPage({ params, searchParams }: Props) 
                   );
                 })}
               </nav>
-              <div className="flex items-center gap-2">
+              <div className="hidden items-center gap-2 lg:flex">
                 {INDICATOR_CHIPS.map((c) => (
                   <span
                     key={c.label}
@@ -227,10 +275,22 @@ export default async function CryptoDetailPage({ params, searchParams }: Props) 
               </div>
             </div>
 
-            <DetailChart bars={bars} sma20={sma20} sma50={sma50} rsi={rsi14} macd={macdPts} scale={1} decimals={chartDecimals(detail.lastPrice)} />
+            <div className="lg:hidden">
+              <CompactChart
+                bars={phoneBars}
+                sma20={sma20.filter((p) => p.time >= phoneFrom)}
+                rsi={rsi14.filter((p) => p.time >= phoneFrom)}
+                scale={1}
+                decimals={chartDecimals(detail.lastPrice)}
+                ariaLabel={`Biểu đồ nến ${detail.base}/USDT kèm đường trung bình động SMA 20`}
+              />
+            </div>
+            <div className="hidden lg:block">
+              <DetailChart bars={bars} sma20={sma20} sma50={sma50} rsi={rsi14} macd={macdPts} scale={1} decimals={chartDecimals(detail.lastPrice)} />
+            </div>
 
             <section className="rounded-2xl border border-app-border bg-app-surface p-4">
-              <div className="mb-3 flex items-center justify-between">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
                 <h2 className="m-0 text-[15px] font-semibold">Thông tin {detail.base}</h2>
                 {walletName && positionQty > 0 && (
                   <span className="text-[12px] text-app-text-muted">
@@ -238,7 +298,7 @@ export default async function CryptoDetailPage({ params, searchParams }: Props) 
                   </span>
                 )}
               </div>
-              <dl className="m-0 grid grid-cols-3 gap-x-6 gap-y-3">
+              <dl className="m-0 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
                 {facts.map((f) => (
                   <div key={f.k} className="flex flex-col gap-[3px]">
                     <dt className="text-[11px] text-app-text-muted">{f.k}</dt>
@@ -249,9 +309,10 @@ export default async function CryptoDetailPage({ params, searchParams }: Props) 
             </section>
           </div>
 
-          <div className="flex w-[344px] shrink-0 flex-col gap-4">
+          <div id="dat-lenh" className="flex w-full scroll-mt-4 flex-col gap-4 lg:w-[344px] lg:shrink-0">
             <CryptoOrderTicket
-              key={detail.symbol}
+              key={`${detail.symbol}-${initialSide}`}
+              initialSide={initialSide}
               symbol={detail.symbol}
               base={detail.base}
               lastPrice={detail.lastPrice}
@@ -261,6 +322,8 @@ export default async function CryptoDetailPage({ params, searchParams }: Props) 
             <CryptoOrderBook bids={book.bids} asks={book.asks} base={detail.base} source={book.source} />
           </div>
         </div>
+
+        <MobileActionBar replayHref={`/crypto/replay?symbol=${detail.symbol}`} buyHref={ticketHref("buy")} sellHref={ticketHref("sell")} />
       </div>
     </div>
   );
