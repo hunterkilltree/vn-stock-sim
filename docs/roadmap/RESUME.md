@@ -10,6 +10,12 @@ DOCKER.md for a one-command demo.
 
 Last updated: 2026-09-24.
 
+**Docs reorganized (2026-09-24, branch `docs-structure`):** every Markdown
+file moved out of the repo root into `docs/{product,architecture,guides,roadmap,roadmap/phases}/`,
+and the Excalidraw skill into `tools/excalidraw-diagram/` -- see the table in
+CLAUDE.md. Filenames are unchanged, so bare-name references like
+"phase-f.md decision 4" in code comments still find the right file.
+
 ---
 
 ## ⚠ TOP PRIORITY FOR THE NEXT SESSION (user decision, 2026-09-23)
