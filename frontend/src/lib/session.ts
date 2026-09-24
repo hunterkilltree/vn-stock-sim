@@ -7,9 +7,22 @@
 // this module to server-only use -- Next.js errors at build time if a
 // Client Component imports it.
 import { cookies } from "next/headers";
-import { getMe, type User } from "./api";
+import { getMe, getPortfolios, type Portfolio, type User } from "./api";
 
 export const SESSION_COOKIE = "vss_token";
+export const ACTIVE_PORTFOLIO_COOKIE = "vss_portfolio";
+
+// The cookie is only a preference (phase-g.md decision 1): it's honored
+// only if it names one of the caller's own trading portfolios, otherwise
+// the first trading portfolio (the default) wins. Replay portfolios are
+// never selectable -- live orders must not reach them.
+export async function getActivePortfolio(token: string): Promise<{ active: Portfolio | null; portfolios: Portfolio[] }> {
+  const all = (await getPortfolios(token)).data;
+  const portfolios = all.filter((p) => p.kind === "trading");
+  const wanted = (await cookies()).get(ACTIVE_PORTFOLIO_COOKIE)?.value;
+  const active = portfolios.find((p) => p.id === wanted) ?? portfolios[0] ?? null;
+  return { active, portfolios };
+}
 
 export async function getSessionToken(): Promise<string | null> {
   const store = await cookies();

@@ -13,8 +13,8 @@ func NewService(store *MemoryStore, tokens *authtoken.Issuer) *Service {
 	return &Service{store: store, tokens: tokens}
 }
 
-func (s *Service) Register(email, displayName, password string) (authResponse, error) {
-	user, err := s.store.Create(email, displayName, password)
+func (s *Service) Register(email, displayName, password, marketInterest string) (authResponse, error) {
+	user, err := s.store.Create(email, displayName, password, marketInterest)
 	if err != nil {
 		return authResponse{}, err
 	}

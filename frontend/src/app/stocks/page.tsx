@@ -11,9 +11,8 @@ import {
   getIndices,
   getHeatmap,
   getMovers,
-  getPortfolioSummary,
-  getPortfolioPositions,
-  getPortfolios,
+  getPortfolioSummaryByID,
+  getPortfolioPositionsByID,
   type IndexSnapshot,
   type SectorGroup,
   type TickerChange,
@@ -21,7 +20,8 @@ import {
   type Position,
   type Portfolio,
 } from "@/lib/api";
-import { getSessionToken, getSessionUser } from "@/lib/session";
+import { getActivePortfolio, getSessionToken, getSessionUser } from "@/lib/session";
+import AccountMenuButton from "@/components/AccountMenuButton";
 
 export const metadata = { title: "Tổng quan thị trường — VN Stock Sim" };
 
@@ -76,27 +76,26 @@ export default async function MarketOverviewPage() {
   const user = await getSessionUser();
   let summary: PortfolioSummary | null = null;
   let positions: Position[] = [];
-  let defaultPortfolio: Portfolio | null = null;
+  let activePortfolio: Portfolio | null = null;
   if (user) {
     try {
       const token = await getSessionToken();
       if (token) {
-        const [summaryRes, positionsRes, portfoliosRes] = await Promise.all([
-          getPortfolioSummary(token),
-          getPortfolioPositions(token),
-          getPortfolios(token),
-        ]);
-        summary = summaryRes;
-        positions = positionsRes.data;
-        defaultPortfolio = portfoliosRes.data[0] ?? null;
+        activePortfolio = (await getActivePortfolio(token)).active;
+        if (activePortfolio) {
+          const [summaryRes, positionsRes] = await Promise.all([
+            getPortfolioSummaryByID(activePortfolio.id, token),
+            getPortfolioPositionsByID(activePortfolio.id, token),
+          ]);
+          summary = summaryRes;
+          positions = positionsRes.data;
+        }
       }
     } catch {
-      // leave summary/positions/defaultPortfolio null; the right column
+      // leave summary/positions/activePortfolio null; the right column
       // degrades to the sign-up-style prompt below rather than crashing.
     }
   }
-
-  const initials = user ? user.displayName.slice(0, 2).toUpperCase() : "?";
 
   return (
     <div className="flex flex-1 bg-app-bg text-app-text">
@@ -125,26 +124,16 @@ export default async function MarketOverviewPage() {
                 className="w-[200px] border-0 bg-transparent text-[13px] text-app-text outline-none placeholder:text-app-text-muted"
               />
             </div>
-            <button
-              type="button"
-              disabled
-              title="Sắp ra mắt"
-              className="flex h-11 cursor-not-allowed items-center gap-2 rounded-[11px] bg-app-accent px-4 text-[13.5px] font-semibold text-app-accent-ink opacity-70"
+            <Link
+              href="/replay"
+              className="flex h-11 items-center gap-2 rounded-[11px] bg-app-accent px-4 text-[13.5px] font-semibold text-app-accent-ink"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M11 6L4 12l7 6V6zM20 6l-7 6 7 6V6z" />
               </svg>
               <span>Vào Replay</span>
-            </button>
-            <button
-              type="button"
-              aria-label="Tài khoản của bạn"
-              disabled
-              title="Menu tài khoản — sắp ra mắt"
-              className="flex h-11 w-11 cursor-not-allowed items-center justify-center rounded-[11px] border border-app-border bg-app-surface-2 text-[13px] font-semibold text-app-text"
-            >
-              {initials}
-            </button>
+            </Link>
+            <AccountMenuButton placement="below" />
           </div>
         </header>
 
@@ -170,12 +159,12 @@ export default async function MarketOverviewPage() {
           </div>
 
           <div className="flex w-[372px] shrink-0 flex-col gap-4">
-            {summary && defaultPortfolio ? (
+            {summary && activePortfolio ? (
               <>
                 <PaperAccountCard
                   summary={summary}
-                  startingCapital={defaultPortfolio.startingCapital}
-                  sinceDate={formatDateVN(defaultPortfolio.createdAt)}
+                  startingCapital={activePortfolio.startingCapital}
+                  sinceDate={formatDateVN(activePortfolio.createdAt)}
                 />
                 <OpenPositionsCard positions={positions} />
               </>

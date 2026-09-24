@@ -10,10 +10,18 @@ type Portfolio struct {
 	UserID          string  `json:"userId"`
 	Name            string  `json:"name"`
 	Market          string  `json:"market"`
+	Kind            string  `json:"kind"`
 	StartingCapital float64 `json:"startingCapital"`
 	Currency        string  `json:"currency"`
 	CreatedAt       string  `json:"createdAt"`
 }
+
+// A replay portfolio holds one Replay session's historical-price fills
+// and must never receive live orders -- see phase-g.md decision 4.
+const (
+	KindTrading = "trading"
+	KindReplay  = "replay"
+)
 
 type Position struct {
 	Symbol        string  `json:"symbol"`

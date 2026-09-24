@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getSessionToken } from "./session";
+import { getActivePortfolio, getSessionToken } from "./session";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
 
@@ -20,7 +20,17 @@ export async function placeOrderAction(_prevState: OrderFormState, formData: For
     return { error: "Bạn cần đăng nhập để đặt lệnh giấy.", success: null };
   }
 
+  // Read server-side from the active-portfolio cookie, not a form field,
+  // so the ticket always trades the portfolio the page showed.
+  let portfolioId: string | undefined;
+  try {
+    portfolioId = (await getActivePortfolio(token)).active?.id;
+  } catch {
+    return { error: "Không thể kết nối tới máy chủ.", success: null };
+  }
+
   const body = {
+    portfolioId,
     symbol: String(formData.get("symbol") ?? ""),
     side: String(formData.get("side") ?? "buy"),
     type: String(formData.get("type") ?? "market"),

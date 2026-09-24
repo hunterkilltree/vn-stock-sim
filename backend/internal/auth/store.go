@@ -22,10 +22,10 @@ type record struct {
 // can run without a database wired up yet; swap for a Postgres-backed
 // store behind the same interface once persistence lands (see RESUME.md).
 type MemoryStore struct {
-	mu       sync.RWMutex
-	byEmail  map[string]*record
-	byID     map[string]*record
-	nextID   int
+	mu      sync.RWMutex
+	byEmail map[string]*record
+	byID    map[string]*record
+	nextID  int
 }
 
 func NewMemoryStore() *MemoryStore {
@@ -35,7 +35,7 @@ func NewMemoryStore() *MemoryStore {
 	}
 }
 
-func (s *MemoryStore) Create(email, displayName, password string) (User, error) {
+func (s *MemoryStore) Create(email, displayName, password, marketInterest string) (User, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -47,7 +47,7 @@ func (s *MemoryStore) Create(email, displayName, password string) (User, error) 
 		return User{}, err
 	}
 	s.nextID++
-	user := User{ID: idOf(s.nextID), Email: email, DisplayName: displayName}
+	user := User{ID: idOf(s.nextID), Email: email, DisplayName: displayName, MarketInterest: marketInterest}
 	rec := &record{user: user, passwordHash: hash}
 	s.byEmail[email] = rec
 	s.byID[user.ID] = rec

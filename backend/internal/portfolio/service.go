@@ -72,7 +72,11 @@ func (s *Service) CreatePortfolio(userID, name, market string, startingCapital f
 	if startingCapital <= 0 {
 		startingCapital = StartingCash
 	}
-	return s.store.Create(userID, name, market, startingCapital, currency)
+	return s.store.Create(userID, name, market, startingCapital, currency, KindTrading)
+}
+
+func (s *Service) CreateReplayPortfolio(userID, name string, startingCapital float64) Portfolio {
+	return s.store.Create(userID, name, "stock", startingCapital, "VND", KindReplay)
 }
 
 func (s *Service) ListPortfolios(userID string) []Portfolio {

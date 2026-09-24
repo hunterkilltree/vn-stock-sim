@@ -146,6 +146,7 @@ export type User = {
   id: string;
   email: string;
   displayName: string;
+  marketInterest?: "stock" | "crypto" | "both";
 };
 
 // GET /auth/me, authenticated. Used by session.ts to re-verify a stored
@@ -222,6 +223,9 @@ export type Portfolio = {
   userId: string;
   name: string;
   market: string;
+  // "replay" portfolios belong to one Replay session and never receive
+  // live orders -- see phase-g.md decision 4.
+  kind: "trading" | "replay";
   startingCapital: number;
   currency: string;
   createdAt: string;

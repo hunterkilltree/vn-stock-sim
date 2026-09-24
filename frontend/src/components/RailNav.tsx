@@ -1,9 +1,10 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { navItems } from "@/lib/navItems";
-import { LogoMark, AvatarPlaceholder } from "@/components/icons";
+import { navItems, settingsItem } from "@/lib/navItems";
+import { LogoMark } from "@/components/icons";
 
 function RailIcon({ d }: { d: string }) {
   return (
@@ -19,8 +20,12 @@ function RailIcon({ d }: { d: string }) {
 // exact `d` path list (see phase-c.md) -- full rail-specific spec
 // fidelity (its own icon set/ordering, if it differs from the sidebar's)
 // is checked against design/screens/Detail.dc.html in Phase D.
-export default function RailNav() {
+// `account` is the server-rendered <AccountMenuButton placement="right"/>
+// -- a Server Component can only reach this Client shell as a prop
+// (phase-g.md decision 9).
+export default function RailNav({ account }: { account: ReactNode }) {
   const pathname = usePathname();
+  const settingsActive = pathname.startsWith("/settings");
 
   return (
     <aside className="flex w-[72px] shrink-0 flex-col items-center gap-6 bg-app-chrome py-6">
@@ -62,14 +67,22 @@ export default function RailNav() {
         })}
       </nav>
 
-      <button
-        type="button"
-        title="Account menu — built in a later phase"
-        aria-label="Account menu"
-        className="flex h-11 w-11 cursor-not-allowed items-center justify-center rounded-[11px] border border-app-border text-app-text-muted"
-      >
-        <AvatarPlaceholder width={19} height={19} />
-      </button>
+      <div className="flex flex-col items-center gap-2">
+        <Link
+          href={settingsItem.href}
+          title={settingsItem.label}
+          aria-label={settingsItem.label}
+          aria-current={settingsActive ? "page" : undefined}
+          className="flex h-11 w-11 items-center justify-center rounded-[11px]"
+          style={{
+            color: settingsActive ? "var(--app-text)" : "var(--app-text-3)",
+            background: settingsActive ? "var(--app-surface-3)" : "transparent",
+          }}
+        >
+          <RailIcon d={settingsItem.d} />
+        </Link>
+        {account}
+      </div>
     </aside>
   );
 }

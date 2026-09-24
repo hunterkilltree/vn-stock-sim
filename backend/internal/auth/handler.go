@@ -27,7 +27,7 @@ func registerHandler(svc *Service) gin.HandlerFunc {
 			httpx.ValidationError(c, "invalid request body", nil)
 			return
 		}
-		resp, err := svc.Register(req.Email, req.DisplayName, req.Password)
+		resp, err := svc.Register(req.Email, req.DisplayName, req.Password, req.MarketInterest)
 		if err != nil {
 			if err == ErrEmailTaken {
 				httpx.Error(c, http.StatusConflict, "email_taken", "an account with this email already exists")
