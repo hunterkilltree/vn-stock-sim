@@ -33,7 +33,7 @@ Environment variables (all optional, with defaults from
 | ------------------------------- | ---------------------- | ------- |
 | `PORT`                          | `8080`                 | HTTP port |
 | `JWT_SECRET`                    | `dev-secret-change-me` | HMAC signing key for bearer tokens |
-| `MARKET_DATA_SOURCE`            | `vci`                  | `vci` (live, falls back to mock) or `mock` |
+| `MARKET_DATA_SOURCE`            | `vci`                  | `vci` (live: VCI for stocks, Binance's public API for crypto; each falls back to the mock per call) or `mock` |
 | `QUANT_ALLOW_PRIVATE_ENDPOINTS` | unset (off)            | `true` lets Trợ lý Quant's "Máy chủ riêng" provider reach localhost/private addresses (e.g. Ollama on the same machine). Leave off on any shared server. |
 
 Verify it is up:

@@ -3,8 +3,11 @@ package replay
 import (
 	"errors"
 	"fmt"
+	"math"
+	"strings"
 	"time"
 
+	"github.com/hunterkilltree/vn-stock-sim/backend/internal/crypto"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/market"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/order"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/portfolio"
@@ -13,6 +16,7 @@ import (
 var ErrNotFound = errors.New("replay session not found")
 var ErrNoData = errors.New("no historical data for that symbol/range")
 var ErrSessionDone = errors.New("replay session already completed")
+var ErrInvalidQuantity = errors.New("invalid quantity: whole shares for stocks, up to 8 decimals for crypto")
 
 // BarsPort is satisfied by *market.Service unchanged.
 type BarsPort interface {
@@ -24,8 +28,8 @@ type BarsPort interface {
 // instead of reusing the user's regular one, and phase-g.md decision 4 on
 // why it is created as a "replay"-kind portfolio live orders can't reach.
 type PortfolioPort interface {
-	CreateReplayPortfolio(userID, name string, startingCapital float64) portfolio.Portfolio
-	ApplyFill(portfolioID, sym, side string, quantity int64, price float64) error
+	CreateReplayPortfolio(userID, name, market string, startingCapital float64) portfolio.Portfolio
+	ApplyFill(portfolioID, sym, side string, quantity float64, price float64) error
 	Positions(portfolioID string) []portfolio.Position
 	Stats(portfolioID string, startingCapital float64) portfolio.Stats
 }
@@ -43,16 +47,42 @@ type OrderLog interface {
 type Service struct {
 	store      *MemoryStore
 	bars       BarsPort
+	cryptoBars BarsPort
 	portfolios PortfolioPort
 	orders     OrderLog
 }
 
-func NewService(store *MemoryStore, bars BarsPort, portfolios PortfolioPort, orders OrderLog) *Service {
-	return &Service{store: store, bars: bars, portfolios: portfolios, orders: orders}
+// cryptoBars serves crypto sessions (crypto.Service.GetBars) -- see
+// phase-i.md decision 11.
+func NewService(store *MemoryStore, bars, cryptoBars BarsPort, portfolios PortfolioPort, orders OrderLog) *Service {
+	return &Service{store: store, bars: bars, cryptoBars: cryptoBars, portfolios: portfolios, orders: orders}
 }
 
 func (s *Service) Start(userID string, req StartRequest) (SessionView, error) {
-	resolution := req.Resolution
+	market := req.Market
+	if market == "" {
+		market = "stock"
+	}
+	symbol := strings.ToUpper(strings.TrimSpace(req.Symbol))
+	resolution, startDate, step := req.Resolution, req.StartDate, int64(24*60*60)
+	startingCapital := float64(DefaultStartingCapital)
+	bars := s.bars
+	if market == "crypto" {
+		pair, ok := crypto.Lookup(req.Symbol)
+		if !ok {
+			return SessionView{}, ErrNoData
+		}
+		symbol = pair.Symbol
+		if resolution == "" {
+			resolution = "60"
+		}
+		if startDate == "" {
+			startDate = DefaultCryptoAnchor
+		}
+		step = 3600
+		startingCapital = DefaultCryptoStartingCapital
+		bars = s.cryptoBars
+	}
 	if resolution == "" {
 		resolution = "1D"
 	}
@@ -60,7 +90,6 @@ func (s *Service) Start(userID string, req StartRequest) (SessionView, error) {
 	if totalBars <= 0 {
 		totalBars = DefaultTotalBars
 	}
-	startDate := req.StartDate
 	if startDate == "" {
 		startDate = DefaultAnchor
 	}
@@ -69,24 +98,27 @@ func (s *Service) Start(userID string, req StartRequest) (SessionView, error) {
 		return SessionView{}, fmt.Errorf("invalid startDate %q: %w", startDate, err)
 	}
 
-	const daySeconds = 24 * 60 * 60
 	from := anchor.Unix()
-	to := from + int64(totalBars-1)*daySeconds
+	to := from + int64(totalBars-1)*step
 
-	bars := s.bars.GetBars(req.Symbol, resolution, from, to)
-	if len(bars) == 0 {
+	series := bars.GetBars(symbol, resolution, from, to)
+	if len(series) == 0 {
 		return SessionView{}, ErrNoData
+	}
+	if len(series) > totalBars {
+		series = series[:totalBars]
 	}
 	// GetBars' own from/to grid-alignment can return a slightly
 	// different count than requested -- trust what actually came back
 	// rather than the request, so CurrentBar/TotalBars never disagree
 	// with len(Bars).
-	totalBars = len(bars)
+	totalBars = len(series)
 
 	pf := s.portfolios.CreateReplayPortfolio(
 		userID,
-		fmt.Sprintf("Replay %s %s", req.Symbol, startDate),
-		DefaultStartingCapital,
+		fmt.Sprintf("Replay %s %s", symbol, startDate),
+		market,
+		startingCapital,
 	)
 
 	revealed := InitialRevealed
@@ -98,9 +130,11 @@ func (s *Service) Start(userID string, req StartRequest) (SessionView, error) {
 		ID:          s.store.nextSessionID(),
 		UserID:      userID,
 		PortfolioID: pf.ID,
-		Symbol:      req.Symbol,
+		Symbol:      symbol,
+		Market:      market,
+		Capital:     startingCapital,
 		Resolution:  resolution,
-		Bars:        bars,
+		Bars:        series,
 		TotalBars:   totalBars,
 		CurrentBar:  revealed,
 		Status:      "active",
@@ -154,6 +188,16 @@ func (s *Service) PlaceOrder(userID, id string, req OrderRequest) (SessionView, 
 		return SessionView{}, errors.New("no candle revealed yet")
 	}
 	price := sess.Bars[sess.CurrentBar-1].Close
+	// Same rule as live orders: whole shares for stocks, up to 8 decimals
+	// for crypto (phase-i.md decision 5).
+	if sess.Market == "crypto" {
+		req.Quantity = math.Round(req.Quantity*1e8) / 1e8
+	} else if req.Quantity != math.Trunc(req.Quantity) {
+		return SessionView{}, ErrInvalidQuantity
+	}
+	if req.Quantity <= 0 {
+		return SessionView{}, ErrInvalidQuantity
+	}
 
 	stopToRecord := 0.0
 	if req.Side == "buy" {
@@ -176,7 +220,7 @@ func (s *Service) PlaceOrder(userID, id string, req OrderRequest) (SessionView, 
 // recorded on the Fill only (see types.go's Fill.StopSet); it does not
 // itself set sess.StopLoss -- callers do that themselves once the fill
 // succeeds.
-func (s *Service) fill(sess *Session, side string, quantity int64, price float64, note string, stopSet float64) error {
+func (s *Service) fill(sess *Session, side string, quantity float64, price float64, note string, stopSet float64) error {
 	if quantity == 0 {
 		for _, p := range s.portfolios.Positions(sess.PortfolioID) {
 			if p.Symbol == sess.Symbol {
@@ -193,7 +237,11 @@ func (s *Service) fill(sess *Session, side string, quantity int64, price float64
 	}
 
 	barDate := time.Unix(sess.Bars[sess.CurrentBar-1].Time, 0).UTC().Format("2006-01-02T15:04:05Z")
-	fee := round2(price * float64(quantity) * order.FeeRate)
+	feeRate := order.FeeRate
+	if sess.Market == "crypto" {
+		feeRate = order.CryptoFeeRate
+	}
+	fee := round2(price * quantity * feeRate)
 	s.orders.Append(sess.UserID, order.Order{
 		PortfolioID: sess.PortfolioID,
 		Symbol:      sess.Symbol,
@@ -215,7 +263,7 @@ func (s *Service) fill(sess *Session, side string, quantity int64, price float64
 		Date:     barDate,
 		Side:     side,
 		Quantity: quantity,
-		Price:    round2(price),
+		Price:    roundPrice(price),
 		StopSet:  stopSet,
 		Note:     note,
 	})
@@ -255,7 +303,7 @@ func (s *Service) view(sess *Session) SessionView {
 	}
 	sma := sma20(closes, revealed)
 
-	var qty int64
+	var qty float64
 	var avgCost float64
 	for _, p := range s.portfolios.Positions(sess.PortfolioID) {
 		if p.Symbol == sess.Symbol {
@@ -276,7 +324,7 @@ func (s *Service) view(sess *Session) SessionView {
 	// values the open position at the replay's own current revealed
 	// close instead, the same way backtest/rule.go's own equity
 	// calculation does.
-	stats := s.portfolios.Stats(sess.PortfolioID, DefaultStartingCapital)
+	stats := s.portfolios.Stats(sess.PortfolioID, sess.Capital)
 	nav, pnlPct, maxDD := replayAccounting(sess)
 	result := &EndResult{
 		NAV:                nav,
@@ -292,6 +340,8 @@ func (s *Service) view(sess *Session) SessionView {
 	return SessionView{
 		ID:          sess.ID,
 		Symbol:      sess.Symbol,
+		Market:      sess.Market,
+		Capital:     sess.Capital,
 		Resolution:  sess.Resolution,
 		PortfolioID: sess.PortfolioID,
 		CurrentBar:  sess.CurrentBar,
@@ -335,4 +385,13 @@ func sma20(closes []float64, bars []market.Bar) []market.IndicatorPoint {
 
 func round2(v float64) float64 {
 	return float64(int64(v*100)) / 100
+}
+
+// roundPrice keeps 2 decimals for normal prices but 8 below 1, so a
+// sub-cent coin's fill price isn't rounded to zero.
+func roundPrice(v float64) float64 {
+	if v >= 1 {
+		return round2(v)
+	}
+	return math.Round(v*1e8) / 1e8
 }

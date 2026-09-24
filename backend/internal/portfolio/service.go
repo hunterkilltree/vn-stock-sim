@@ -1,6 +1,7 @@
 package portfolio
 
 import (
+	"math"
 	"sort"
 	"time"
 
@@ -39,7 +40,7 @@ func (s *Service) SetOrdersPort(orders OrdersPort) {
 // (instead of the bare store), so every fill grows the equity-history
 // series Stats' max-drawdown and the equity-curve chart both read (see
 // phase-e.md item 1).
-func (s *Service) ApplyFill(portfolioID, sym, side string, quantity int64, price float64) error {
+func (s *Service) ApplyFill(portfolioID, sym, side string, quantity float64, price float64) error {
 	if err := s.store.ApplyFill(portfolioID, sym, side, quantity, price); err != nil {
 		return err
 	}
@@ -63,20 +64,32 @@ func (s *Service) CreatePortfolio(userID, name, market string, startingCapital f
 	if name == "" {
 		name = "Danh muc moi"
 	}
-	if market == "" {
+	if market != "crypto" {
 		market = "stock"
 	}
-	if currency == "" {
-		currency = "VND"
+	// Currency follows the market: VND for stocks, USDT for crypto
+	// wallets (Crypto-Main's "Ví giấy ... 10.000 USDT ban đầu").
+	currency = "VND"
+	if market == "crypto" {
+		currency = "USDT"
 	}
 	if startingCapital <= 0 {
 		startingCapital = StartingCash
+		if market == "crypto" {
+			startingCapital = StartingUSDT
+		}
 	}
 	return s.store.Create(userID, name, market, startingCapital, currency, KindTrading)
 }
 
-func (s *Service) CreateReplayPortfolio(userID, name string, startingCapital float64) Portfolio {
-	return s.store.Create(userID, name, "stock", startingCapital, "VND", KindReplay)
+func (s *Service) CreateReplayPortfolio(userID, name, market string, startingCapital float64) Portfolio {
+	currency := "VND"
+	if market == "crypto" {
+		currency = "USDT"
+	} else {
+		market = "stock"
+	}
+	return s.store.Create(userID, name, market, startingCapital, currency, KindReplay)
 }
 
 func (s *Service) ListPortfolios(userID string) []Portfolio {
@@ -130,8 +143,8 @@ func (s *Service) valuedPositions(portfolioID string) []Position {
 		pos := Position{
 			Symbol:        sym,
 			Quantity:      p.quantity,
-			AvgCost:       round2(p.avgCost),
-			LastPrice:     round2(lastPrice),
+			AvgCost:       roundPrice(p.avgCost),
+			LastPrice:     roundPrice(lastPrice),
 			MarketValue:   round2(marketValue),
 			UnrealizedPnl: round2(marketValue - p.avgCost*float64(p.quantity)),
 		}
@@ -185,7 +198,7 @@ func (s *Service) Allocation(portfolioID string) []Allocation {
 }
 
 type lot struct {
-	quantity int64
+	quantity float64
 	price    float64
 	at       time.Time
 }
@@ -228,7 +241,7 @@ func (s *Service) reconstructTrades(portfolioID string) ([]ClosedTrade, map[stri
 		case "sell":
 			remaining := f.Quantity
 			q := queues[f.Symbol]
-			for remaining > 0 && len(q) > 0 {
+			for remaining > qtyEpsilon && len(q) > 0 {
 				head := &q[0]
 				matched := head.quantity
 				if matched > remaining {
@@ -251,7 +264,7 @@ func (s *Service) reconstructTrades(portfolioID string) ([]ClosedTrade, map[stri
 				})
 				head.quantity -= matched
 				remaining -= matched
-				if head.quantity == 0 {
+				if head.quantity <= qtyEpsilon {
 					q = q[1:]
 				}
 			}
@@ -353,4 +366,13 @@ func maxDrawdown(points []EquityPoint) float64 {
 
 func round2(v float64) float64 {
 	return float64(int64(v*100)) / 100
+}
+
+// roundPrice keeps 2 decimals for normal prices but 8 below 1, so
+// sub-cent coins (SLP at 0.00412 USDT) don't round to zero.
+func roundPrice(v float64) float64 {
+	if v >= 1 || v <= -1 {
+		return round2(v)
+	}
+	return math.Round(v*1e8) / 1e8
 }

@@ -174,16 +174,25 @@ export type TickerChange = {
   changePercent: number;
   price?: number;
   volume?: number;
+  companyName?: string;
+  exchange?: string;
+  marketCap?: number;
 };
 
 export type SectorGroup = {
   sector: string;
   avgChangePercent: number;
   tickers: TickerChange[];
+  marketCap?: number;
+  up?: number;
+  down?: number;
+  flat?: number;
 };
 
-export function getHeatmap(): Promise<{ data: SectorGroup[] }> {
-  return apiFetch<{ data: SectorGroup[] }>("/api/v1/market/heatmap");
+export type HeatmapPeriod = "1D" | "1W" | "1M" | "3M";
+
+export function getHeatmap(period: HeatmapPeriod = "1D", exchange = "ALL"): Promise<{ data: SectorGroup[] }> {
+  return apiFetch<{ data: SectorGroup[] }>(`/api/v1/market/heatmap?period=${period}&exchange=${encodeURIComponent(exchange)}`);
 }
 
 export function getMovers(direction: "up" | "down", limit = 5): Promise<{ data: TickerChange[] }> {
@@ -290,10 +299,11 @@ export type Order = {
   portfolioId: string;
   symbol: string;
   side: "buy" | "sell";
-  type: "market" | "limit" | "atc" | "stop";
+  type: "market" | "limit" | "atc" | "stop" | "oco";
   quantity: number;
   status: "filled" | "queued" | "cancelled";
   price?: number;
+  stopPrice?: number;
   filledPrice?: number;
   fee: number;
   filledAt?: string;
@@ -348,6 +358,8 @@ export type ReplayResult = {
 export type ReplaySession = {
   id: string;
   symbol: string;
+  market: "stock" | "crypto";
+  startingCapital: number;
   resolution: string;
   portfolioId: string;
   currentBar: number;
@@ -362,3 +374,78 @@ export type ReplaySession = {
   avgCost?: number;
   result: ReplayResult;
 };
+
+// -- Phase I: crypto market (backend/internal/crypto) --
+
+export type CryptoPairQuote = {
+  symbol: string; // "BTCUSDT"
+  base: string;
+  quote: string;
+  name: string;
+  category: string;
+  circulatingSupply: number;
+  maxSupply: number;
+  lastPrice: number;
+  change: number;
+  changePercent: number;
+  high24h: number;
+  low24h: number;
+  volume24h: number;
+  quoteVolume24h: number;
+  source: "binance" | "mock";
+  marketCap: number;
+};
+
+export type CryptoPairDetail = CryptoPairQuote & {
+  allTimeHigh: number;
+  distanceFromAthPercent: number;
+  volatility30dPercentDay: number;
+};
+
+export type CryptoOverview = {
+  btc: CryptoPairQuote;
+  eth: CryptoPairQuote;
+  btcSparkline: number[];
+  ethSparkline: number[];
+  totalMarketCap: number;
+  totalMarketCapChangePercent: number;
+  btcDominancePercent: number;
+  ethDominancePercent: number;
+  pairCount: number;
+  totalQuoteVolume24h: number;
+  categories: string[];
+};
+
+export type DepthLevel = { price: number; size: number; cumulative: number };
+
+export type CryptoInterval = "5m" | "15m" | "1h" | "4h" | "1d" | "1w";
+
+export function getCryptoPairs(): Promise<{ data: CryptoPairQuote[] }> {
+  return apiFetch<{ data: CryptoPairQuote[] }>("/api/v1/crypto/pairs");
+}
+
+export function getCryptoPair(symbol: string): Promise<CryptoPairDetail> {
+  return apiFetch<CryptoPairDetail>(`/api/v1/crypto/pairs/${encodeURIComponent(symbol)}`);
+}
+
+export function getCryptoOverview(): Promise<CryptoOverview> {
+  return apiFetch<CryptoOverview>("/api/v1/crypto/overview");
+}
+
+export function getCryptoHeatmap(): Promise<{ data: SectorGroup[] }> {
+  return apiFetch<{ data: SectorGroup[] }>("/api/v1/crypto/heatmap");
+}
+
+export function getCryptoMovers(direction: "up" | "down", limit = 5): Promise<{ data: CryptoPairQuote[] }> {
+  return apiFetch<{ data: CryptoPairQuote[] }>(`/api/v1/crypto/movers?direction=${direction}&limit=${limit}`);
+}
+
+export function getCryptoBars(pair: string, interval: CryptoInterval, from: number, to: number): Promise<{ data: Bar[]; source: string }> {
+  return apiFetch<{ data: Bar[]; source: string }>(`/api/v1/crypto/bars?pair=${encodeURIComponent(pair)}&interval=${interval}&from=${from}&to=${to}`);
+}
+
+export function getCryptoOrderBook(pair: string, levels = 4): Promise<{ data: { bids: DepthLevel[]; asks: DepthLevel[]; source: string } }> {
+  return apiFetch<{ data: { bids: DepthLevel[]; asks: DepthLevel[]; source: string } }>(
+    `/api/v1/crypto/orderbook?pair=${encodeURIComponent(pair)}&levels=${levels}`,
+  );
+}

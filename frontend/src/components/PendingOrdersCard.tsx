@@ -10,6 +10,7 @@ const KIND_LABEL: Record<Order["type"], string> = {
   atc: "ATC",
   stop: "Stop",
   market: "MP",
+  oco: "OCO",
 };
 
 // Portfolio.dc.html's "Lệnh chờ khớp" panel -- real queued orders (GET

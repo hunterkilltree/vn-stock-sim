@@ -38,8 +38,13 @@ async function replayFetch(path: string, method: "GET" | "POST", body?: object):
   return { session: payload as ReplaySession, error: null };
 }
 
-export async function startReplayAction(symbol: string, totalBars?: number, startDate?: string): Promise<ReplayActionResult> {
-  return replayFetch("/api/v1/replay/sessions", "POST", { symbol, totalBars, startDate });
+export async function startReplayAction(
+  symbol: string,
+  market: "stock" | "crypto" = "stock",
+  totalBars?: number,
+  startDate?: string,
+): Promise<ReplayActionResult> {
+  return replayFetch("/api/v1/replay/sessions", "POST", { symbol, market, totalBars, startDate });
 }
 
 export async function advanceReplayAction(sessionId: string): Promise<ReplayActionResult> {

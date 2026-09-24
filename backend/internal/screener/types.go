@@ -11,6 +11,11 @@ type TickerChange struct {
 	ChangePercent float64 `json:"changePercent"`
 	Price         float64 `json:"price,omitempty"`
 	Volume        int64   `json:"volume,omitempty"`
+	// Set on heatmap tiles (phase-i.md decision 15): the full heatmap
+	// sizes tiles by market cap and shows name/exchange on hover.
+	CompanyName string `json:"companyName,omitempty"`
+	Exchange    string `json:"exchange,omitempty"`
+	MarketCap   int64  `json:"marketCap,omitempty"`
 }
 
 // SectorGroup is one sector's heatmap row: its average day change plus
@@ -20,4 +25,12 @@ type SectorGroup struct {
 	Sector           string         `json:"sector"`
 	AvgChangePercent float64        `json:"avgChangePercent"`
 	Tickers          []TickerChange `json:"tickers"`
+	MarketCap        int64          `json:"marketCap"`
+	Up               int            `json:"up"`
+	Down             int            `json:"down"`
+	Flat             int            `json:"flat"`
 }
+
+// Periods the heatmap can colour by, as sessions back from the latest
+// daily close ("1D" uses the quote's own day change).
+var PeriodSessions = map[string]int{"1D": 1, "1W": 5, "1M": 21, "3M": 63}

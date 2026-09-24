@@ -115,11 +115,11 @@ func (p *VCIProvider) fetchOHLC(vciSymbol, timeFrame string, from, to int64) ([]
 		return nil, err
 	}
 	if len(parsed) == 0 {
-		return nil, errors.New("vci: empty response")
+		return nil, errVCINoData
 	}
 	row := parsed[0]
 	if len(row.Time) == 0 || len(row.Time) != len(row.Close) {
-		return nil, errors.New("vci: malformed response shape")
+		return nil, errVCINoData
 	}
 
 	bars := make([]Bar, 0, len(row.Time))
@@ -171,16 +171,22 @@ func estimateCountBack(timeFrame string, from, to int64) int {
 	return int(n)
 }
 
+// errVCINoData means VCI answered but had nothing for this symbol/window
+// -- unlike a transport or HTTP failure, it says nothing about whether VCI
+// itself is reachable (see LiveProvider's breaker).
+var errVCINoData = errors.New("vci: no data for this symbol/window")
+
 func (p *VCIProvider) GetBars(sym, resolution string, from, to int64) []Bar {
+	bars, _ := p.getBars(sym, resolution, from, to)
+	return bars
+}
+
+func (p *VCIProvider) getBars(sym, resolution string, from, to int64) ([]Bar, error) {
 	vciSymbol := sym
 	if mapped, ok := vciIndexSymbols[sym]; ok {
 		vciSymbol = mapped
 	}
-	bars, err := p.fetchOHLC(vciSymbol, vciTimeFrame(resolution), from, to)
-	if err != nil {
-		return nil
-	}
-	return bars
+	return p.fetchOHLC(vciSymbol, vciTimeFrame(resolution), from, to)
 }
 
 // GetIndex builds a real IndexSnapshot from a real 21-daily-bar VCI

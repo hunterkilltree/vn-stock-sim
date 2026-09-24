@@ -66,3 +66,30 @@ export function formatMarketCapVN(rawVnd: number): string {
   }
   return `${formatVN(rawVnd / 1_000_000_000, 1)} tỷ`;
 }
+
+// Crypto prices (USDT) span 64.820,50 (BTC) to 0,0000392 (VNDC): keep 2
+// decimals above 1 and ~4 significant digits below (Crypto-Main's
+// "0,00412", "0,4820").
+export function formatCryptoPrice(v: number): string {
+  if (!isFinite(v) || v === 0) return "0";
+  const abs = Math.abs(v);
+  if (abs >= 1) return formatVN(v, 2);
+  const decimals = Math.min(10, Math.max(4, 3 - Math.floor(Math.log10(abs))));
+  return v.toLocaleString("vi-VN", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+
+// Compact amounts in the design's short forms: "1,28 ngh.tỷ USD",
+// "28,4 tỷ USDT", "162 tr".
+export function formatCompact(v: number, unit = ""): string {
+  const suffix = unit ? ` ${unit}` : "";
+  const abs = Math.abs(v);
+  if (abs >= 1e12) return `${formatVN(v / 1e12, 2)} ngh.tỷ${suffix}`;
+  if (abs >= 1e9) return `${formatVN(v / 1e9, 1)} tỷ${suffix}`;
+  if (abs >= 1e6) return `${formatVN(v / 1e6, 1)} tr${suffix}`;
+  return `${formatVN(v, 0)}${suffix}`;
+}
+
+// Crypto amounts: up to 8 decimals, trailing zeros trimmed ("0,025").
+export function formatAmount(v: number, maxDecimals = 8): string {
+  return v.toLocaleString("vi-VN", { minimumFractionDigits: 0, maximumFractionDigits: maxDecimals });
+}

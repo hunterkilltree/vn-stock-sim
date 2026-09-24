@@ -1337,23 +1337,88 @@ cross-screen links, no page errors, keys absent from all logs. **Not yet
 done: a successful live round trip with a real Claude/OpenAI key** --
 that needs the user's own key.
 
+**Phase I (crypto market, real stock universe, full heatmap dashboard) --
+branch `phase-i-crypto`, stacked on `phase-h-quant`, 2026-09-24.** Plan
+and decisions: phase-i.md.
+
+- **Crypto backend** (`internal/crypto`, public routes under
+  `/api/v1/crypto`: pairs, pairs/:symbol, bars, orderbook, heatmap,
+  movers, overview):
+  - The design's 24 pairs in 4 categories (Layer 1, DeFi, Sàn & hạ
+    tầng, Dự án Việt Nam).
+  - A Binance public-API adapter (`data-api.binance.vision`: 24h ticker,
+    klines paged to 5,000, depth) behind the same live-with-mock-fallback
+    decorator the stock market uses, with a 10 s cache and a 30 s circuit
+    breaker. Every quote carries `source: binance | mock`.
+  - A deterministic 24/7 mock.
+  - Pair detail adds the all-time high and 30-day volatility; the
+    overview adds market cap and dominance over the app's 24 pairs.
+- **Crypto trading:**
+  - Crypto wallets are portfolios with `market: "crypto"`: USDT, 10,000
+    default, and their own active-wallet cookie so the stock portfolio
+    never changes.
+  - Quantities are float64 app-wide: stocks still trade whole shares,
+    crypto is rounded to 8 decimals.
+  - Crypto fee is 0.10 %.
+  - New `oco` order type (price + stopPrice, queued).
+  - A stock ticker into a crypto wallet, or the reverse, returns 409
+    `wrong_market`.
+  - Crypto Replay: 1h bars from 2021-05-01 with 10,000 USDT.
+- **Real stock universe + heatmap:**
+  - 40 real tickers in 9 Vietnamese sectors (was 5).
+  - VCI adapter hardening: a no-data answer doesn't trip the new 30 s
+    breaker, and a network failure does.
+  - `/market/heatmap` takes `period` (1D/1W/1M/3M from daily bars) and
+    `exchange`, and returns market cap and breadth per sector.
+- **Frontend:**
+  - A Cổ phiếu | Crypto switch in both navs.
+  - `/crypto` (Crypto-Main: stat cards, 24h heatmap, movers, wallet,
+    positions).
+  - `/crypto/[pair]` (Crypto-Detail: 24h chips, 6 timeframes, candles +
+    SMA/RSI/MACD computed client-side, paper order ticket with
+    market/limit/stop/OCO and lot buttons, 8-level book, coin facts).
+  - `/crypto/replay`.
+  - `/heatmap`, a full-screen two-level squarified treemap. It isn't in
+    the designs (SCREENS.md lists it as not designed), so it extends the
+    Main heatmap panel's visual language. It has market, exchange and
+    period filters, cap/equal sizing, hover details, breadth, a sector
+    list and top/bottom 5.
+  - The account menu lists stock portfolios and crypto wallets and
+    creates either.
+  - The 10.000 USDT signup option now opens a crypto wallet.
+
+Verified (details in phase-i.md):
+- 31 Go tests and Newman 62/0.
+- A Playwright run on the production build: every heatmap filter with 0
+  overlapping tiles, USDT signup, the market switch, a fractional BTC
+  order, the account menu, and crypto Replay.
+
+Not verified: live Binance/VCI data. This sandbox's network policy
+blocks both hosts, so everything ran on the mock fallback. Still open
+from phase-e.md: trading fees are shown but not deducted from cash.
+
 ---
 
 ## Plan (where to pick up)
 
-Phases A-H of FULL-APP-PLAN.md's rebuild are now done (see the Done
+Phases A-I of FULL-APP-PLAN.md's rebuild are now done (see the Done
 section above). Next up:
 
 1. **Merge the stacked branches** in order: `phase-g-account-menu` →
-   `docs-structure` → `phase-h-quant` (no PRs opened yet).
-2. **Try Quant with a real key** (Settings › Mô hình AI → Claude → paste a
+   `docs-structure` → `phase-h-quant` → `phase-i-crypto` (no PRs opened
+   yet).
+2. **See real prices**: run with normal internet access (or allow
+   `data-api.binance.vision` and `trading.vietcap.com.vn` in the cloud
+   environment's network settings) -- the one Phase I check this sandbox
+   couldn't do.
+3. **Try Quant with a real key** (Settings › Mô hình AI → Claude → paste a
    key → Kiểm tra) -- the one Phase H check this sandbox couldn't do.
-3. **Phase I** (Crypto-Main/Detail/Replay.dc.html): a parallel
-   `internal/crypto` feature set per FULL-APP-PLAN.md 2.3; also enables
-   the disabled 10.000 USDT signup option.
-4. **Phase J** (mobile layouts) and **Phase K** (WILL items, English);
-   Quant-Chart is Phase H's deferred stretch item.
-5. Independently of the lettered phases: wire a real Postgres database
+4. **Deduct trading fees from cash** (the phase-e.md gap, now visible on
+   crypto wallets too).
+5. **Phase J** (mobile layouts) and **Phase K** (WILL items, English);
+   Quant-Chart is Phase H's deferred stretch item; crypto Quant and a
+   crypto Portfolio page are Phase I's.
+6. Independently of the lettered phases: wire a real Postgres database
    behind auth/watchlist/portfolio/order (all in-memory MemoryStores that
    reset on restart today -- also what free hosts other than an always-on
    VM need), and replace the VCI market-data adapter with a licensed

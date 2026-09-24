@@ -11,17 +11,29 @@ import { getMe, getPortfolios, type Portfolio, type User } from "./api";
 
 export const SESSION_COOKIE = "vss_token";
 export const ACTIVE_PORTFOLIO_COOKIE = "vss_portfolio";
+export const ACTIVE_CRYPTO_COOKIE = "vss_portfolio_crypto";
+
+export type Market = "stock" | "crypto";
+
+export function activeCookieFor(market: Market): string {
+  return market === "crypto" ? ACTIVE_CRYPTO_COOKIE : ACTIVE_PORTFOLIO_COOKIE;
+}
 
 // The cookie is only a preference (phase-g.md decision 1): it's honored
-// only if it names one of the caller's own trading portfolios, otherwise
-// the first trading portfolio (the default) wins. Replay portfolios are
-// never selectable -- live orders must not reach them.
-export async function getActivePortfolio(token: string): Promise<{ active: Portfolio | null; portfolios: Portfolio[] }> {
-  const all = (await getPortfolios(token)).data;
-  const portfolios = all.filter((p) => p.kind === "trading");
-  const wanted = (await cookies()).get(ACTIVE_PORTFOLIO_COOKIE)?.value;
+// only if it names one of the caller's own trading portfolios of this
+// market, otherwise the market's first trading portfolio wins. Each market
+// has its own cookie, so switching a crypto wallet never changes the
+// stock portfolio (phase-i.md decision 9). Replay portfolios are never
+// selectable -- live orders must not reach them.
+export async function getActivePortfolio(
+  token: string,
+  market: Market = "stock",
+): Promise<{ active: Portfolio | null; portfolios: Portfolio[]; all: Portfolio[] }> {
+  const all = (await getPortfolios(token)).data.filter((p) => p.kind === "trading");
+  const portfolios = all.filter((p) => p.market === market);
+  const wanted = (await cookies()).get(activeCookieFor(market))?.value;
   const active = portfolios.find((p) => p.id === wanted) ?? portfolios[0] ?? null;
-  return { active, portfolios };
+  return { active, portfolios, all };
 }
 
 export async function getSessionToken(): Promise<string | null> {

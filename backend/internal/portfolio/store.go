@@ -11,8 +11,13 @@ var ErrInsufficientCash = errors.New("insufficient virtual cash")
 var ErrInsufficientShares = errors.New("insufficient shares")
 var ErrNotFound = errors.New("portfolio not found")
 
+// qtyEpsilon absorbs float rounding now that crypto positions are
+// fractional (phase-i.md decision 5): selling "all" of 0.1+0.2 BTC must
+// close the position, not leave 5e-17 BTC behind.
+const qtyEpsilon = 1e-9
+
 type position struct {
-	quantity int64
+	quantity float64
 	avgCost  float64
 }
 
@@ -81,7 +86,10 @@ func (s *MemoryStore) createLocked(userID, name, market string, startingCapital 
 	s.portfolios[p.ID] = &p
 	s.accounts[p.ID] = &account{cash: startingCapital, positions: make(map[string]*position)}
 	s.byUser[userID] = append(s.byUser[userID], p.ID)
-	if _, ok := s.byUserDefault[userID]; !ok && kind == KindTrading {
+	// Only a stock trading portfolio can be the default: the singular
+	// /portfolio routes and stock orders without a portfolioId use it
+	// (phase-i.md decision 9).
+	if _, ok := s.byUserDefault[userID]; !ok && kind == KindTrading && market == "stock" {
 		s.byUserDefault[userID] = p.ID
 	}
 	// Seed one equity point at creation so a brand-new portfolio's
@@ -177,7 +185,7 @@ func (s *MemoryStore) accountFor(portfolioID string) *account {
 // cash and grows the position at a blended average cost, sell credits
 // cash and shrinks the position. Returns the fill error (if any) without
 // mutating state, so a rejected order never partially applies.
-func (s *MemoryStore) ApplyFill(portfolioID, sym, side string, quantity int64, price float64) error {
+func (s *MemoryStore) ApplyFill(portfolioID, sym, side string, quantity float64, price float64) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	acc := s.accountFor(portfolioID)
@@ -199,11 +207,11 @@ func (s *MemoryStore) ApplyFill(portfolioID, sym, side string, quantity int64, p
 		acc.cash -= cost
 	case "sell":
 		pos, ok := acc.positions[sym]
-		if !ok || pos.quantity < quantity {
+		if !ok || pos.quantity < quantity-qtyEpsilon {
 			return ErrInsufficientShares
 		}
 		pos.quantity -= quantity
-		if pos.quantity == 0 {
+		if pos.quantity <= qtyEpsilon {
 			delete(acc.positions, sym)
 		}
 		acc.cash += cost

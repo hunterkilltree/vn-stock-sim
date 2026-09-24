@@ -25,7 +25,7 @@ const (
 
 type Position struct {
 	Symbol        string  `json:"symbol"`
-	Quantity      int64   `json:"quantity"`
+	Quantity      float64 `json:"quantity"`
 	AvgCost       float64 `json:"avgCost"`
 	LastPrice     float64 `json:"lastPrice"`
 	MarketValue   float64 `json:"marketValue"`
@@ -49,6 +49,9 @@ type Summary struct {
 // opens with (vn-stock-sim-version-highlights.md: "Starting cash, current
 // holdings, market value, and profit/loss — always visible").
 const StartingCash = 100_000_000
+
+// StartingUSDT is a new crypto wallet's default balance (Crypto-Main.dc.html).
+const StartingUSDT = 10_000
 
 // EquityPoint is one (timestamp, NAV) sample of a portfolio's total
 // equity over time -- see phase-e.md item 1. V1 appends a real point on
@@ -76,7 +79,7 @@ type Allocation struct {
 type OrderRecord struct {
 	Symbol      string
 	Side        string // "buy" or "sell"
-	Quantity    int64
+	Quantity    float64
 	FilledPrice float64
 	FilledAt    string // formatted like order.formatTime: "2006-01-02T15:04:05Z"
 }
@@ -96,7 +99,7 @@ type OrdersPort interface {
 // it drains more than one buy lot.
 type ClosedTrade struct {
 	Symbol      string
-	Quantity    int64
+	Quantity    float64
 	EntryPrice  float64
 	ExitPrice   float64
 	EntryAt     string

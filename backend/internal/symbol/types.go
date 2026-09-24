@@ -31,3 +31,8 @@ type Detail struct {
 	Ceiling   float64 `json:"ceiling"`
 	Floor     float64 `json:"floor"`
 }
+
+// ExchangeCrypto marks a Detail that describes a crypto pair (served by
+// crypto.QuoteRouter), so order/portfolio can tell the markets apart
+// without importing the crypto package (phase-i.md decisions 7-8).
+const ExchangeCrypto = "CRYPTO"

@@ -44,7 +44,7 @@ export const navItems: NavItem[] = [
     href: "/heatmap",
     label: "Bản đồ nhiệt",
     d: "M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18",
-    kind: "will",
+    kind: "built",
   },
   {
     href: "/strategy-builder",
@@ -83,6 +83,40 @@ export const navItems: NavItem[] = [
     kind: "built",
   },
 ];
+
+export type Mode = "stock" | "crypto";
+
+// Crypto mode's list, from design/screens/Crypto-Main.dc.html's navRaw
+// (same icons; its WILL flags kept, except the heatmap, built in Phase I).
+// Crypto paper trading has no screen of its own -- the wallet lives on
+// the Crypto overview (phase-i.md decision 10).
+export const cryptoNavItems: NavItem[] = [
+  { href: "/crypto", label: "Tổng quan", d: "M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z", kind: "built" },
+  { href: "/crypto/BTCUSDT", label: "Biểu đồ & chỉ báo", d: "M4 20V11M9 20V4M14 20V14M19 20V8", kind: "built" },
+  { href: "/crypto/screener", label: "Bộ lọc coin", d: "M4 6h16M7 12h10M10 18h4", kind: "will" },
+  { href: "/heatmap?market=crypto", label: "Bản đồ nhiệt", d: "M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18", kind: "built" },
+  { href: "/crypto/strategy-builder", label: "Xây chiến lược", d: "M6 4h5v5H6zM13 15h5v5h-5zM8.5 9v4a2 2 0 002 2h2.5", kind: "will" },
+  { href: "/crypto/backtest", label: "Kiểm thử lịch sử", d: "M12 21a9 9 0 100-18 9 9 0 000 18zM12 7.5V12l3 2", kind: "will" },
+  { href: "/crypto/paper", label: "Giao dịch giấy", d: "M3 7h18v12H3zM3 7l3-4h12l3 4M16 13h2", kind: "will" },
+  { href: "/crypto/replay", label: "Chế độ Replay", d: "M11 6L4 12l7 6V6zM20 6l-7 6 7 6V6z", kind: "built" },
+  { href: "/crypto/quant", label: "Trợ lý Quant", d: "M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5z", kind: "will" },
+];
+
+export function navItemsFor(mode: Mode): NavItem[] {
+  return mode === "crypto" ? cryptoNavItems : navItems;
+}
+
+// An item is active when the path matches its href's path (query ignored),
+// or, for the chart item, any detail page of that market.
+export function isNavActive(item: NavItem, pathname: string, mode: Mode): boolean {
+  const path = item.href.split("?")[0];
+  if (item.label.startsWith("Biểu đồ")) {
+    return mode === "crypto"
+      ? pathname.startsWith("/crypto/") && pathname !== "/crypto/replay"
+      : pathname.startsWith("/stocks/");
+  }
+  return pathname === path;
+}
 
 // Settings -- rendered separately below the nav loop, always inactive
 // style, per Main.dc.html's markup (not part of navRaw).

@@ -1,8 +1,10 @@
 import type { ReplaySession } from "@/lib/api";
-import { formatVN, formatVolumeVN } from "@/lib/format";
+import { formatCompact, formatVN, formatVolumeVN } from "@/lib/format";
 
 type Props = {
   session: ReplaySession;
+  scale?: number;
+  decimals?: number;
 };
 
 // Replay.dc.html's candle chart, ported the same way DetailChart.tsx
@@ -16,7 +18,7 @@ type Props = {
 // `step = plotW / totalBars` instead, which scales correctly for any
 // session length rather than replicating a magic constant tuned for one
 // specific number.
-export default function ReplayChart({ session }: Props) {
+export default function ReplayChart({ session, scale = 1000, decimals = 2 }: Props) {
   const { bars, sma20, fills, stopLoss, totalBars, currentBar } = session;
 
   if (bars.length < 2) {
@@ -27,7 +29,9 @@ export default function ReplayChart({ session }: Props) {
     );
   }
 
-  const toK = (v: number) => v / 1000;
+  // scale 1000 shows VND in thousands (stocks); 1 shows USDT (crypto).
+  const toK = (v: number) => v / scale;
+  const fmtVol = (v: number) => (scale === 1 ? formatCompact(v) : formatVolumeVN(v));
   const plotW = 870;
   const step = plotW / totalBars;
   const bw = Math.max(1, step * 0.6);
@@ -65,7 +69,7 @@ export default function ReplayChart({ session }: Props) {
   const grid = Array.from({ length: 5 }, (_, i) => {
     const v = lo + ((hi - lo) * i) / 4;
     const gy = py(v);
-    return { key: i, y: gy.toFixed(1), ty: (gy + 3.5).toFixed(1), label: formatVN(v, 1) };
+    return { key: i, y: gy.toFixed(1), ty: (gy + 3.5).toFixed(1), label: formatVN(v, decimals === 2 ? 1 : decimals) };
   });
 
   const smaPoly = sma20
@@ -98,7 +102,7 @@ export default function ReplayChart({ session }: Props) {
       col: up ? "#35C77F" : "#FF5C5C",
       tx: cx.toFixed(1),
       ty: (up ? cy + s + 12 : cy - s - 6).toFixed(1),
-      label: `${up ? "M" : "B"} ${formatVN(toK(f.price), 1)}`,
+      label: `${up ? "M" : "B"} ${formatVN(toK(f.price), decimals === 2 ? 1 : decimals)}`,
     };
   });
 
@@ -123,13 +127,18 @@ export default function ReplayChart({ session }: Props) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-[14px] font-plex-mono text-[11.5px] text-app-text-3">
           <span className="text-app-text-2">
-            {new Date(lastBar.time * 1000).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" })}
+            {new Date(lastBar.time * 1000).toLocaleString(
+              "vi-VN",
+              session.market === "crypto"
+                ? { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "UTC" }
+                : { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" },
+            )}
           </span>
-          <span>O {formatVN(toK(lastBar.open), 2)}</span>
-          <span>H {formatVN(toK(lastBar.high), 2)}</span>
-          <span>L {formatVN(toK(lastBar.low), 2)}</span>
+          <span>O {formatVN(toK(lastBar.open), decimals)}</span>
+          <span>H {formatVN(toK(lastBar.high), decimals)}</span>
+          <span>L {formatVN(toK(lastBar.low), decimals)}</span>
           <span className={closes[closes.length - 1] >= opens[opens.length - 1] ? "text-price-up" : "text-price-down"}>
-            C {formatVN(toK(lastBar.close), 2)}
+            C {formatVN(toK(lastBar.close), decimals)}
           </span>
         </div>
         <div className="flex items-center gap-[10px]">
@@ -208,7 +217,7 @@ export default function ReplayChart({ session }: Props) {
           <>
             <line x1="0" y1={stopY.toFixed(1)} x2={maskX > 0 ? maskX.toFixed(1) : "870"} y2={stopY.toFixed(1)} stroke="#FF5C5C" strokeWidth="1" strokeDasharray="4 4" />
             <text x="6" y={(stopY - 6).toFixed(1)} fill="#FF5C5C" fontFamily="'IBM Plex Mono', monospace" fontSize="10">
-              Cắt lỗ {formatVN(toK(stopLoss ?? 0), 2)}
+              Cắt lỗ {formatVN(toK(stopLoss ?? 0), decimals)}
             </text>
           </>
         )}
@@ -221,7 +230,7 @@ export default function ReplayChart({ session }: Props) {
         </g>
       </svg>
 
-      <div className="text-[10.5px] text-app-text-muted">KL {formatVolumeVN(lastBar.volume)}</div>
+      <div className="text-[10.5px] text-app-text-muted">KL {fmtVol(lastBar.volume)}</div>
     </section>
   );
 }

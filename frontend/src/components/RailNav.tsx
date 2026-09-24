@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { navItems, settingsItem } from "@/lib/navItems";
+import { isNavActive, navItemsFor, settingsItem, type Mode } from "@/lib/navItems";
 import { LogoMark } from "@/components/icons";
 
 function RailIcon({ d }: { d: string }) {
@@ -23,19 +23,46 @@ function RailIcon({ d }: { d: string }) {
 // `account` is the server-rendered <AccountMenuButton placement="right"/>
 // -- a Server Component can only reach this Client shell as a prop
 // (phase-g.md decision 9).
-export default function RailNav({ account }: { account: ReactNode }) {
+export default function RailNav({ account, mode = "stock" }: { account: ReactNode; mode?: Mode }) {
   const pathname = usePathname();
+  const items = navItemsFor(mode);
   const settingsActive = pathname.startsWith("/settings");
 
   return (
     <aside className="flex w-[72px] shrink-0 flex-col items-center gap-6 bg-app-chrome py-6">
-      <Link href="/stocks" className="text-app-accent" title="VN Stock Sim">
+      <Link href={mode === "crypto" ? "/crypto" : "/stocks"} className="text-app-accent" title="VN Stock Sim">
         <LogoMark />
       </Link>
 
+      {/* Crypto-Detail.dc.html's CP / CRY switch (phase-i.md decision 13). */}
+      <div role="group" aria-label="Chọn thị trường" className="-mt-2 flex flex-col gap-[3px]">
+        {([
+          { m: "stock", href: "/stocks", label: "CP", aria: "Thị trường cổ phiếu" },
+          { m: "crypto", href: "/crypto", label: "CRY", aria: "Thị trường crypto" },
+        ] as const).map((x) => {
+          const on = x.m === mode;
+          return (
+            <Link
+              key={x.m}
+              href={x.href}
+              aria-label={x.aria}
+              aria-current={on ? "page" : undefined}
+              className="flex h-[30px] w-11 items-center justify-center rounded-[9px] text-[10px]"
+              style={{
+                background: on ? "var(--app-accent)" : "transparent",
+                color: on ? "var(--app-accent-ink)" : "var(--app-text-muted)",
+                fontWeight: on ? 700 : 600,
+              }}
+            >
+              {x.label}
+            </Link>
+          );
+        })}
+      </div>
+
       <nav className="flex flex-1 flex-col items-center gap-1">
-        {navItems.map((item) => {
-          const active = pathname === item.href;
+        {items.map((item) => {
+          const active = isNavActive(item, pathname, mode);
 
           if (item.kind !== "built") {
             return (

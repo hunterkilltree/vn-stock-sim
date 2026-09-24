@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import type { ReplaySession as Session } from "@/lib/api";
 import { startReplayAction, advanceReplayAction, placeReplayOrderAction, endReplayAction } from "@/lib/replayActions";
-import { formatVN } from "@/lib/format";
+import { formatAmount, formatCryptoPrice, formatVN } from "@/lib/format";
 import ReplayChart from "./ReplayChart";
 import ReplayResultsPanel from "./ReplayResultsPanel";
 
@@ -16,14 +16,22 @@ const AUTOPLAY_BASE_MS = 900;
 // from the backend after every action (see backend/internal/replay's
 // SessionView -- the "future hidden" guarantee is enforced there, not
 // by anything this component chooses not to render).
-export default function ReplaySession({ initialSymbol }: { initialSymbol: string }) {
+// market "crypto" is Crypto-Replay.dc.html: 1-hour candles from
+// 01/05/2021, USDT prices, fractional amounts (phase-i.md decision 11).
+export default function ReplaySession({ initialSymbol, market = "stock" }: { initialSymbol: string; market?: "stock" | "crypto" }) {
+  const crypto = market === "crypto";
+  const fmtPrice = (v: number) => (crypto ? formatCryptoPrice(v) : formatVN(v / 1000, 2));
+  const fmtWhen = (iso: string) =>
+    new Date(iso).toLocaleString("vi-VN", crypto
+      ? { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "UTC" }
+      : { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" });
   const [session, setSession] = useState<Session | null>(null);
   const [symbol, setSymbol] = useState(initialSymbol);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [autoPlay, setAutoPlay] = useState(false);
   const [speed, setSpeed] = useState(1);
-  const [qty, setQty] = useState("1000");
+  const [qty, setQty] = useState(market === "crypto" ? "0,05" : "1000");
   const [stopLossInput, setStopLossInput] = useState("");
   const busyRef = useRef(false);
 
@@ -64,7 +72,7 @@ export default function ReplaySession({ initialSymbol }: { initialSymbol: string
   function start() {
     setError(null);
     startTransition(async () => {
-      const res = await startReplayAction(symbol.trim().toUpperCase());
+      const res = await startReplayAction(symbol.trim().toUpperCase(), market);
       if (res.error) setError(res.error);
       if (res.session) setSession(res.session);
     });
@@ -73,8 +81,9 @@ export default function ReplaySession({ initialSymbol }: { initialSymbol: string
   function placeOrder(side: "buy" | "sell") {
     if (!session) return;
     setError(null);
-    const quantity = Number(qty.replace(/\D/g, "")) || 0;
-    const stopLoss = side === "buy" ? (Number(stopLossInput.replace(",", ".")) || 0) * 1000 : 0;
+    const quantity = crypto ? Number(qty.replace(/\./g, "").replace(",", ".")) || 0 : Number(qty.replace(/\D/g, "")) || 0;
+    const stopRaw = Number(stopLossInput.replace(/\./g, "").replace(",", ".")) || 0;
+    const stopLoss = side === "buy" ? (crypto ? stopRaw : stopRaw * 1000) : 0;
     startTransition(async () => {
       const res = await placeReplayOrderAction(session.id, side, quantity, stopLoss);
       if (res.error) setError(res.error);
@@ -114,7 +123,7 @@ export default function ReplaySession({ initialSymbol }: { initialSymbol: string
           </div>
           <div className="flex flex-col gap-[6px]">
             <label htmlFor="rsym" className="text-[11px] text-app-text-muted">
-              Mã cổ phiếu
+              {crypto ? "Cặp giao dịch" : "Mã cổ phiếu"}
             </label>
             <input
               id="rsym"
@@ -146,7 +155,9 @@ export default function ReplaySession({ initialSymbol }: { initialSymbol: string
           <div className="flex flex-col gap-1">
             <h1 className="m-0 font-display text-[26px] font-bold tracking-[-0.015em]">Chế độ Replay</h1>
             <span className="text-[12.5px] text-app-text-muted">
-              {session.symbol} · Nến ngày · Phiên mô phỏng
+              {crypto
+                ? `${session.symbol.replace(/USDT$/, "/USDT")} · Nến 1 giờ · chạy liên tục, kể cả cuối tuần`
+                : `${session.symbol} · Nến ngày · Phiên mô phỏng`}
             </span>
           </div>
           <div className="flex items-center gap-2 rounded-[10px] border border-[#4A3521] bg-[#1C1813] px-[13px] py-[7px]">
@@ -185,7 +196,7 @@ export default function ReplaySession({ initialSymbol }: { initialSymbol: string
 
       <div className="flex min-h-0 flex-1 gap-5">
         <div className="flex min-w-0 flex-1 flex-col gap-[14px]">
-          <ReplayChart session={session} />
+          <ReplayChart session={session} scale={crypto ? 1 : 1000} />
 
           <section className="flex shrink-0 items-center gap-[18px] rounded-2xl border border-app-border bg-app-surface p-[14px_18px]">
             <div className="flex items-center gap-2">
@@ -295,7 +306,7 @@ export default function ReplaySession({ initialSymbol }: { initialSymbol: string
                       <th className="p-0 pb-[7px] text-left font-medium">Lệnh</th>
                       <th className="p-0 pb-[7px] text-right font-medium">KL</th>
                       <th className="p-0 pb-[7px] text-right font-medium">Giá</th>
-                      <th className="p-0 pb-[7px] text-left font-medium">Ghi chú</th>
+                      <th className="p-0 pb-[7px] pl-4 text-left font-medium">Ghi chú</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -305,7 +316,7 @@ export default function ReplaySession({ initialSymbol }: { initialSymbol: string
                         <tr key={i} className="border-t border-app-hairline">
                           <td className="py-2 font-plex-mono text-app-text-muted">#{f.barIndex}</td>
                           <td className="py-2 font-plex-mono">
-                            {new Date(f.date).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" })}
+                            {fmtWhen(f.date)}
                           </td>
                           <td className="py-2">
                             <span
@@ -315,9 +326,9 @@ export default function ReplaySession({ initialSymbol }: { initialSymbol: string
                               {buy ? "Mua" : "Bán"}
                             </span>
                           </td>
-                          <td className="py-2 text-right font-plex-mono">{f.quantity.toLocaleString("vi-VN")}</td>
-                          <td className="py-2 text-right font-plex-mono">{formatVN(f.price / 1000, 2)}</td>
-                          <td className="py-2 text-app-text-muted">{f.note || "—"}</td>
+                          <td className="py-2 text-right font-plex-mono">{formatAmount(f.quantity)}</td>
+                          <td className="py-2 text-right font-plex-mono">{fmtPrice(f.price)}</td>
+                          <td className="py-2 pl-4 text-app-text-muted">{f.note || "—"}</td>
                         </tr>
                       );
                     })}
@@ -332,7 +343,7 @@ export default function ReplaySession({ initialSymbol }: { initialSymbol: string
           <section className="flex flex-col gap-[13px] rounded-2xl border border-app-border bg-app-surface p-[18px]">
             <div className="flex items-center justify-between">
               <h2 className="m-0 text-[15px] font-semibold">Đặt lệnh tại nến này</h2>
-              <span className="font-plex-mono text-[12px] text-price-up">{formatVN(lastClose / 1000, 2)}</span>
+              <span className="font-plex-mono text-[12px] text-price-up">{fmtPrice(lastClose)}</span>
             </div>
             <div className="grid grid-cols-2 gap-[10px]">
               <div className="flex flex-col gap-[6px]">
@@ -349,7 +360,7 @@ export default function ReplaySession({ initialSymbol }: { initialSymbol: string
               </div>
               <div className="flex flex-col gap-[6px]">
                 <label htmlFor="rstop" className="text-[11px] text-app-text-muted">
-                  Cắt lỗ (nghìn ₫)
+                  {crypto ? "Cắt lỗ (USDT)" : "Cắt lỗ (nghìn ₫)"}
                 </label>
                 <input
                   id="rstop"
@@ -385,13 +396,13 @@ export default function ReplaySession({ initialSymbol }: { initialSymbol: string
               <span className="text-app-text-muted">Đang giữ</span>
               <span className="font-plex-mono font-semibold">
                 {session.positionQty > 0
-                  ? `${session.positionQty.toLocaleString("vi-VN")} ${session.symbol} @ ${formatVN((session.avgCost ?? 0) / 1000, 2)}`
+                  ? `${formatAmount(session.positionQty)} ${session.symbol.replace(/USDT$/, "")} @ ${fmtPrice(session.avgCost ?? 0)}`
                   : "Chưa có vị thế"}
               </span>
             </div>
           </section>
 
-          <ReplayResultsPanel result={session.result} />
+          <ReplayResultsPanel result={session.result} currency={crypto ? "USDT" : "VND"} />
         </div>
       </div>
     </div>

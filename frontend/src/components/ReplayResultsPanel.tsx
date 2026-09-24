@@ -7,9 +7,9 @@ import { formatVN, signVN, tone } from "@/lib/format";
 // (phase-f.md reuses Phase E's portfolio.Stats over the session's own
 // dedicated portfolio) and a real, explicitly-labeled heuristic skill
 // score (score.go) rather than the design's fixed sample numbers.
-export default function ReplayResultsPanel({ result }: { result: ReplayResult }) {
+export default function ReplayResultsPanel({ result, currency = "VND" }: { result: ReplayResult; currency?: "VND" | "USDT" }) {
   const stats: { k: string; v: string; color: string }[] = [
-    { k: "NAV mô phỏng", v: `${formatVN(result.nav / 1_000_000, 2)} tr`, color: "var(--app-text)" },
+    { k: "NAV mô phỏng", v: currency === "USDT" ? `${formatVN(result.nav, 2)} USDT` : `${formatVN(result.nav / 1_000_000, 2)} tr`, color: "var(--app-text)" },
     { k: "Lãi/lỗ phiên", v: `${signVN(result.pnlPercent, 2)}%`, color: tone(result.pnlPercent) },
     { k: "Số lệnh", v: `${result.totalTrades}`, color: "var(--app-text)" },
     { k: "Tỷ lệ thắng", v: `${result.wins} / ${result.wins + result.losses}`, color: tone(result.wins - result.losses) },

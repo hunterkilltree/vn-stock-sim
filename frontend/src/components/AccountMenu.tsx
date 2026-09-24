@@ -6,10 +6,12 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import WillBadge from "@/components/WillBadge";
 import { createPortfolioAction, setActivePortfolioAction } from "@/lib/accountActions";
 import { logoutAction } from "@/lib/authActions";
-import { STOCK_CAPITAL_PRESETS } from "@/lib/capital";
+import { CRYPTO_CAPITAL_PRESET, STOCK_CAPITAL_PRESETS } from "@/lib/capital";
 import { signVN } from "@/lib/format";
 
-export type MenuPortfolio = { id: string; name: string; nav: string; pct: number; active: boolean };
+export type MenuPortfolio = { id: string; name: string; nav: string; pct: number; active: boolean; market: "stock" | "crypto" };
+
+const homeFor = (market?: "stock" | "crypto") => (market === "crypto" ? "/crypto" : "/portfolio");
 
 type Props = {
   placement: "below" | "right";
@@ -38,7 +40,9 @@ export default function AccountMenu({ placement, user, portfolios }: Props) {
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
+  const [market, setMarket] = useState<"stock" | "crypto">("stock");
   const [capital, setCapital] = useState(STOCK_CAPITAL_PRESETS[0].amount);
+  const presets = market === "crypto" ? [CRYPTO_CAPITAL_PRESET] : STOCK_CAPITAL_PRESETS;
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -65,8 +69,9 @@ export default function AccountMenu({ placement, user, portfolios }: Props) {
     setError(null);
   }
 
-  // Each row links to the Portfolio page, as in the design; choosing a
-  // row also makes it the active portfolio for the whole app.
+  // Each row links to its market's home (Portfolio page for stock, the
+  // crypto overview for a wallet); choosing a row also makes it the
+  // active portfolio of that market.
   function selectPortfolio(id: string) {
     setError(null);
     startTransition(async () => {
@@ -76,15 +81,20 @@ export default function AccountMenu({ placement, user, portfolios }: Props) {
         return;
       }
       setOpen(false);
-      router.push("/portfolio");
+      router.push(homeFor(res.market));
     });
+  }
+
+  function chooseMarket(m: "stock" | "crypto") {
+    setMarket(m);
+    setCapital(m === "crypto" ? CRYPTO_CAPITAL_PRESET.amount : STOCK_CAPITAL_PRESETS[0].amount);
   }
 
   function submitCreate(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     startTransition(async () => {
-      const res = await createPortfolioAction(name, capital);
+      const res = await createPortfolioAction(name, capital, market);
       if (res.error) {
         setError(res.error);
         return;
@@ -92,7 +102,7 @@ export default function AccountMenu({ placement, user, portfolios }: Props) {
       setName("");
       setCreating(false);
       setOpen(false);
-      router.push("/portfolio");
+      router.push(homeFor(res.market));
     });
   }
 
@@ -174,9 +184,33 @@ export default function AccountMenu({ placement, user, portfolios }: Props) {
                   maxLength={60}
                   className="h-10 rounded-[9px] border border-app-border bg-app-surface px-3 text-[13px] text-app-text outline-none placeholder:text-app-text-faint"
                 />
+                <span className="text-[11.5px] text-app-text-3">Thị trường</span>
+                <div role="group" aria-label="Thị trường của danh mục" className="flex gap-2">
+                  {(
+                    [
+                      ["stock", "Cổ phiếu"],
+                      ["crypto", "Crypto"],
+                    ] as const
+                  ).map(([m, label]) => (
+                    <button
+                      key={m}
+                      type="button"
+                      aria-pressed={market === m}
+                      onClick={() => chooseMarket(m)}
+                      className="flex h-9 flex-1 items-center justify-center rounded-[9px] border text-[12.5px] font-semibold"
+                      style={{
+                        borderColor: market === m ? "var(--app-border-strong)" : "var(--app-border)",
+                        background: market === m ? "var(--app-border)" : "var(--app-surface)",
+                        color: market === m ? "var(--app-text)" : "var(--app-text-3)",
+                      }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
                 <span className="text-[11.5px] text-app-text-3">Vốn ảo ban đầu</span>
                 <div className="flex gap-2">
-                  {STOCK_CAPITAL_PRESETS.map((c) => {
+                  {presets.map((c) => {
                     const selected = capital === c.amount;
                     return (
                       <button

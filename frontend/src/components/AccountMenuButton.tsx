@@ -45,7 +45,11 @@ export default async function AccountMenuButton({ placement }: Props) {
 
   let portfolios: MenuPortfolio[] = [];
   try {
-    const { active, portfolios: list } = await getActivePortfolio(token);
+    // Both markets are listed; each market keeps its own active
+    // portfolio (phase-i.md decision 9), so up to two rows are marked.
+    const [stock, crypto] = await Promise.all([getActivePortfolio(token, "stock"), getActivePortfolio(token, "crypto")]);
+    const activeIDs = new Set([stock.active?.id, crypto.active?.id]);
+    const list = stock.all;
     const summaries = await Promise.all(list.map((p) => getPortfolioSummaryByID(p.id, token)));
     portfolios = list.map((p, i) => {
       const equity = summaries[i].totalEquity;
@@ -54,7 +58,8 @@ export default async function AccountMenuButton({ placement }: Props) {
         name: p.name,
         nav: navLabel(p, equity),
         pct: p.startingCapital > 0 ? ((equity - p.startingCapital) / p.startingCapital) * 100 : 0,
-        active: p.id === active?.id,
+        active: activeIDs.has(p.id),
+        market: p.market === "crypto" ? "crypto" : "stock",
       };
     });
   } catch {
