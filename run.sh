@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Builds and runs the whole VN Stock Sim V1 demo in Docker (backend +
-# frontend, see docker-compose.yml / DOCKER.md). Wraps `docker compose up
+# frontend, see docker-compose.yml / docs/guides/DOCKER.md). Wraps `docker compose up
 # --build` with a couple of sanity checks so failures are clearer than the
 # raw Docker error.
 #
