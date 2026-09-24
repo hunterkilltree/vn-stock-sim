@@ -16,6 +16,7 @@
     { "key": "orderId", "value": "", "type": "string" },
     { "key": "backtestId", "value": "", "type": "string" },
     { "key": "replaySessionId", "value": "", "type": "string" },
+    { "key": "replayPortfolioId", "value": "", "type": "string" },
     { "key": "nowTs", "value": "", "type": "string" },
     { "key": "from10dTs", "value": "", "type": "string" },
     { "key": "from180dTs", "value": "", "type": "string" }
@@ -50,7 +51,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"tester@example.com\",\n  \"displayName\": \"Postman Tester\",\n  \"password\": \"password123\"\n}"
+              "raw": "{\n  \"email\": \"tester@example.com\",\n  \"displayName\": \"Postman Tester\",\n  \"password\": \"password123\",\n  \"marketInterest\": \"both\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/register",
@@ -633,6 +634,32 @@
             },
             "description": "Only a still-\"queued\" order can be cancelled. In the default top-to-bottom run, {{orderId}} points at the \"Create Order (Limit, queued)\" order, so this succeeds; re-running it against a filled market order's id (or cancelling twice) returns 409 cannot_cancel instead."
           }
+        },
+        {
+          "name": "Create Order (unknown portfolio -> 404)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"portfolioId\": \"pf_does_not_exist\",\n  \"symbol\": \"{{symbol}}\",\n  \"side\": \"buy\",\n  \"type\": \"market\",\n  \"quantity\": 100\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders"]
+            },
+            "description": "Orders are only accepted into a portfolio the caller owns -- an unknown or another user's portfolioId returns 404 portfolio_not_found (phase-g.md decision 3)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('returns 404', function () { pm.response.to.have.status(404); });"]
+              }
+            }
+          ]
         }
       ]
     },
@@ -723,8 +750,35 @@
                 "exec": [
                   "if (pm.response.code === 201) {",
                   "  pm.collectionVariables.set('replaySessionId', pm.response.json().id);",
+                  "  pm.collectionVariables.set('replayPortfolioId', pm.response.json().portfolioId);",
                   "}"
                 ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Live Order into Replay Portfolio (-> 409)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"portfolioId\": \"{{replayPortfolioId}}\",\n  \"symbol\": \"{{symbol}}\",\n  \"side\": \"buy\",\n  \"type\": \"market\",\n  \"quantity\": 100\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders"]
+            },
+            "description": "A Replay session's portfolio (kind: \"replay\") only receives fills from its own session; a live POST /orders into it returns 409 replay_portfolio (phase-g.md decision 4)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('returns 409', function () { pm.response.to.have.status(409); });"]
               }
             }
           ]

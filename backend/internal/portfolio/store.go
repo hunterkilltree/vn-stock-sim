@@ -58,15 +58,22 @@ func (s *MemoryStore) nextPortfolioID() string {
 }
 
 // Create opens a new named portfolio for userID with its own cash
-// balance seeded from startingCapital.
-func (s *MemoryStore) Create(userID, name, market string, startingCapital float64, currency string) Portfolio {
+// balance seeded from startingCapital. The first KindTrading portfolio
+// a user gets becomes their default (phase-g.md decision 5) -- that is
+// how Signup's capital picker sets the main portfolio's capital.
+func (s *MemoryStore) Create(userID, name, market string, startingCapital float64, currency, kind string) Portfolio {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	return s.createLocked(userID, name, market, startingCapital, currency, kind)
+}
+
+func (s *MemoryStore) createLocked(userID, name, market string, startingCapital float64, currency, kind string) Portfolio {
 	p := Portfolio{
 		ID:              s.nextPortfolioID(),
 		UserID:          userID,
 		Name:            name,
 		Market:          market,
+		Kind:            kind,
 		StartingCapital: startingCapital,
 		Currency:        currency,
 		CreatedAt:       time.Now().UTC().Format("2006-01-02T15:04:05Z"),
@@ -74,6 +81,9 @@ func (s *MemoryStore) Create(userID, name, market string, startingCapital float6
 	s.portfolios[p.ID] = &p
 	s.accounts[p.ID] = &account{cash: startingCapital, positions: make(map[string]*position)}
 	s.byUser[userID] = append(s.byUser[userID], p.ID)
+	if _, ok := s.byUserDefault[userID]; !ok && kind == KindTrading {
+		s.byUserDefault[userID] = p.ID
+	}
 	// Seed one equity point at creation so a brand-new portfolio's
 	// history is never empty (its NAV is just its starting capital).
 	s.equity[p.ID] = []EquityPoint{{Timestamp: p.CreatedAt, NAV: startingCapital}}
@@ -118,22 +128,17 @@ func (s *MemoryStore) OwnerOf(portfolioID string) (string, bool) {
 }
 
 // DefaultFor returns the lazily-created default portfolio ID for userID,
-// opening a "Danh muc chinh" (Main portfolio) stock portfolio seeded with
+// opening a "Danh mục chính" (Main portfolio) stock portfolio seeded with
 // StartingCash the first time it's asked for a given user -- the same
 // lazy-open behavior the old single-portfolio ensure() had, now sitting
 // on top of the multi-portfolio store.
 func (s *MemoryStore) DefaultFor(userID string) string {
 	s.mu.Lock()
+	defer s.mu.Unlock()
 	if id, ok := s.byUserDefault[userID]; ok {
-		s.mu.Unlock()
 		return id
 	}
-	s.mu.Unlock()
-	p := s.Create(userID, "Danh muc chinh", "stock", StartingCash, "VND")
-	s.mu.Lock()
-	s.byUserDefault[userID] = p.ID
-	s.mu.Unlock()
-	return p.ID
+	return s.createLocked(userID, "Danh mục chính", "stock", StartingCash, "VND", KindTrading).ID
 }
 
 func (s *MemoryStore) List(userID string) []Portfolio {

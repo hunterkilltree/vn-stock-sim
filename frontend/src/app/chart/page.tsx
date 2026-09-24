@@ -1,5 +1,6 @@
 import TradingViewWidget from "@/components/TradingViewWidget";
 import RailNav from "@/components/RailNav";
+import AccountMenuButton from "@/components/AccountMenuButton";
 
 export const metadata = { title: "Chart — VN Stock Sim" };
 
@@ -11,7 +12,7 @@ export const metadata = { title: "Chart — VN Stock Sim" };
 export default function ChartPage() {
   return (
     <div className="flex flex-1">
-      <RailNav />
+      <RailNav account={<AccountMenuButton placement="right" />} />
       <main className="mx-auto w-full max-w-5xl p-8 lg:p-12">
         <h1 className="mb-1 text-2xl font-medium tracking-tight text-neutral-900 lg:text-3xl">
           TradingView Chart

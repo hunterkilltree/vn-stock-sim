@@ -9,6 +9,7 @@ type Props = {
   symbol: string;
   lastPrice: number; // raw VND
   buyingPower: number | null; // raw VND cash balance, null when guest
+  portfolioName: string | null; // the active portfolio this ticket trades
 };
 
 const ORDER_TYPES: { label: string; value: "limit" | "market" | "atc" | "stop" }[] = [
@@ -28,7 +29,7 @@ const LOT_SIZE = 100;
 // the submit area with a sign-in prompt instead of a modal -- see
 // phase-d.md decision 5 (a modal over the order ticket is explicitly
 // listed as NOT YET DESIGNED in design/SCREENS.md).
-export default function OrderTicket({ symbol, lastPrice, buyingPower }: Props) {
+export default function OrderTicket({ symbol, lastPrice, buyingPower, portfolioName }: Props) {
   const initialState: OrderFormState = { error: null, success: null };
   const [state, formAction, pending] = useActionState(placeOrderAction, initialState);
 
@@ -156,6 +157,12 @@ export default function OrderTicket({ symbol, lastPrice, buyingPower }: Props) {
           <span className="text-app-text-muted">Phí mô phỏng (0,15%)</span>
           <span className="font-plex-mono">{formatVN(fee, 0)} ₫</span>
         </div>
+        {portfolioName !== null && (
+          <div className="flex justify-between text-[12.5px]">
+            <span className="text-app-text-muted">Danh mục</span>
+            <span className="truncate pl-3 text-app-text-2">{portfolioName}</span>
+          </div>
+        )}
         {remaining !== null && (
           <div className="flex justify-between text-[12.5px]">
             <span className="text-app-text-muted">Sức mua còn lại</span>

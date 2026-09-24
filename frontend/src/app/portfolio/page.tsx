@@ -2,7 +2,6 @@ import Link from "next/link";
 import SidebarNav from "@/components/SidebarNav";
 import PortfolioTabs from "@/components/PortfolioTabs";
 import {
-  getPortfolios,
   getPortfolioSummaryByID,
   getPortfolioPositionsByID,
   getEquityHistory,
@@ -17,7 +16,8 @@ import {
   type PortfolioStats,
   type Order,
 } from "@/lib/api";
-import { getSessionToken, getSessionUser } from "@/lib/session";
+import { getActivePortfolio, getSessionToken, getSessionUser } from "@/lib/session";
+import AccountMenuButton from "@/components/AccountMenuButton";
 
 export const metadata = { title: "Giao dịch giấy — VN Stock Sim" };
 
@@ -42,8 +42,7 @@ export default async function PortfolioPage() {
 
   if (token) {
     try {
-      const portfoliosRes = await getPortfolios(token);
-      portfolio = portfoliosRes.data[0] ?? null;
+      portfolio = (await getActivePortfolio(token)).active;
       if (portfolio) {
         const [summaryRes, positionsRes, equityRes, allocRes, statsRes, ordersRes] = await Promise.all([
           getPortfolioSummaryByID(portfolio.id, token),
@@ -71,8 +70,9 @@ export default async function PortfolioPage() {
 
       <div className="flex min-w-0 flex-1 flex-col gap-[18px] p-[24px_28px]">
         <header className="flex items-center justify-between gap-6">
-          <div className="flex items-center gap-[22px]">
+          <div className="flex flex-col gap-[5px]">
             <h1 className="m-0 font-display text-[27px] font-bold tracking-[-0.015em]">Giao dịch giấy</h1>
+            {portfolio && <span className="text-[12.5px] text-app-text-muted">{portfolio.name}</span>}
           </div>
           <div className="flex items-center gap-[10px]">
             <button
@@ -92,6 +92,8 @@ export default async function PortfolioPage() {
               </svg>
               <span>Đặt lệnh mới</span>
             </Link>
+            {/* Not in Portfolio.dc.html -- phase-g.md decision 9. */}
+            <AccountMenuButton placement="below" />
           </div>
         </header>
 

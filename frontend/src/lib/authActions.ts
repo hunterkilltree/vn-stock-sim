@@ -2,7 +2,8 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { SESSION_COOKIE } from "./session";
+import { ACTIVE_PORTFOLIO_COOKIE, SESSION_COOKIE } from "./session";
+import { isStockCapitalPreset } from "./capital";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
 
@@ -68,16 +69,39 @@ export async function registerAction(_prevState: AuthFormState, formData: FormDa
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const displayName = String(formData.get("displayName") ?? "").trim();
+  const marketInterest = String(formData.get("marketInterest") ?? "both");
+  const startingCapital = Number(formData.get("startingCapital") ?? 0);
 
-  const result = await postAuth("/api/v1/auth/register", { email, password, displayName });
+  if (formData.get("acknowledge") !== "on") {
+    return { error: "Vui lòng xác nhận bạn hiểu đây là công cụ mô phỏng." };
+  }
+  if (!isStockCapitalPreset(startingCapital)) {
+    return { error: "Vui lòng chọn vốn ảo ban đầu." };
+  }
+
+  const result = await postAuth("/api/v1/auth/register", { email, password, displayName, marketInterest });
   if (!result.ok) {
     return { error: result.message };
   }
   await setSessionCookie(result.data);
+
+  // The user's first trading portfolio becomes their default
+  // (phase-g.md decision 5). If this call fails, the backend's lazy
+  // default (100,000,000 VND) still opens on first use -- the account
+  // itself is already created, so don't fail the signup over it.
+  await fetch(`${API_BASE_URL}/api/v1/portfolios`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${result.data.accessToken}` },
+    body: JSON.stringify({ name: "Danh mục chính", market: "stock", currency: "VND", startingCapital }),
+    cache: "no-store",
+  }).catch(() => null);
+
   redirect("/stocks");
 }
 
 export async function logoutAction() {
-  (await cookies()).delete(SESSION_COOKIE);
+  const store = await cookies();
+  store.delete(SESSION_COOKIE);
+  store.delete(ACTIVE_PORTFOLIO_COOKIE);
   redirect("/");
 }

@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 import Navbar from "@/components/Navbar";
 
 // Route-group layout for the light, luxalgo-style marketing/auth surface
-// (/, /login, /register) -- these three pages are NOT part of the design
+// (/, /login; /register moved out in Phase G to follow Signup.dc.html's
+// full-screen dark layout) -- these pages are NOT part of the design
 // canvas's 20 screens, they predate it, so they keep their own nav
 // instead of picking up SidebarNav/RailNav. A layout (a Server Component)
 // is required here rather than each page importing <Navbar/> directly,

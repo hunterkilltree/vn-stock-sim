@@ -6,7 +6,7 @@ import {
   getMACD,
   getOrderBook,
   getInsight,
-  getPortfolioSummary,
+  getPortfolioSummaryByID,
   type Bar,
   type IndicatorPoint,
   type IndicatorMultiPoint,
@@ -14,6 +14,7 @@ import {
   type Insight,
 } from "@/lib/api";
 import RailNav from "@/components/RailNav";
+import AccountMenuButton from "@/components/AccountMenuButton";
 import PriceBandChips from "@/components/PriceBandChips";
 import TimeframePills, { TIMEFRAMES, type TimeframeKey } from "@/components/TimeframePills";
 import DetailChart from "@/components/DetailChart";
@@ -22,7 +23,7 @@ import OrderBookPanel from "@/components/OrderBookPanel";
 import FundamentalsGrid from "@/components/FundamentalsGrid";
 import AIInsightCard from "@/components/AIInsightCard";
 import { formatThousandsVN, signVN, tone } from "@/lib/format";
-import { getSessionToken, getSessionUser } from "@/lib/session";
+import { getActivePortfolio, getSessionToken, getSessionUser } from "@/lib/session";
 
 type Props = {
   params: Promise<{ symbol: string }>;
@@ -111,10 +112,17 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
 
   const user = await getSessionUser();
   let buyingPower: number | null = null;
+  let activePortfolioName: string | null = null;
   if (user) {
     try {
       const token = await getSessionToken();
-      if (token) buyingPower = (await getPortfolioSummary(token)).cashBalance;
+      if (token) {
+        const { active } = await getActivePortfolio(token);
+        if (active) {
+          activePortfolioName = active.name;
+          buyingPower = (await getPortfolioSummaryByID(active.id, token)).cashBalance;
+        }
+      }
     } catch {
       // leave buyingPower null; OrderTicket falls back to its guest treatment.
     }
@@ -124,7 +132,7 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
 
   return (
     <div className="flex flex-1 bg-app-bg text-app-text">
-      <RailNav />
+      <RailNav account={<AccountMenuButton placement="right" />} />
 
       <div className="flex min-w-0 flex-1 flex-col gap-4 p-[20px_24px]">
         <header className="flex items-center justify-between gap-6">
@@ -197,7 +205,7 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
           </div>
 
           <div className="flex w-[344px] shrink-0 flex-col gap-4">
-            <OrderTicket symbol={detail.symbol} lastPrice={detail.lastPrice} buyingPower={buyingPower} />
+            <OrderTicket symbol={detail.symbol} lastPrice={detail.lastPrice} buyingPower={buyingPower} portfolioName={activePortfolioName} />
             <OrderBookPanel bids={orderBook.bids} asks={orderBook.asks} />
             <FundamentalsGrid detail={detail} avgVolume20d={avgVolume20d} />
           </div>

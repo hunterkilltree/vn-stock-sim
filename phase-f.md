@@ -164,6 +164,10 @@ planning/analysis file before each lettered phase. This is the plan's own
   numbers are visible on the Replay results panel itself (which is what
   the design actually draws) and, once Phase G exists, through the
   regular Portfolio page like any other portfolio.
+  **Revised in Phase G** (phase-g.md decision 4): Replay portfolios are
+  now `kind: "replay"` and deliberately excluded from the switcher, since
+  an active Replay portfolio would receive live Detail-ticket orders and
+  mix price eras -- the backend rejects such orders with 409.
 - **Skill score is a heuristic**, explicitly labeled as such in both the
   API response (`"source": "heuristic"` alongside the score) and the UI,
   never presented as a validated skill assessment.

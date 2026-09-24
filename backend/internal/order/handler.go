@@ -39,6 +39,10 @@ func createHandler(svc *Service) gin.HandlerFunc {
 			switch {
 			case errors.Is(err, ErrSymbolNotFound):
 				httpx.Error(c, http.StatusNotFound, "not_found", "symbol not found")
+			case errors.Is(err, ErrPortfolioNotFound):
+				httpx.Error(c, http.StatusNotFound, "portfolio_not_found", "portfolio not found")
+			case errors.Is(err, ErrReplayPortfolio):
+				httpx.Error(c, http.StatusConflict, "replay_portfolio", err.Error())
 			case errors.Is(err, ErrInsufficientFunds):
 				httpx.Error(c, http.StatusConflict, "insufficient_funds", "not enough virtual cash for this order")
 			case errors.Is(err, ErrInsufficientShares):

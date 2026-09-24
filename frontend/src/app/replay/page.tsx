@@ -1,5 +1,6 @@
 import Link from "next/link";
 import RailNav from "@/components/RailNav";
+import AccountMenuButton from "@/components/AccountMenuButton";
 import ReplaySession from "@/components/ReplaySession";
 import { getSessionUser } from "@/lib/session";
 
@@ -17,7 +18,7 @@ export default async function ReplayPage() {
 
   return (
     <div className="flex flex-1 bg-app-bg text-app-text">
-      <RailNav />
+      <RailNav account={<AccountMenuButton placement="right" />} />
       <div className="flex min-w-0 flex-1 flex-col p-[20px_24px]">
         {user ? (
           <ReplaySession />

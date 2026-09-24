@@ -19,13 +19,12 @@ type BarsPort interface {
 	GetBars(sym, resolution string, from, to int64) []market.Bar
 }
 
-// PortfolioPort is satisfied by *portfolio.Service unchanged -- every
-// method here already existed for Phase B (CreatePortfolio) or Phase E
-// (ApplyFill, Positions, Stats). See phase-f.md decision 4 on why Replay
-// gets its own dedicated portfolio per session instead of reusing the
-// user's regular one.
+// PortfolioPort is satisfied by *portfolio.Service. See phase-f.md
+// decision 4 on why Replay gets its own dedicated portfolio per session
+// instead of reusing the user's regular one, and phase-g.md decision 4 on
+// why it is created as a "replay"-kind portfolio live orders can't reach.
 type PortfolioPort interface {
-	CreatePortfolio(userID, name, market string, startingCapital float64, currency string) portfolio.Portfolio
+	CreateReplayPortfolio(userID, name string, startingCapital float64) portfolio.Portfolio
 	ApplyFill(portfolioID, sym, side string, quantity int64, price float64) error
 	Positions(portfolioID string) []portfolio.Position
 	Stats(portfolioID string, startingCapital float64) portfolio.Stats
@@ -84,10 +83,10 @@ func (s *Service) Start(userID string, req StartRequest) (SessionView, error) {
 	// with len(Bars).
 	totalBars = len(bars)
 
-	pf := s.portfolios.CreatePortfolio(
+	pf := s.portfolios.CreateReplayPortfolio(
 		userID,
 		fmt.Sprintf("Replay %s %s", req.Symbol, startDate),
-		"stock", DefaultStartingCapital, "VND",
+		DefaultStartingCapital,
 	)
 
 	revealed := InitialRevealed

@@ -21,11 +21,15 @@ type QuotePort interface {
 	Detail(sym string) (symbol.Detail, bool)
 }
 
+var ErrPortfolioNotFound = errors.New("portfolio not found")
+var ErrReplayPortfolio = errors.New("replay portfolios only accept fills from their own replay session")
+
 // PortfolioResolver lets Service resolve a request's optional
-// portfolioId to a real portfolio -- satisfied by *portfolio.Service.
-// See phase-b.md decision 1.
+// portfolioId to a real portfolio the caller owns -- satisfied by
+// *portfolio.Service. See phase-b.md decision 1.
 type PortfolioResolver interface {
 	DefaultPortfolioID(userID string) string
+	GetPortfolio(userID, id string) (portfolio.Portfolio, bool)
 }
 
 type Service struct {
@@ -51,6 +55,13 @@ func (s *Service) Create(userID string, req createRequest) (Order, error) {
 	portfolioID := req.PortfolioID
 	if portfolioID == "" {
 		portfolioID = s.portfolios.DefaultPortfolioID(userID)
+	}
+	pf, ok := s.portfolios.GetPortfolio(userID, portfolioID)
+	if !ok {
+		return Order{}, ErrPortfolioNotFound
+	}
+	if pf.Kind == portfolio.KindReplay {
+		return Order{}, ErrReplayPortfolio
 	}
 	now := time.Now()
 	o := Order{

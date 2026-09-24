@@ -8,7 +8,7 @@ api-spec.md, charting-library-integration.md) for the full spec. See
 RUNNING.md to run backend + frontend locally with hot reload, or
 DOCKER.md for a one-command demo.
 
-Last updated: 2026-09-23.
+Last updated: 2026-09-24.
 
 ---
 
@@ -1215,24 +1215,76 @@ attribute directly). Re-verified the NAV fix specifically: buying at the
 exact price shown as "current" now leaves NAV/P&L at exactly 0,00% until
 the price moves within the replay's own history, with no live-quote leak.
 
+**Phase G (account menu, portfolio switcher, Settings shell, Signup
+capital picker) -- DONE.** Plan: phase-g.md, written against
+`design/screens/Account-Menu.dc.html`, the rail + subnav of
+`Settings-AI.dc.html`, and `Signup.dc.html`.
+
+- **Active portfolio**: an httpOnly `vss_portfolio` cookie set by
+  `setActivePortfolioAction` (ownership-checked), read by
+  `getActivePortfolio` in session.ts, which only honors it if it names
+  one of the caller's own *trading* portfolios (else falls back to the
+  default). Main, Detail (order ticket now shows "Danh mục: <name>"),
+  and Portfolio all read the active portfolio; `placeOrderAction` sends
+  its ID from the cookie server-side. Logout clears the cookie.
+- **Pre-existing security hole fixed**: `order.Service.Create` booked
+  fills into whatever `portfolioId` a request named without checking
+  ownership -- any user could trade in another user's portfolio. Now
+  404 `portfolio_not_found`.
+- **Portfolio `kind`** (`"trading"` | `"replay"`): Replay sessions create
+  `"replay"` portfolios (new `CreateReplayPortfolio`), which the switcher
+  never lists and `POST /orders` rejects with 409 -- keeps Phase F's
+  "never mix historical and live fills" guarantee now that portfolios
+  are switchable. (Revises phase-f.md's note that they'd appear in the
+  switcher.)
+- **Signup rebuilt** against Signup.dc.html (moved out of the light
+  `(marketing)` group, URL unchanged): capital picker (1 tỷ default, 500
+  triệu; the 10.000 USDT option is shown disabled until Phase I), market
+  interest (stored on the user as `marketInterest`), live password-rule
+  hints, required simulation acknowledgement. The chosen capital opens
+  the user's main portfolio: the backend now makes a user's *first
+  trading* portfolio their default, and `registerAction` creates it
+  right after registering.
+- **Account menu** (`AccountMenu.tsx` client popover +
+  `AccountMenuButton.tsx` server loader): profile header, trading
+  portfolios with real NAV and P&L vs. starting capital, inline "Tạo
+  danh mục mới" form, Settings link, WILL-badged Profile/Help, logout.
+  Opened from Main's avatar, the Portfolio header (flagged deviation --
+  that design has no avatar), and the rail's avatar (RailNav takes it as
+  an `account` prop so the data fetch stays server-side). RailNav also
+  gained the Settings icon. Main's "Vào Replay" and the Replay promo card
+  are now real links (they were still disabled from before Phase F).
+- **Settings shell**: `/settings` → `/settings/ai`; subnav with the
+  design's 8 sections, 7 WILL-badged placeholders under
+  `/settings/[section]`; `/settings/ai` has the design's header plus an
+  honest "not connected yet" note -- no inputs until Phase H can save
+  them.
+
+Verified (details in phase-g.md): Go build/vet, tsc/eslint/build clean;
+curl for the ownership 404 / replay 409 / first-portfolio-is-default
+paths; Newman 43 requests, 0 failures (2 new status-asserting
+requests); real browser (Playwright, production build) sign-up with 500
+triệu → create a second portfolio from the menu → buy on the Detail
+ticket → switch back → confirmed via the API that the fill landed only
+in the active portfolio; Replay portfolio absent from the menu; all 8
+Settings sections navigable; logout clears both cookies.
+
+Branch: `phase-g-account-menu` (off master after PR #22). Phase F also
+has its own named branch, `phase-f-replay-mode`, pointing at its merged
+commit.
+
 ---
 
 ## Plan (where to pick up)
 
-Phases A-F of FULL-APP-PLAN.md's 20-screen rebuild are now done (see the
+Phases A-G of FULL-APP-PLAN.md's 20-screen rebuild are now done (see the
 Done section above). Next up, in that plan's own order:
 
-1. **Phase G** (Account-Menu.dc.html, Signup's capital picker): the
-   multi-portfolio switcher UI -- the backend (`portfolios` plural API,
-   Phase B) has supported this since before Phase E; only the frontend
-   picker/switcher never got built. Phase E's Portfolio page still only
-   ever reads `portfolios[0]` (the lazily-created default) -- worth
-   revisiting once Account-Menu exists.
-2. **Phase H** (Settings-AI.dc.html, then Quant.dc.html): BYOK LLM
-   provider settings, then the actual Quant chat -- read FULL-APP-PLAN.md
-   section 2.2 first, this is explicitly bring-your-own-key, not a
-   company-funded model call.
-3. Independently of the lettered phases: wire a real Postgres database
+1. **Phase H** (Settings-AI.dc.html's form, then Quant.dc.html): BYOK LLM
+   provider settings inside the `/settings/ai` shell Phase G built, then
+   the actual Quant chat -- read FULL-APP-PLAN.md section 2.2 first, this
+   is explicitly bring-your-own-key, not a company-funded model call.
+2. Independently of the lettered phases: wire a real Postgres database
    behind auth/watchlist/portfolio/order (all in-memory MemoryStores that
    reset on restart today), and replace the VCI market-data adapter with
    a licensed vendor if the user decides to pursue that (see the VCI
