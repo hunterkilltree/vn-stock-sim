@@ -67,7 +67,7 @@ export default function QuantResultsPanel({ screen, strategy, years }: Props) {
   ];
 
   return (
-    <aside className="flex w-[416px] shrink-0 flex-col overflow-hidden rounded-[14px] border border-app-border bg-app-surface">
+    <aside className="flex w-full flex-col overflow-hidden rounded-[14px] lg:w-[416px] lg:shrink-0 border border-app-border bg-app-surface">
       <div role="tablist" className="flex gap-1 border-b border-app-hairline p-[6px]">
         {tabs.map((t) => (
           <button

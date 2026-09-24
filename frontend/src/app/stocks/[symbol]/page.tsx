@@ -22,12 +22,15 @@ import OrderTicket from "@/components/OrderTicket";
 import OrderBookPanel from "@/components/OrderBookPanel";
 import FundamentalsGrid from "@/components/FundamentalsGrid";
 import AIInsightCard from "@/components/AIInsightCard";
-import { formatThousandsVN, signVN, tone } from "@/lib/format";
+import CompactChart from "@/components/CompactChart";
+import MobileActionBar from "@/components/MobileActionBar";
+import Link from "next/link";
+import { formatThousandsVN, formatVN, formatVolumeVN, signVN, tone } from "@/lib/format";
 import { getActivePortfolio, getSessionToken, getSessionUser } from "@/lib/session";
 
 type Props = {
   params: Promise<{ symbol: string }>;
-  searchParams: Promise<{ tf?: string }>;
+  searchParams: Promise<{ tf?: string; side?: string }>;
 };
 
 const INDICATOR_CHIPS: { label: string; color: string }[] = [
@@ -58,7 +61,8 @@ function rangeFor(days: number): { from: number; to: number } {
 
 export default async function StockDetailPage({ params, searchParams }: Props) {
   const { symbol } = await params;
-  const { tf: tfParam } = await searchParams;
+  const { tf: tfParam, side: sideParam } = await searchParams;
+  const initialSide = sideParam === "sell" ? "sell" : "buy";
   const tf: TimeframeKey = TIMEFRAMES.some((f) => f.key === tfParam) ? (tfParam as TimeframeKey) : "1m";
   const { resolution, days } = TF_RANGES[tf];
 
@@ -129,13 +133,53 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
   }
 
   const changeColor = tone(detail.changePercent);
+  // Phone chart: the last 40 bars, as in Mobile-Detail.dc.html.
+  const phoneBars = bars.slice(-40);
+  const phoneFrom = phoneBars[0]?.time ?? 0;
+  const ticketHref = (side: "buy" | "sell") => `/stocks/${detail.symbol}?tf=${tf}&side=${side}#dat-lenh`;
 
   return (
     <div className="flex flex-1 bg-app-bg text-app-text">
-      <RailNav account={<AccountMenuButton placement="right" />} />
+      <RailNav account={<AccountMenuButton placement="right" />} tabBar={false} />
 
-      <div className="flex min-w-0 flex-1 flex-col gap-4 p-[20px_24px]">
-        <header className="flex items-center justify-between gap-6">
+      <div className="flex min-w-0 flex-1 flex-col gap-[14px] px-[18px] pt-[22px] lg:gap-4 lg:p-[20px_24px]">
+        {/* Phone header + price block (Mobile-Detail.dc.html). */}
+        <header className="flex items-center gap-3 lg:hidden">
+          <Link
+            href="/stocks"
+            aria-label="Trở lại thị trường"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-app-border bg-app-surface text-app-text-3"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M15 5l-7 7 7 7" />
+            </svg>
+          </Link>
+          <div className="flex min-w-0 flex-1 flex-col gap-[1px]">
+            <div className="flex items-center gap-2">
+              <h1 className="m-0 font-display text-[20px] font-bold">{detail.symbol}</h1>
+              <span className="rounded-[5px] border border-app-border px-[6px] py-[1px] text-[10px] text-app-text-muted">{detail.exchange}</span>
+            </div>
+            <span className="truncate text-[11.5px] text-app-text-muted">{detail.companyName}</span>
+          </div>
+          <AccountMenuButton placement="below" />
+        </header>
+        <div className="flex items-end justify-between gap-3 lg:hidden">
+          <div className="flex flex-col gap-[3px]">
+            <span className="font-plex-mono text-[32px] font-semibold tracking-[-0.02em]" style={{ color: changeColor }}>
+              {formatThousandsVN(detail.lastPrice)}
+            </span>
+            <span className="font-plex-mono text-[13px]" style={{ color: changeColor }}>
+              {signVN(detail.change / 1000, 2)} ({signVN(detail.changePercent, 2)}%)
+            </span>
+          </div>
+          <div className="flex flex-col items-end gap-1 font-plex-mono text-[11px]">
+            <span className="text-price-ceiling">Trần {formatThousandsVN(detail.ceiling)}</span>
+            <span className="text-price-ref">TC {formatThousandsVN(detail.reference)}</span>
+            <span className="text-price-floor">Sàn {formatThousandsVN(detail.floor)}</span>
+          </div>
+        </div>
+
+        <header className="hidden items-center justify-between gap-6 lg:flex">
           <div className="flex items-center gap-[22px]">
             <div className="flex flex-col gap-[3px]">
               <div className="flex items-center gap-[9px]">
@@ -182,11 +226,13 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
           </div>
         </header>
 
-        <div className="flex min-h-0 flex-1 gap-5">
+        <div className="flex min-h-0 flex-1 flex-col gap-5 lg:flex-row">
           <div className="flex min-w-0 flex-1 flex-col gap-[14px]">
             <div className="flex items-center justify-between gap-4">
-              <TimeframePills symbol={symbol} active={tf} />
-              <div className="flex items-center gap-2">
+              <div className="-mx-[18px] overflow-x-auto px-[18px] lg:mx-0 lg:px-0">
+                <TimeframePills symbol={symbol} active={tf} />
+              </div>
+              <div className="hidden items-center gap-2 lg:flex">
                 {INDICATOR_CHIPS.map((c) => (
                   <span
                     key={c.label}
@@ -199,17 +245,51 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
               </div>
             </div>
 
-            <DetailChart bars={bars} sma20={sma20} sma50={sma50} rsi={rsi} macd={macd} />
+            <div className="lg:hidden">
+              <CompactChart
+                bars={phoneBars}
+                sma20={sma20.filter((p) => p.time >= phoneFrom)}
+                rsi={rsi.filter((p) => p.time >= phoneFrom)}
+                ariaLabel={`Biểu đồ nến của ${detail.symbol} kèm đường trung bình động SMA 20`}
+              />
+            </div>
+            <div className="grid grid-cols-[1fr_1fr_1fr_1.4fr] gap-2 lg:hidden">
+              {[
+                { k: "KL", v: bars.length > 0 ? formatVolumeVN(bars[bars.length - 1].volume) : "—" },
+                { k: "P/E", v: formatVN(detail.peRatio, 1) },
+                { k: "ROE", v: `${formatVN(detail.roe, 1)}%` },
+                // Mobile-Detail's short form: "188 ngh.tỷ".
+                { k: "Vốn hóa", v: detail.marketCap >= 1e12 ? `${formatVN(detail.marketCap / 1e12, 0)} ngh.tỷ` : `${formatVN(detail.marketCap / 1e9, 0)} tỷ` },
+              ].map((x) => (
+                <div key={x.k} className="flex min-w-0 flex-col gap-[3px] rounded-[11px] border border-app-hairline bg-app-surface p-[9px_10px]">
+                  <span className="text-[9.5px] text-app-text-muted">{x.k}</span>
+                  <span className="truncate font-plex-mono text-[12.5px] font-semibold">{x.v}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="hidden lg:block">
+              <DetailChart bars={bars} sma20={sma20} sma50={sma50} rsi={rsi} macd={macd} />
+            </div>
 
             {insight && <AIInsightCard insight={insight} />}
           </div>
 
-          <div className="flex w-[344px] shrink-0 flex-col gap-4">
-            <OrderTicket symbol={detail.symbol} lastPrice={detail.lastPrice} buyingPower={buyingPower} portfolioName={activePortfolioName} />
+          <div id="dat-lenh" className="flex w-full scroll-mt-4 flex-col gap-4 lg:w-[344px] lg:shrink-0">
+            <OrderTicket
+              key={initialSide}
+              symbol={detail.symbol}
+              lastPrice={detail.lastPrice}
+              buyingPower={buyingPower}
+              portfolioName={activePortfolioName}
+              initialSide={initialSide}
+            />
             <OrderBookPanel bids={orderBook.bids} asks={orderBook.asks} />
             <FundamentalsGrid detail={detail} avgVolume20d={avgVolume20d} />
           </div>
         </div>
+
+        <MobileActionBar replayHref={`/replay?symbol=${detail.symbol}`} buyHref={ticketHref("buy")} sellHref={ticketHref("sell")} />
       </div>
     </div>
   );

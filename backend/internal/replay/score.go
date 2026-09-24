@@ -65,9 +65,9 @@ func replayAccounting(sess *Session) (nav, pnlPercent, maxDrawdownPercent float6
 		fillsByBar[f.BarIndex] = append(fillsByBar[f.BarIndex], f)
 	}
 
-	cash := float64(DefaultStartingCapital)
-	var qty int64
-	peak := float64(DefaultStartingCapital)
+	cash := sess.Capital
+	var qty float64
+	peak := sess.Capital
 	var maxDD float64
 
 	for i := 0; i < sess.CurrentBar; i++ {
@@ -93,7 +93,7 @@ func replayAccounting(sess *Session) (nav, pnlPercent, maxDrawdownPercent float6
 	}
 
 	finalEquity := cash + float64(qty)*sess.Bars[sess.CurrentBar-1].Close
-	return round2(finalEquity), round2((finalEquity - DefaultStartingCapital) / DefaultStartingCapital * 100), round2(maxDD)
+	return round2(finalEquity), round2((finalEquity - sess.Capital) / sess.Capital * 100), round2(maxDD)
 }
 
 const scoreWindow = 5

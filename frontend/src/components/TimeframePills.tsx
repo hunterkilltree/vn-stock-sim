@@ -23,7 +23,7 @@ export default function TimeframePills({ symbol, active }: { symbol: string; act
           <Link
             key={f.key}
             href={`/stocks/${symbol}?tf=${f.key}`}
-            className="box-border flex h-[34px] items-center rounded-[9px] border px-[13px] text-[12.5px]"
+            className="box-border flex h-[34px] shrink-0 items-center whitespace-nowrap rounded-[9px] border px-[13px] text-[12.5px]"
             style={{
               borderColor: on ? "var(--app-border-strong)" : "var(--app-border)",
               background: on ? "var(--app-border)" : "var(--app-surface)",

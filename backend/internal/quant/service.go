@@ -348,7 +348,7 @@ func (s *Service) appData(userID string, req ChatRequest, snap *snapshot) string
 			b.WriteString("User's paper portfolio has no open positions.\n")
 		}
 		for _, p := range positions {
-			fmt.Fprintf(&b, "Paper position: %s %d shares, average cost %.2f thousand VND\n", p.Symbol, p.Quantity, p.AvgCost/1000)
+			fmt.Fprintf(&b, "Paper position: %s %g shares, average cost %.2f thousand VND\n", p.Symbol, p.Quantity, p.AvgCost/1000)
 		}
 	}
 	return b.String()

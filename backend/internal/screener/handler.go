@@ -21,7 +21,21 @@ func RegisterRoutes(v1 *gin.RouterGroup, svc *Service) {
 
 func heatmapHandler(svc *Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"data": svc.GetSectorHeatmap()})
+		period := c.DefaultQuery("period", "1D")
+		if _, ok := PeriodSessions[period]; !ok {
+			httpx.ValidationError(c, "period must be one of 1D, 1W, 1M, 3M", nil)
+			return
+		}
+		exchange := c.DefaultQuery("exchange", "")
+		switch exchange {
+		case "", "ALL":
+			exchange = ""
+		case "HOSE", "HNX", "UPCOM":
+		default:
+			httpx.ValidationError(c, "exchange must be HOSE, HNX, UPCOM or ALL", nil)
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"data": svc.GetSectorHeatmap(period, exchange)})
 	}
 }
 

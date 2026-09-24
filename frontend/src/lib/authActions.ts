@@ -2,8 +2,8 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { ACTIVE_PORTFOLIO_COOKIE, SESSION_COOKIE } from "./session";
-import { isStockCapitalPreset } from "./capital";
+import { ACTIVE_CRYPTO_COOKIE, ACTIVE_PORTFOLIO_COOKIE, SESSION_COOKIE } from "./session";
+import { CRYPTO_CAPITAL_PRESET, isStockCapitalPreset } from "./capital";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
 
@@ -75,7 +75,8 @@ export async function registerAction(_prevState: AuthFormState, formData: FormDa
   if (formData.get("acknowledge") !== "on") {
     return { error: "Vui lòng xác nhận bạn hiểu đây là công cụ mô phỏng." };
   }
-  if (!isStockCapitalPreset(startingCapital)) {
+  const cryptoStart = startingCapital === CRYPTO_CAPITAL_PRESET.amount;
+  if (!isStockCapitalPreset(startingCapital) && !cryptoStart) {
     return { error: "Vui lòng chọn vốn ảo ban đầu." };
   }
 
@@ -85,23 +86,29 @@ export async function registerAction(_prevState: AuthFormState, formData: FormDa
   }
   await setSessionCookie(result.data);
 
-  // The user's first trading portfolio becomes their default
-  // (phase-g.md decision 5). If this call fails, the backend's lazy
-  // default (100,000,000 VND) still opens on first use -- the account
-  // itself is already created, so don't fail the signup over it.
+  // The user's first stock trading portfolio becomes their default
+  // (phase-g.md decision 5); choosing 10.000 USDT opens a crypto wallet
+  // instead and the stock default opens lazily at 100,000,000 VND
+  // (phase-i.md decision 9). If this call fails the account still works
+  // -- don't fail the signup over it.
   await fetch(`${API_BASE_URL}/api/v1/portfolios`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${result.data.accessToken}` },
-    body: JSON.stringify({ name: "Danh mục chính", market: "stock", currency: "VND", startingCapital }),
+    body: JSON.stringify(
+      cryptoStart
+        ? { name: "Ví crypto", market: "crypto", startingCapital }
+        : { name: "Danh mục chính", market: "stock", startingCapital },
+    ),
     cache: "no-store",
   }).catch(() => null);
 
-  redirect("/stocks");
+  redirect(cryptoStart ? "/crypto" : "/stocks");
 }
 
 export async function logoutAction() {
   const store = await cookies();
   store.delete(SESSION_COOKIE);
   store.delete(ACTIVE_PORTFOLIO_COOKIE);
+  store.delete(ACTIVE_CRYPTO_COOKIE);
   redirect("/");
 }

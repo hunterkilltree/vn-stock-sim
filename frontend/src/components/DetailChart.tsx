@@ -1,5 +1,5 @@
 import type { Bar, IndicatorPoint, IndicatorMultiPoint } from "@/lib/api";
-import { formatVN, formatVolumeVN } from "@/lib/format";
+import { formatCompact, formatVN, formatVolumeVN } from "@/lib/format";
 
 type Props = {
   bars: Bar[];
@@ -7,6 +7,8 @@ type Props = {
   sma50: IndicatorPoint[];
   rsi: IndicatorPoint[];
   macd: IndicatorMultiPoint[];
+  scale?: number;
+  decimals?: number;
 };
 
 // Full inline-SVG chart (candles + SMA20/50 + volume + RSI(14) +
@@ -18,7 +20,7 @@ type Props = {
 // geometry math, matching the Detail screen's own "Gia (nghin d)"
 // display convention (see lib/format.ts's formatThousandsVN) -- RSI
 // (0-100) and volume (raw share counts) are left unconverted.
-export default function DetailChart({ bars, sma20, sma50, rsi, macd }: Props) {
+export default function DetailChart({ bars, sma20, sma50, rsi, macd, scale = 1000, decimals = 2 }: Props) {
   if (bars.length < 2) {
     return (
       <p className="py-16 text-center text-sm text-app-text-muted">
@@ -27,7 +29,9 @@ export default function DetailChart({ bars, sma20, sma50, rsi, macd }: Props) {
     );
   }
 
-  const toK = (v: number) => v / 1000;
+  // scale 1000 shows VND in thousands (stocks); 1 shows USDT (crypto).
+  const toK = (v: number) => v / scale;
+  const fmtVol = (v: number) => (scale === 1 ? formatCompact(v) : formatVolumeVN(v));
   const n = bars.length;
   const plotW = 870;
   const step = plotW / n;
@@ -63,10 +67,15 @@ export default function DetailChart({ bars, sma20, sma50, rsi, macd }: Props) {
     };
   });
 
+  // Last-price tag: 50 wide fits a stock price ("27,45"); longer USDT
+  // prices ("56.657,61") widen it leftward (~6.4 units per mono char).
+  const tagLabel = formatVN(closes[n - 1], decimals);
+  const tagW = Math.max(50, tagLabel.length * 6.4 + 8);
+
   const grid = Array.from({ length: 5 }, (_, i) => {
     const v = lo + ((hi - lo) * i) / 4;
     const gy = py(v);
-    return { key: i, y: gy.toFixed(1), ty: (gy + 3.5).toFixed(1), label: formatVN(v, 1) };
+    return { key: i, y: gy.toFixed(1), ty: (gy + 3.5).toFixed(1), label: formatVN(v, decimals === 2 ? 1 : decimals) };
   });
 
   const poly = (points: IndicatorPoint[], scale: (v: number) => number, convert: (v: number) => number = toK) =>
@@ -140,11 +149,11 @@ export default function DetailChart({ bars, sma20, sma50, rsi, macd }: Props) {
     <section className="flex min-h-0 flex-1 flex-col gap-[10px] rounded-2xl border border-app-border bg-app-surface p-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-[14px] font-plex-mono text-[11.5px] text-app-text-3">
-          <span>O {formatVN(toK(lastBar.open), 2)}</span>
-          <span>H {formatVN(toK(lastBar.high), 2)}</span>
-          <span>L {formatVN(toK(lastBar.low), 2)}</span>
-          <span className="text-price-up">C {formatVN(toK(lastBar.close), 2)}</span>
-          <span className="text-app-text-muted">KL {formatVolumeVN(lastBar.volume)}</span>
+          <span>O {formatVN(toK(lastBar.open), decimals)}</span>
+          <span>H {formatVN(toK(lastBar.high), decimals)}</span>
+          <span>L {formatVN(toK(lastBar.low), decimals)}</span>
+          <span className="text-price-up">C {formatVN(toK(lastBar.close), decimals)}</span>
+          <span className="text-app-text-muted">KL {fmtVol(lastBar.volume)}</span>
         </div>
         <span className="rounded-[5px] border border-app-border px-2 py-[2px] text-[10px] uppercase tracking-[0.06em] text-app-text-muted">
           Dữ liệu mẫu
@@ -169,9 +178,9 @@ export default function DetailChart({ bars, sma20, sma50, rsi, macd }: Props) {
         <polyline points={poly(sma20, py)} stroke="#E08A3C" strokeWidth="1.6" strokeLinejoin="round" fill="none" />
         <polyline points={poly(sma50, py)} stroke="#7FA2FF" strokeWidth="1.6" strokeLinejoin="round" fill="none" />
         <line x1="0" y1={lastY.toFixed(1)} x2="870" y2={lastY.toFixed(1)} stroke="#35C77F" strokeWidth="1" strokeDasharray="3 3" />
-        <rect x="874" y={(lastY - 8.5).toFixed(1)} width="50" height="17" fill="#35C77F" rx="3" />
-        <text x="899" y={(lastY + 3.7).toFixed(1)} textAnchor="middle" fill="#0F0F0E" fontFamily="'IBM Plex Mono', monospace" fontSize="10.5" fontWeight="600">
-          {formatVN(lastClose, 2)}
+        <rect x={(924 - tagW).toFixed(1)} y={(lastY - 8.5).toFixed(1)} width={tagW.toFixed(1)} height="17" fill="#35C77F" rx="3" />
+        <text x={(924 - tagW / 2).toFixed(1)} y={(lastY + 3.7).toFixed(1)} textAnchor="middle" fill="#0F0F0E" fontFamily="'IBM Plex Mono', monospace" fontSize="10.5" fontWeight="600">
+          {tagLabel}
         </text>
       </svg>
 

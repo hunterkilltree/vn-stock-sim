@@ -15,9 +15,11 @@ export default async function QuantPage({ searchParams }: PageProps<"/quant">) {
   const initialQuestion = typeof q === "string" ? q.slice(0, 500) : "";
 
   return (
-    // Viewport-high, like the design's fixed artboard: the thread scrolls
-    // inside, the question box stays in view.
-    <div className="flex h-dvh overflow-hidden bg-app-bg text-app-text">
+    // Viewport-high from lg, like the design's fixed artboard: the thread
+    // scrolls inside, the question box stays in view. Phones scroll the
+    // page instead, with the question box pinned above the tab bar
+    // (phase-j.md decision 10).
+    <div className="flex flex-1 bg-app-bg text-app-text lg:h-dvh lg:overflow-hidden">
       <SidebarNav>{user && <QuantHistoryList />}</SidebarNav>
       {user ? (
         <QuantChat initialQuestion={initialQuestion} />

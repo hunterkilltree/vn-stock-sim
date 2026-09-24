@@ -1,6 +1,7 @@
 package market
 
 import (
+	"errors"
 	"log"
 	"strconv"
 	"sync"
@@ -28,7 +29,30 @@ type LiveProvider struct {
 
 	mu        sync.Mutex
 	barsCache map[string]barsCacheEntry
+	downUntil time.Time
 	idxCache  map[string]idxCacheEntry
+}
+
+// liveDownFor is how long the provider skips VCI after a connection or
+// HTTP failure. Without it, an unreachable VCI makes every one of the
+// heatmap's ~36 per-symbol requests wait on a failing call before
+// falling back (phase-i.md decision 14).
+const liveDownFor = 30 * time.Second
+
+func (p *LiveProvider) liveDown() bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return time.Now().Before(p.downUntil)
+}
+
+func (p *LiveProvider) markDown(err error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if time.Now().Before(p.downUntil) {
+		return
+	}
+	p.downUntil = time.Now().Add(liveDownFor)
+	log.Printf("market: VCI unreachable (%v), serving mock data for %s", err, liveDownFor)
 }
 
 type barsCacheEntry struct {
@@ -60,9 +84,14 @@ func (p *LiveProvider) GetBars(sym, resolution string, from, to int64) []Bar {
 	}
 	p.mu.Unlock()
 
-	bars := p.live.GetBars(sym, resolution, from, to)
+	if p.liveDown() {
+		return p.mock.GetBars(sym, resolution, from, to)
+	}
+	bars, err := p.live.getBars(sym, resolution, from, to)
+	if err != nil && !errors.Is(err, errVCINoData) {
+		p.markDown(err)
+	}
 	if len(bars) == 0 {
-		log.Printf("market: VCI returned no bars for %s (%s), falling back to mock data", sym, resolution)
 		return p.mock.GetBars(sym, resolution, from, to)
 	}
 
@@ -80,6 +109,9 @@ func (p *LiveProvider) GetIndex(name string) IndexSnapshot {
 	}
 	p.mu.Unlock()
 
+	if p.liveDown() {
+		return p.mock.GetIndex(name)
+	}
 	snapshot := p.live.GetIndex(name)
 	if len(snapshot.Sparkline) == 0 {
 		log.Printf("market: VCI returned no data for index %s, falling back to mock data", name)

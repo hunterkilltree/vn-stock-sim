@@ -8,7 +8,7 @@ import { CRYPTO_CAPITAL_PRESET, STOCK_CAPITAL_PRESETS } from "@/lib/capital";
 const initialState: AuthFormState = { error: null };
 
 const POINTS = [
-  "Chọn vốn ảo ban đầu cho danh mục cổ phiếu đầu tiên của bạn.",
+  "Chọn vốn ảo ban đầu — 1 tỷ ₫ cho cổ phiếu hoặc 10.000 USDT cho crypto.",
   "Danh mục, sổ giao dịch và điểm Replay gắn với tài khoản của bạn.",
   "Không thu phí, không tiền thật, không kết nối tài khoản chứng khoán.",
 ];
@@ -198,10 +198,10 @@ export default function RegisterPage() {
               ))}
               <button
                 type="button"
-                disabled
-                title="Thị trường crypto chưa có"
-                className="flex h-14 flex-1 cursor-not-allowed flex-col items-center justify-center gap-[3px] rounded-[11px] border px-[10px] opacity-50"
-                style={choiceStyle(false)}
+                aria-pressed={capital === CRYPTO_CAPITAL_PRESET.amount}
+                onClick={() => setCapital(CRYPTO_CAPITAL_PRESET.amount)}
+                className="flex h-14 flex-1 flex-col items-center justify-center gap-[3px] rounded-[11px] border px-[10px]"
+                style={choiceStyle(capital === CRYPTO_CAPITAL_PRESET.amount)}
               >
                 <span className="font-plex-mono text-[13px] font-semibold">{CRYPTO_CAPITAL_PRESET.label}</span>
                 <span className="text-[10.5px] text-app-text-muted">{CRYPTO_CAPITAL_PRESET.note}</span>

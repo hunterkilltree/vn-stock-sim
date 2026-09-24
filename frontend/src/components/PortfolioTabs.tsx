@@ -29,13 +29,13 @@ export default function PortfolioTabs({ stats, equityHistory, positions, allocat
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-[18px]">
-      <div className="flex gap-[6px]">
+      <div className="-mx-[18px] flex gap-[6px] overflow-x-auto px-[18px] lg:mx-0 lg:px-0">
         {TABS.map((t) => (
           <button
             key={t}
             type="button"
             onClick={() => setTab(t)}
-            className="flex h-9 items-center gap-[6px] rounded-[9px] border px-[14px] text-[13px]"
+            className="flex h-10 shrink-0 items-center gap-[6px] whitespace-nowrap rounded-[9px] border px-[14px] text-[13px] lg:h-9"
             style={
               tab === t
                 ? { borderColor: "var(--app-border-strong)", background: "var(--app-border)", color: "var(--app-text)", fontWeight: 600 }
@@ -55,12 +55,12 @@ export default function PortfolioTabs({ stats, equityHistory, positions, allocat
       <KpiRow stats={stats} />
 
       {tab === "Tổng quan" && (
-        <div className="flex min-h-0 flex-1 gap-[18px]">
+        <div className="flex min-h-0 flex-1 flex-col gap-[18px] lg:flex-row">
           <div className="flex min-w-0 flex-1 flex-col gap-[18px]">
             <EquityCurveChart points={equityHistory} startingCapital={startingCapital} />
             <HoldingsTable positions={positions} totalEquity={stats.totalEquity} />
           </div>
-          <div className="flex w-[352px] shrink-0 flex-col gap-[18px]">
+          <div className="flex w-full flex-col gap-[18px] lg:w-[352px] lg:shrink-0">
             <SectorAllocationCard allocation={allocation} />
             <PendingOrdersCard orders={pendingOrders} />
           </div>
@@ -72,11 +72,11 @@ export default function PortfolioTabs({ stats, equityHistory, positions, allocat
       {tab === "Lệnh chờ" && <PendingOrdersCard orders={pendingOrders} />}
 
       {tab === "Sổ giao dịch" && (
-        <div className="flex min-h-0 flex-1 gap-[18px]">
+        <div className="flex min-h-0 flex-1 flex-col gap-[18px] lg:flex-row">
           <div className="min-w-0 flex-1">
             <JournalCard stats={stats} />
           </div>
-          <div className="w-[352px] shrink-0">
+          <div className="w-full lg:w-[352px] lg:shrink-0">
             <SectorAllocationCard allocation={allocation} />
           </div>
         </div>

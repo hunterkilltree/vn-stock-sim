@@ -121,3 +121,25 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
 }
+
+/* Phase J phone shell (phase-j.md decisions 2 and 15): the fixed bottom
+   tab bar's height, and the space the page keeps free for it. Only pages
+   that render the bar (every app screen below lg except Detail, Replay
+   and Settings, which have their own bottom bars) get the padding. */
+:root {
+  --tabbar-h: calc(78px + env(safe-area-inset-bottom));
+}
+
+@media (max-width: 1023.98px) {
+  body:has([data-mobile-tabbar]) {
+    padding-bottom: var(--tabbar-h);
+    background: var(--app-bg);
+  }
+  /* A running Replay session swaps the tab bar for its buy/sell bar. */
+  body:has([data-replay-active]) {
+    padding-bottom: 0;
+  }
+  body:has([data-replay-active]) [data-mobile-tabbar] {
+    display: none;
+  }
+}

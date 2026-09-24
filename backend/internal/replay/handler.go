@@ -98,6 +98,8 @@ func writeSessionErr(c *gin.Context, err error) {
 	switch {
 	case errors.Is(err, ErrNotFound):
 		httpx.Error(c, http.StatusNotFound, "not_found", "replay session not found")
+	case errors.Is(err, ErrInvalidQuantity):
+		httpx.ValidationError(c, err.Error(), nil)
 	case errors.Is(err, ErrSessionDone):
 		httpx.Error(c, http.StatusConflict, "session_completed", "replay session already completed")
 	default:

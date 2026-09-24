@@ -68,29 +68,37 @@ export default async function PortfolioPage() {
     <div className="flex flex-1 bg-app-bg text-app-text">
       <SidebarNav cashBalance={summary?.cashBalance} />
 
-      <div className="flex min-w-0 flex-1 flex-col gap-[18px] p-[24px_28px]">
+      <div className="flex min-w-0 flex-1 flex-col gap-[14px] px-[18px] pb-4 pt-[22px] lg:gap-[18px] lg:p-[24px_28px]">
         <header className="flex items-center justify-between gap-6">
-          <div className="flex flex-col gap-[5px]">
-            <h1 className="m-0 font-display text-[27px] font-bold tracking-[-0.015em]">Giao dịch giấy</h1>
-            {portfolio && <span className="text-[12.5px] text-app-text-muted">{portfolio.name}</span>}
+          <div className="flex min-w-0 flex-col gap-[5px]">
+            <h1 className="m-0 font-display text-[23px] font-bold tracking-[-0.015em] lg:text-[27px]">
+              <span className="lg:hidden">Danh mục giấy</span>
+              <span className="hidden lg:inline">Giao dịch giấy</span>
+            </h1>
+            {portfolio && (
+              <span className="truncate text-[11.5px] text-app-text-muted lg:text-[12.5px]">
+                {portfolio.name} · {positions.length} mã
+              </span>
+            )}
           </div>
-          <div className="flex items-center gap-[10px]">
+          <div className="flex shrink-0 items-center gap-[10px]">
             <button
               type="button"
               disabled
               title="Sắp ra mắt"
-              className="h-11 cursor-not-allowed rounded-[11px] border border-app-border bg-app-surface px-[15px] text-[13px] font-medium text-app-text-muted"
+              className="hidden h-11 cursor-not-allowed lg:block rounded-[11px] border border-app-border bg-app-surface px-[15px] text-[13px] font-medium text-app-text-muted"
             >
               Nạp lại tài khoản ảo
             </button>
             <Link
               href="/stocks"
-              className="flex h-11 items-center gap-2 rounded-[11px] bg-app-accent px-4 text-[13.5px] font-semibold text-app-accent-ink"
+              aria-label="Đặt lệnh mới"
+              className="flex h-11 w-11 items-center justify-center gap-2 rounded-[11px] bg-app-accent text-[13.5px] font-semibold text-app-accent-ink lg:w-auto lg:px-4"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
                 <path d="M12 5v14M5 12h14" />
               </svg>
-              <span>Đặt lệnh mới</span>
+              <span className="hidden lg:inline">Đặt lệnh mới</span>
             </Link>
             {/* Not in Portfolio.dc.html -- phase-g.md decision 9. */}
             <AccountMenuButton placement="below" />

@@ -19,7 +19,10 @@
     { "key": "replayPortfolioId", "value": "", "type": "string" },
     { "key": "nowTs", "value": "", "type": "string" },
     { "key": "from10dTs", "value": "", "type": "string" },
-    { "key": "from180dTs", "value": "", "type": "string" }
+    { "key": "from180dTs", "value": "", "type": "string" },
+    { "key": "pair", "value": "BTCUSDT", "type": "string" },
+    { "key": "cryptoPortfolioId", "value": "", "type": "string" },
+    { "key": "cryptoReplaySessionId", "value": "", "type": "string" }
   ],
   "event": [
     {
@@ -298,6 +301,89 @@
             },
             "description": "backend/internal/screener -> { data: SectorGroup[] }, each { sector, avgChangePercent, tickers: TickerChange[] }."
           }
+        },
+        {
+          "name": "Get Heatmap (1M, HOSE)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/market/heatmap?period=1M&exchange=HOSE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "heatmap"
+              ],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "1M"
+                },
+                {
+                  "key": "exchange",
+                  "value": "HOSE"
+                }
+              ]
+            },
+            "description": "Phase I: period = 1D | 1W | 1M | 3M (change over 1/5/21/63 sessions of daily bars), exchange = ALL | HOSE | HNX | UPCOM. Sectors and tiles come back sorted by market cap, with up/down/flat breadth per sector.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('only HOSE tiles', () => pm.response.json().data.forEach(g => g.tickers.forEach(t => pm.expect(t.exchange).to.eql('HOSE'))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Heatmap (bad period -> 400)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/market/heatmap?period=2Y",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "heatmap"
+              ],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "2Y"
+                }
+              ]
+            },
+            "description": "Unknown period -> 400 validation_error.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Get Movers",
@@ -860,6 +946,562 @@
             },
             "description": "Callable at any point, not just once all candles are revealed -- an early exit is scored over however many bars were actually played. result.skill.final becomes true; it's already present (and honest about only using revealed bars) on every response before this, per the design's \"provisional score\" panel."
           }
+        }
+      ]
+    },
+    {
+      "name": "Crypto",
+      "description": "Phase I (docs/roadmap/phases/phase-i.md): backend/internal/crypto. Public market data from Binance (MARKET_DATA_SOURCE=vci) with a deterministic mock fallback; every quote carries source: binance | mock. Crypto wallets are portfolios with market=crypto (10,000 USDT, fractional quantities, 0.10% fee).",
+      "item": [
+        {
+          "name": "List Pairs",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/crypto/pairs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "crypto",
+                "pairs"
+              ]
+            },
+            "description": "-> { data: PairQuote[] } for the 24 pairs in 4 categories.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('24 pairs', () => pm.expect(pm.response.json().data.length).to.eql(24));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Pair",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/crypto/pairs/{{pair}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "crypto",
+                "pairs",
+                "{{pair}}"
+              ]
+            },
+            "description": "Accepts BTCUSDT, BTC-USDT or BTC. -> PairDetail (adds allTimeHigh, distanceFromAthPercent, volatility30dPercentDay).",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('canonical symbol', () => pm.expect(pm.response.json().symbol).to.eql('BTCUSDT'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Pair (unknown -> 404)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/crypto/pairs/NOPEUSDT",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "crypto",
+                "pairs",
+                "NOPEUSDT"
+              ]
+            },
+            "description": "Unknown pair -> 404 not_found.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Bars (1h)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/crypto/bars?pair={{pair}}&interval=1h&from={{from10dTs}}&to={{nowTs}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "crypto",
+                "bars"
+              ],
+              "query": [
+                {
+                  "key": "pair",
+                  "value": "{{pair}}"
+                },
+                {
+                  "key": "interval",
+                  "value": "1h"
+                },
+                {
+                  "key": "from",
+                  "value": "{{from10dTs}}"
+                },
+                {
+                  "key": "to",
+                  "value": "{{nowTs}}"
+                }
+              ]
+            },
+            "description": "interval = 5m | 15m | 1h | 4h | 1d | 1w; from/to unix seconds. -> { data: Bar[], source }.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('has bars', () => pm.expect(pm.response.json().data.length).to.be.above(100));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Order Book",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/crypto/orderbook?pair={{pair}}&levels=4",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "crypto",
+                "orderbook"
+              ],
+              "query": [
+                {
+                  "key": "pair",
+                  "value": "{{pair}}"
+                },
+                {
+                  "key": "levels",
+                  "value": "4"
+                }
+              ]
+            },
+            "description": "levels per side (default 4, max 20); each level { price, size, cumulative }.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('4 + 4 levels', () => { const d = pm.response.json().data; pm.expect(d.bids.length).to.eql(4); pm.expect(d.asks.length).to.eql(4); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Heatmap",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/crypto/heatmap",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "crypto",
+                "heatmap"
+              ]
+            },
+            "description": "Same SectorGroup shape as /market/heatmap, grouped by coin category, 24h change.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Movers",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/crypto/movers?direction=up&limit=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "crypto",
+                "movers"
+              ],
+              "query": [
+                {
+                  "key": "direction",
+                  "value": "up"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "direction = up | down.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Overview",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/crypto/overview",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "crypto",
+                "overview"
+              ]
+            },
+            "description": "BTC/ETH quotes + sparklines, total market cap of the 24 pairs, dominance.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Crypto Wallet",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/portfolios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "portfolios"
+              ]
+            },
+            "description": "market=crypto -> currency USDT, default capital 10,000. Does not change the stock default portfolio.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ví crypto\",\n  \"market\": \"crypto\",\n  \"startingCapital\": 10000\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('cryptoPortfolioId', pm.response.json().id);",
+                  "pm.test('USDT wallet', () => pm.expect(pm.response.json().currency).to.eql('USDT'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crypto Order (fractional market buy)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders"
+              ]
+            },
+            "description": "Quantity may be fractional (rounded to 8 decimals); fee 0.10% of fill value.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"portfolioId\": \"{{cryptoPortfolioId}}\",\n  \"symbol\": \"{{pair}}\",\n  \"side\": \"buy\",\n  \"type\": \"market\",\n  \"quantity\": 0.025\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('filled, 0.10% fee', () => { const o = pm.response.json(); pm.expect(o.status).to.eql('filled'); pm.expect(o.fee).to.be.closeTo(o.filledPrice * 0.025 * 0.001, 0.01); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crypto Order (OCO, queued)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders"
+              ]
+            },
+            "description": "type oco needs both price (limit) and stopPrice; queued like limit/stop.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"portfolioId\": \"{{cryptoPortfolioId}}\",\n  \"symbol\": \"{{pair}}\",\n  \"side\": \"sell\",\n  \"type\": \"oco\",\n  \"quantity\": 0.01,\n  \"price\": 999999,\n  \"stopPrice\": 1\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('queued with both prices', () => { const o = pm.response.json(); pm.expect(o.status).to.eql('queued'); pm.expect(o.stopPrice).to.eql(1); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Stock into Crypto Wallet (-> 409)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders"
+              ]
+            },
+            "description": "A stock ticker into a crypto wallet (or a pair into a stock portfolio) -> 409 wrong_market.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"portfolioId\": \"{{cryptoPortfolioId}}\",\n  \"symbol\": \"FPT\",\n  \"side\": \"buy\",\n  \"type\": \"market\",\n  \"quantity\": 1\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 409', () => pm.response.to.have.status(409));",
+                  "pm.test('wrong_market', () => pm.expect(pm.response.json().code).to.eql('wrong_market'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Fractional Stock Quantity (-> 400)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders"
+              ]
+            },
+            "description": "Stocks trade whole shares only.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"symbol\": \"{{symbol}}\",\n  \"side\": \"buy\",\n  \"type\": \"market\",\n  \"quantity\": 1.5\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Start Crypto Replay",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/replay/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "replay",
+                "sessions"
+              ]
+            },
+            "description": "market=crypto: 1h bars from 2021-05-01, its own 10,000 USDT replay portfolio.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"symbol\": \"{{pair}}\",\n  \"market\": \"crypto\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('cryptoReplaySessionId', pm.response.json().id);",
+                  "pm.test('hourly USDT session', () => { const s = pm.response.json(); pm.expect(s.market).to.eql('crypto'); pm.expect(s.startingCapital).to.eql(10000); });"
+                ]
+              }
+            }
+          ]
         }
       ]
     },

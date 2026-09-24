@@ -15,6 +15,7 @@ import (
 
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/auth"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/backtest"
+	"github.com/hunterkilltree/vn-stock-sim/backend/internal/crypto"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/insight"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/market"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/order"
@@ -52,10 +53,21 @@ func main() {
 	symbolProvider := symbol.NewMockProvider()
 	symbolSvc := symbol.NewService(symbolProvider, marketSvc)
 
+	// Crypto market (Phase I): Binance's public market data with the same
+	// per-call mock fallback as the stock side, or mock only when
+	// MARKET_DATA_SOURCE=mock. QuoteRouter lets order/portfolio price both
+	// markets through their existing Detail port (phase-i.md decision 7).
+	var cryptoLive crypto.DataProvider
+	if cfg.MarketDataSource == "vci" {
+		cryptoLive = crypto.NewBinanceProvider()
+	}
+	cryptoSvc := crypto.NewService(crypto.NewLiveProvider(cryptoLive))
+	quotes := crypto.QuoteRouter{Crypto: cryptoSvc, Stock: symbolSvc}
+
 	authSvc := auth.NewService(auth.NewMemoryStore(), tokens)
 	watchlistSvc := watchlist.NewService(watchlist.NewMemoryStore(), symbolSvc)
 	portfolioStore := portfolio.NewMemoryStore()
-	portfolioSvc := portfolio.NewService(portfolioStore, symbolSvc)
+	portfolioSvc := portfolio.NewService(portfolioStore, quotes)
 	// orderStore is a named variable (not inlined) because Phase F's
 	// replaySvc below also needs it, to log Replay fills as real
 	// order.Order records -- see phase-f.md decision 5.
@@ -63,7 +75,7 @@ func main() {
 	// Ledger is portfolioSvc, not the bare store -- portfolioSvc.ApplyFill
 	// wraps the store's ledger op with a real equity-history snapshot on
 	// every fill (see phase-e.md item 1 and portfolio/service.go).
-	orderSvc := order.NewService(orderStore, portfolioSvc, symbolSvc, portfolioSvc)
+	orderSvc := order.NewService(orderStore, portfolioSvc, quotes, portfolioSvc)
 	// SetOrdersPort closes the reverse dependency (portfolioSvc.Stats
 	// needs order history) after both services exist, avoiding an import
 	// cycle -- see portfolio/types.go's OrdersPort comment.
@@ -76,7 +88,7 @@ func main() {
 	// dedicated portfolio, see phase-f.md decision 4), and orderStore
 	// (Replay fills are logged as real orders, decision 5) -- no new
 	// dependency surface on any existing package.
-	replaySvc := replay.NewService(replay.NewMemoryStore(), marketSvc, portfolioSvc, orderStore)
+	replaySvc := replay.NewService(replay.NewMemoryStore(), marketSvc, cryptoSvc, portfolioSvc, orderStore)
 	quantSvc := quant.NewService(quant.DefaultClients(cfg.QuantAllowPrivateEndpoints), symbolSvc, marketSvc, watchlistSvc, portfolioSvc)
 
 	router := gin.Default()
@@ -93,6 +105,7 @@ func main() {
 	screener.RegisterRoutes(v1, screenerSvc)
 	replay.RegisterRoutes(v1, replaySvc, tokens)
 	quant.RegisterRoutes(v1, quantSvc, tokens)
+	crypto.RegisterRoutes(v1, cryptoSvc)
 
 	log.Printf("VN Stock Sim API listening on :%s", cfg.Port)
 	if err := router.Run(":" + cfg.Port); err != nil {

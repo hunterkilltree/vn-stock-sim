@@ -21,6 +21,11 @@ const DefaultTotalBars = 120
 // deliberately (see service.go).
 const DefaultStartingCapital = 100_000_000
 
+// Crypto sessions (phase-i.md decision 11): Crypto-Replay.dc.html's May
+// 2021 crash on 1-hour candles, with a 10,000 USDT replay wallet.
+const DefaultCryptoAnchor = "2021-05-01"
+const DefaultCryptoStartingCapital = 10_000
+
 // InitialRevealed is how many candles a fresh session shows immediately
 // (not zero -- an empty chart on session start would be a strange first
 // screen, and SMA(20) needs at least 20 points to plot at all).
@@ -35,6 +40,8 @@ type Session struct {
 	UserID      string
 	PortfolioID string
 	Symbol      string
+	Market      string  // "stock" | "crypto"
+	Capital     float64 // starting capital of the session's portfolio
 	Resolution  string
 	// Bars is the FULL historical series, fetched once at Start -- only
 	// Bars[:CurrentBar] is ever exposed in a SessionView. Scoring at End
@@ -56,7 +63,7 @@ type Fill struct {
 	BarIndex int     `json:"barIndex"`
 	Date     string  `json:"date"`
 	Side     string  `json:"side"`
-	Quantity int64   `json:"quantity"`
+	Quantity float64 `json:"quantity"`
 	Price    float64 `json:"price"`
 	// StopSet is the stop-loss price active immediately after this fill
 	// (0 = none), recorded on the fill itself rather than only on the
@@ -69,6 +76,7 @@ type Fill struct {
 
 type StartRequest struct {
 	Symbol     string `json:"symbol" binding:"required"`
+	Market     string `json:"market" binding:"omitempty,oneof=stock crypto"`
 	Resolution string `json:"resolution"`
 	TotalBars  int    `json:"totalBars"`
 	StartDate  string `json:"startDate"`
@@ -76,7 +84,7 @@ type StartRequest struct {
 
 type OrderRequest struct {
 	Side     string  `json:"side" binding:"required,oneof=buy sell"`
-	Quantity int64   `json:"quantity" binding:"required,gt=0"`
+	Quantity float64 `json:"quantity" binding:"required,gt=0"`
 	StopLoss float64 `json:"stopLoss"`
 }
 
@@ -87,6 +95,8 @@ type OrderRequest struct {
 type SessionView struct {
 	ID          string                  `json:"id"`
 	Symbol      string                  `json:"symbol"`
+	Market      string                  `json:"market"`
+	Capital     float64                 `json:"startingCapital"`
 	Resolution  string                  `json:"resolution"`
 	PortfolioID string                  `json:"portfolioId"`
 	CurrentBar  int                     `json:"currentBar"`
@@ -97,7 +107,7 @@ type SessionView struct {
 	SMA20       []market.IndicatorPoint `json:"sma20"`
 	Fills       []Fill                  `json:"fills"`
 	StopLoss    float64                 `json:"stopLoss,omitempty"`
-	PositionQty int64                   `json:"positionQty"`
+	PositionQty float64                 `json:"positionQty"`
 	AvgCost     float64                 `json:"avgCost,omitempty"`
 	// Result is always present, not just after End -- KPIs and the skill
 	// score are real numbers throughout the session (matching the

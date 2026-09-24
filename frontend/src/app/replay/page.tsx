@@ -22,7 +22,7 @@ export default async function ReplayPage({ searchParams }: PageProps<"/replay">)
   return (
     <div className="flex flex-1 bg-app-bg text-app-text">
       <RailNav account={<AccountMenuButton placement="right" />} />
-      <div className="flex min-w-0 flex-1 flex-col p-[20px_24px]">
+      <div className="flex min-w-0 flex-1 flex-col px-[18px] pt-[22px] lg:p-[20px_24px]">
         {user ? (
           <ReplaySession initialSymbol={initialSymbol} />
         ) : (

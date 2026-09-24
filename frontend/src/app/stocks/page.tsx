@@ -22,6 +22,9 @@ import {
 } from "@/lib/api";
 import { getActivePortfolio, getSessionToken, getSessionUser } from "@/lib/session";
 import AccountMenuButton from "@/components/AccountMenuButton";
+import MarketSwitch from "@/components/MarketSwitch";
+import { MobileChips, MobileHero, MobileMoverList, MobileSectionHead, MobileTileGrid } from "@/components/MobileMarket";
+import { formatThousandsVN, formatVN, signVN } from "@/lib/format";
 
 export const metadata = { title: "Tổng quan thị trường — VN Stock Sim" };
 
@@ -97,21 +100,33 @@ export default async function MarketOverviewPage() {
     }
   }
 
+  // Phone view (Mobile-Market.dc.html, phase-j.md decision 5): breadth
+  // across the whole universe and the 9 largest tickers as tiles.
+  const breadth = sectors.reduce((b, g) => ({ up: b.up + (g.up ?? 0), down: b.down + (g.down ?? 0), flat: b.flat + (g.flat ?? 0) }), { up: 0, down: 0, flat: 0 });
+  const bigNine = sectors
+    .flatMap((g) => g.tickers)
+    .sort((a, b) => (b.marketCap ?? 0) - (a.marketCap ?? 0))
+    .slice(0, 9);
+  const [vnIndex, ...otherIndices] = indices;
+
   return (
     <div className="flex flex-1 bg-app-bg text-app-text">
       <SidebarNav cashBalance={summary?.cashBalance} />
 
-      <div className="flex min-w-0 flex-1 flex-col gap-5 p-[24px_28px]">
-        <header className="flex items-end justify-between gap-6">
-          <div className="flex flex-col gap-[5px]">
-            <h1 className="m-0 font-display text-[27px] font-bold tracking-[-0.015em]">Tổng quan thị trường</h1>
-            <div className="flex items-center gap-2 text-[12.5px] text-app-text-3">
+      <div className="flex min-w-0 flex-1 flex-col gap-[14px] px-[18px] pb-4 pt-[22px] lg:gap-5 lg:p-[24px_28px]">
+        <header className="flex items-center justify-between gap-6 lg:items-end">
+          <div className="flex min-w-0 flex-col gap-[5px]">
+            <h1 className="m-0 font-display text-[23px] font-bold tracking-[-0.015em] lg:text-[27px]">
+              <span className="lg:hidden">Thị trường</span>
+              <span className="hidden lg:inline">Tổng quan thị trường</span>
+            </h1>
+            <div className="flex items-center gap-2 text-[11.5px] text-app-text-3 lg:text-[12.5px]">
               <span className="h-[7px] w-[7px] rounded-full bg-price-up" />
               <span>{nowSessionLabel()}</span>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 items-center gap-2 rounded-[11px] border border-app-border bg-app-surface px-[14px]">
+          <div className="flex shrink-0 items-center gap-3">
+            <div className="hidden h-11 items-center gap-2 rounded-[11px] border border-app-border bg-app-surface px-[14px] lg:flex">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A867E" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
                 <circle cx="11" cy="11" r="7" />
                 <path d="M16.5 16.5L21 21" />
@@ -126,7 +141,7 @@ export default async function MarketOverviewPage() {
             </div>
             <Link
               href="/replay"
-              className="flex h-11 items-center gap-2 rounded-[11px] bg-app-accent px-4 text-[13.5px] font-semibold text-app-accent-ink"
+              className="hidden h-11 items-center gap-2 rounded-[11px] bg-app-accent px-4 text-[13.5px] font-semibold text-app-accent-ink lg:flex"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M11 6L4 12l7 6V6zM20 6l-7 6 7 6V6z" />
@@ -143,13 +158,61 @@ export default async function MarketOverviewPage() {
           </p>
         )}
 
-        <div className="grid grid-cols-4 gap-4">
+        <MarketSwitch mode="stock" />
+
+        <div className="flex flex-col gap-[14px] lg:hidden">
+          {vnIndex && (
+            <MobileHero
+              name={vnIndex.name}
+              value={formatVN(vnIndex.value, 2)}
+              changePercent={vnIndex.changePercent}
+              changeText={`${signVN(vnIndex.change, 2)} điểm`}
+              sparkline={vnIndex.sparkline}
+              foot={
+                <>
+                  <span>{breadth.up + breadth.down + breadth.flat} mã</span>
+                  <span className="text-price-up">{breadth.up} tăng</span>
+                  <span className="text-price-ref">{breadth.flat} đứng</span>
+                  <span className="text-price-down">{breadth.down} giảm</span>
+                </>
+              }
+            />
+          )}
+          {otherIndices.length > 0 && (
+            <MobileChips chips={otherIndices.map((ix) => ({ name: ix.name.replace(/-INDEX$/, ""), value: formatVN(ix.value, 2), changePercent: ix.changePercent }))} />
+          )}
+          <section className="flex flex-col gap-[10px]">
+            <MobileSectionHead
+              title="Bản đồ nhiệt"
+              right={
+                <Link href="/heatmap" className="-my-3 py-3 text-[12px] font-medium text-app-accent">
+                  Toàn thị trường
+                </Link>
+              }
+            />
+            <MobileTileGrid tiles={bigNine.map((t) => ({ symbol: t.symbol, changePercent: t.changePercent, href: `/stocks/${t.symbol}` }))} />
+          </section>
+          <section className="flex flex-col gap-[10px]">
+            <MobileSectionHead title="Tăng mạnh nhất" right={<span className="text-[11.5px] text-app-text-muted">HOSE · HNX · UPCOM</span>} />
+            <MobileMoverList
+              rows={gainers.map((r) => ({
+                symbol: r.symbol,
+                name: r.companyName ?? "",
+                price: r.price !== undefined ? formatThousandsVN(r.price) : "—",
+                changePercent: r.changePercent,
+                href: `/stocks/${r.symbol}`,
+              }))}
+            />
+          </section>
+        </div>
+
+        <div className="hidden grid-cols-4 gap-4 lg:grid">
           {indices.map((ix) => (
             <IndexCard key={ix.name} index={ix} />
           ))}
         </div>
 
-        <div className="flex min-h-0 flex-1 gap-5">
+        <div className="hidden min-h-0 flex-1 gap-5 lg:flex">
           <div className="flex min-w-0 flex-1 flex-col gap-5">
             <SectorHeatmap sectors={sectors} />
             <section className="flex h-[226px] shrink-0 gap-6 rounded-2xl border border-app-border bg-app-surface p-[18px_20px]">
