@@ -9,6 +9,7 @@ This repo is three things bundled together:
 1. **VN Stock Sim source code** (`backend/`, a Go + Gin V1 MVP; `frontend/`, a Next.js app) — see **Running it** and [docs/roadmap/RESUME.md](docs/roadmap/RESUME.md) below for status. This is a real, partially-built implementation now, not just specs.
 2. **VN Stock Sim docs** under `docs/`, plus the design export under `design/` — the blueprint the code above follows. When a doc and the code disagree, treat the doc as intent and the code as possibly incomplete or drifted — check RESUME.md for known gaps before assuming either is wrong.
 3. **An Excalidraw diagram-generation skill** in `tools/excalidraw-diagram/` — the upstream [`excalidraw-diagram-skill`](https://github.com/coleam00/excalidraw-diagram-skill) repo in its own layout (`SKILL.md` + `references/`), not installed under `.claude/skills/` as its README describes. Treat it as tooling for generating diagrams, not as this project's product code.
+4. **Standalone services** under `services/` — currently just `services/quant-gemini-bridge/`, a small Python (FastAPI) OpenAI-compatible proxy in front of Google Gemini, used as the reference "Máy chủ riêng" (self-hosted) provider for Trợ lý Quant. See [phase-quant-gemini-bridge.md](docs/roadmap/phases/phase-quant-gemini-bridge.md). It is deliberately outside `backend/`/`frontend/`: it's a separately built/run process, not Go or Next.js code.
 
 ### Where the Markdown lives
 

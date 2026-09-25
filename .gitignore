@@ -2,3 +2,6 @@
 *.png
 uv.lock
 __pycache__/
+# Holds GEMINI_API_KEY for docker-compose.yml's gemini-bridge service --
+# see phase-quant-gemini-bridge.md. Never commit the real key.
+.env
