@@ -7,6 +7,7 @@ import {
   getOrderBook,
   getInsight,
   getPortfolioSummaryByID,
+  getWatchlist,
   type Bar,
   type IndicatorPoint,
   type IndicatorMultiPoint,
@@ -24,6 +25,7 @@ import FundamentalsGrid from "@/components/FundamentalsGrid";
 import AIInsightCard from "@/components/AIInsightCard";
 import CompactChart from "@/components/CompactChart";
 import MobileActionBar from "@/components/MobileActionBar";
+import WatchlistButton from "@/components/WatchlistButton";
 import Link from "next/link";
 import { formatThousandsVN, formatVN, formatVolumeVN, signVN, tone } from "@/lib/format";
 import { getActivePortfolio, getSessionToken, getSessionUser } from "@/lib/session";
@@ -117,10 +119,12 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
   const user = await getSessionUser();
   let buyingPower: number | null = null;
   let activePortfolioName: string | null = null;
+  let watched = false;
   if (user) {
     try {
       const token = await getSessionToken();
       if (token) {
+        watched = (await getWatchlist(token)).data.some((w) => w.symbol === detail.symbol);
         const { active } = await getActivePortfolio(token);
         if (active) {
           activePortfolioName = active.name;
@@ -161,6 +165,7 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
             </div>
             <span className="truncate text-[11.5px] text-app-text-muted">{detail.companyName}</span>
           </div>
+          <WatchlistButton symbol={detail.symbol} watched={watched} signedIn={!!user} />
           <AccountMenuButton placement="below" />
         </header>
         <div className="flex items-end justify-between gap-3 lg:hidden">
@@ -201,28 +206,39 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
             <PriceBandChips ceiling={detail.ceiling} reference={detail.reference} floor={detail.floor} />
           </div>
           <div className="flex items-center gap-[10px]">
+            <WatchlistButton symbol={detail.symbol} watched={watched} signedIn={!!user} />
             <button
               type="button"
               disabled
               title="Sắp ra mắt"
-              className="box-border flex h-11 cursor-not-allowed items-center gap-2 rounded-[11px] border border-app-border bg-app-surface px-[15px] text-[13px] font-medium text-app-text opacity-70"
+              aria-label="Thêm chỉ báo"
+              className="box-border flex h-11 cursor-not-allowed items-center gap-2 whitespace-nowrap rounded-[11px] border border-app-border bg-app-surface px-[13px] text-[13px] font-medium text-app-text opacity-70 xl:px-[15px]"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
                 <path d="M12 5v14M5 12h14" />
               </svg>
-              <span>Thêm chỉ báo</span>
+              <span className="hidden xl:inline">Thêm chỉ báo</span>
             </button>
-            <button
-              type="button"
-              disabled
-              title="Sắp ra mắt"
-              className="box-border flex h-11 cursor-not-allowed items-center gap-2 rounded-[11px] border border-app-accent-border bg-app-accent-surface px-[15px] text-[13px] font-semibold text-app-accent opacity-80"
+            <Link
+              href={`/backtest?symbol=${detail.symbol}`}
+              aria-label="Kiểm thử mã này"
+              className="box-border flex h-11 items-center gap-2 whitespace-nowrap rounded-[11px] border border-app-border bg-app-surface px-[13px] text-[13px] font-medium text-app-text xl:px-[15px]"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 21a9 9 0 100-18 9 9 0 000 18zM12 7.5V12l3 2" />
+              </svg>
+              <span className="hidden xl:inline">Kiểm thử mã này</span>
+            </Link>
+            <Link
+              href={`/replay?symbol=${detail.symbol}`}
+              aria-label="Replay mã này"
+              className="box-border flex h-11 items-center gap-2 whitespace-nowrap rounded-[11px] border border-app-accent-border bg-app-accent-surface px-[13px] text-[13px] font-semibold text-app-accent xl:px-[15px]"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M11 6L4 12l7 6V6zM20 6l-7 6 7 6V6z" />
               </svg>
-              <span>Replay mã này</span>
-            </button>
+              <span className="hidden xl:inline">Replay mã này</span>
+            </Link>
           </div>
         </header>
 
@@ -232,11 +248,12 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
               <div className="-mx-[18px] overflow-x-auto px-[18px] lg:mx-0 lg:px-0">
                 <TimeframePills symbol={symbol} active={tf} />
               </div>
-              <div className="hidden items-center gap-2 lg:flex">
+              {/* Chips from xl up: at lg they'd wrap beside the timeframes. */}
+              <div className="hidden items-center gap-2 xl:flex">
                 {INDICATOR_CHIPS.map((c) => (
                   <span
                     key={c.label}
-                    className="flex h-7 items-center gap-[7px] rounded-lg border border-app-border bg-app-surface-2 px-[11px] text-[11.5px] text-app-text-2"
+                    className="flex h-7 items-center gap-[7px] whitespace-nowrap rounded-lg border border-app-border bg-app-surface-2 px-[11px] text-[11.5px] text-app-text-2"
                   >
                     <span className="h-2 w-2 rounded-[2px]" style={{ background: c.color }} />
                     {c.label}

@@ -19,13 +19,17 @@ type Order struct {
 	Price       float64 `json:"price,omitempty"`
 	StopPrice   float64 `json:"stopPrice,omitempty"`
 	FilledPrice float64 `json:"filledPrice,omitempty"`
-	// Fee is the simulated 0.15% trading fee (FeeRate), charged only on an
-	// actual fill -- a queued order (limit/atc/stop, none of which fill
-	// immediately in V1, see service.go) shows fee 0 until a real matching
-	// engine later fills it.
+	// Fee is the simulated trading fee (FeeRate / CryptoFeeRate), charged
+	// only on an actual fill -- a queued order shows fee 0 until the
+	// matcher fills it (matcher.go, phase-k.md).
 	Fee       float64 `json:"fee"`
 	FilledAt  string  `json:"filledAt,omitempty"`
 	CreatedAt string  `json:"createdAt"`
+	// TriggeredBy says which leg of an OCO filled: "limit" or "stop".
+	TriggeredBy string `json:"triggeredBy,omitempty"`
+	// RejectReason is set when a triggered order could not be booked
+	// (status "rejected": not enough cash or shares at that moment).
+	RejectReason string `json:"rejectReason,omitempty"`
 }
 
 // FeeRate is the simulated paper-trading fee (Detail.dc.html shows
@@ -42,9 +46,9 @@ type createRequest struct {
 	PortfolioID string `json:"portfolioId"`
 	Symbol      string `json:"symbol" binding:"required"`
 	Side        string `json:"side" binding:"required,oneof=buy sell"`
-	// market == MP, limit == LO, atc/stop are new (Detail.dc.html's order
-	// ticket). atc/stop are accepted and queued like limit today -- V1 has
-	// no real matching engine yet (see RESUME.md future work).
+	// market == MP, limit == LO, atc/stop are Detail.dc.html's order
+	// ticket, oco is Crypto-Detail's. Everything but market is queued and
+	// filled by the matcher (matcher.go, phase-k.md decisions 4-10).
 	Type     string  `json:"type" binding:"required,oneof=market limit atc stop oco"`
 	Quantity float64 `json:"quantity" binding:"required,gt=0"`
 	// Price is required for non-market types (see Order.Price above);

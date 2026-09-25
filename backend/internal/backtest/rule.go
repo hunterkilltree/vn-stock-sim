@@ -9,6 +9,11 @@ type runResult struct {
 	winRate            float64
 	maxDrawdownPercent float64
 	profitFactor       float64
+	// equity, trades and benchmarkReturnPercent feed the /backtest results
+	// page (phase-k.md decision 13).
+	equity                 []EquityPoint
+	trades                 []Trade
+	benchmarkReturnPercent float64
 }
 
 // tracker is the long-only, all-in/all-out bookkeeping both rules share:
@@ -24,6 +29,10 @@ type tracker struct {
 	grossLoss       float64
 	peak            float64
 	maxDD           float64
+	entryTime       int64
+	firstClose      float64
+	equity          []EquityPoint
+	tradeLog        []Trade
 }
 
 func newTracker(startingCapital float64) *tracker {
@@ -32,15 +41,20 @@ func newTracker(startingCapital float64) *tracker {
 
 func (t *tracker) inPosition() bool { return t.shares > 0 }
 
-func (t *tracker) buy(price float64) {
+func (t *tracker) buy(at int64, price float64) {
 	t.shares = t.cash / price
 	t.cash = 0
 	t.entryPrice = price
+	t.entryTime = at
 }
 
-func (t *tracker) sell(price float64) {
+func (t *tracker) sell(at int64, price float64) {
 	proceeds := t.shares * price
 	cost := t.shares * t.entryPrice
+	t.tradeLog = append(t.tradeLog, Trade{
+		EntryTime: t.entryTime, EntryPrice: t.entryPrice, ExitTime: at, ExitPrice: price,
+		ReturnPercent: round2((price - t.entryPrice) / t.entryPrice * 100),
+	})
 	t.cash = proceeds
 	t.shares = 0
 	t.trades++
@@ -52,8 +66,14 @@ func (t *tracker) sell(price float64) {
 	}
 }
 
-func (t *tracker) mark(price float64) {
+// mark records the bar's equity next to buy-and-hold of the same
+// capital from the first bar marked.
+func (t *tracker) mark(at int64, price float64) {
 	equity := t.cash + t.shares*price
+	if t.firstClose == 0 {
+		t.firstClose = price
+	}
+	t.equity = append(t.equity, EquityPoint{Time: at, Equity: round2(equity), Benchmark: round2(t.startingCapital * price / t.firstClose)})
 	if equity > t.peak {
 		t.peak = equity
 	}
@@ -64,13 +84,25 @@ func (t *tracker) mark(price float64) {
 	}
 }
 
-func (t *tracker) result(lastPrice float64) runResult {
+func (t *tracker) result(lastTime int64, lastPrice float64) runResult {
 	final := t.cash + t.shares*lastPrice
+	trades := t.tradeLog
+	if t.inPosition() { // still holding at the end: shown, not counted
+		trades = append(trades, Trade{
+			EntryTime: t.entryTime, EntryPrice: t.entryPrice, ExitTime: lastTime, ExitPrice: lastPrice,
+			ReturnPercent: round2((lastPrice - t.entryPrice) / t.entryPrice * 100), Open: true,
+		})
+	}
 	r := runResult{
 		finalCapital:       final,
 		returnPercent:      (final - t.startingCapital) / t.startingCapital * 100,
 		totalTrades:        t.trades,
 		maxDrawdownPercent: t.maxDD,
+		equity:             t.equity,
+		trades:             trades,
+	}
+	if t.firstClose > 0 {
+		r.benchmarkReturnPercent = (lastPrice - t.firstClose) / t.firstClose * 100
 	}
 	if t.trades > 0 {
 		r.winRate = float64(t.wins) / float64(t.trades) * 100
@@ -103,14 +135,15 @@ func runEMACrossover(bars []market.Bar, fastPeriod, slowPeriod int, startingCapi
 			crossedUp := fastEMA[i-1] <= slowEMA[i-1] && fastEMA[i] > slowEMA[i]
 			crossedDown := fastEMA[i-1] >= slowEMA[i-1] && fastEMA[i] < slowEMA[i]
 			if !t.inPosition() && crossedUp {
-				t.buy(bars[i].Close)
+				t.buy(bars[i].Time, bars[i].Close)
 			} else if t.inPosition() && crossedDown {
-				t.sell(bars[i].Close)
+				t.sell(bars[i].Time, bars[i].Close)
 			}
 		}
-		t.mark(bars[i].Close)
+		t.mark(bars[i].Time, bars[i].Close)
 	}
-	return t.result(bars[len(bars)-1].Close)
+	last := bars[len(bars)-1]
+	return t.result(last.Time, last.Close)
 }
 
 type rsiReversionParams struct {
@@ -154,18 +187,19 @@ func runRSIReversion(bars []market.Bar, p rsiReversionParams, startingCapital fl
 					trendOK = ok && price > s
 				}
 				if prev < p.entry && cur >= p.entry && trendOK {
-					t.buy(price)
+					t.buy(bars[i].Time, price)
 				}
 			} else {
 				stopHit := p.stopLossPercent > 0 && price <= t.entryPrice*(1-p.stopLossPercent/100)
 				if cur > p.exit || stopHit {
-					t.sell(price)
+					t.sell(bars[i].Time, price)
 				}
 			}
 		}
-		t.mark(price)
+		t.mark(bars[i].Time, price)
 	}
-	return t.result(bars[len(bars)-1].Close)
+	last := bars[len(bars)-1]
+	return t.result(last.Time, last.Close)
 }
 
 // emaSeries returns an EMA aligned index-for-index with closes; entries

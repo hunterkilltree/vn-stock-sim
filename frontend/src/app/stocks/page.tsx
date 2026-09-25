@@ -13,7 +13,9 @@ import {
   getMovers,
   getPortfolioSummaryByID,
   getPortfolioPositionsByID,
+  getWatchlist,
   type IndexSnapshot,
+  type WatchlistItem,
   type SectorGroup,
   type TickerChange,
   type PortfolioSummary,
@@ -22,6 +24,7 @@ import {
 } from "@/lib/api";
 import { getActivePortfolio, getSessionToken, getSessionUser } from "@/lib/session";
 import AccountMenuButton from "@/components/AccountMenuButton";
+import WatchlistCard from "@/components/WatchlistCard";
 import MarketSwitch from "@/components/MarketSwitch";
 import { MobileChips, MobileHero, MobileMoverList, MobileSectionHead, MobileTileGrid } from "@/components/MobileMarket";
 import { formatThousandsVN, formatVN, signVN } from "@/lib/format";
@@ -80,10 +83,12 @@ export default async function MarketOverviewPage() {
   let summary: PortfolioSummary | null = null;
   let positions: Position[] = [];
   let activePortfolio: Portfolio | null = null;
+  let watchlist: WatchlistItem[] | null = null;
   if (user) {
     try {
       const token = await getSessionToken();
       if (token) {
+        watchlist = (await getWatchlist(token)).data;
         activePortfolio = (await getActivePortfolio(token)).active;
         if (activePortfolio) {
           const [summaryRes, positionsRes] = await Promise.all([
@@ -204,6 +209,7 @@ export default async function MarketOverviewPage() {
               }))}
             />
           </section>
+          {watchlist && <WatchlistCard items={watchlist} />}
         </div>
 
         <div className="hidden grid-cols-4 gap-4 lg:grid">
@@ -246,6 +252,7 @@ export default async function MarketOverviewPage() {
               </section>
             )}
 
+            {watchlist && <WatchlistCard items={watchlist} />}
             <ReplayPromoCard />
             <QuantPromptCard />
           </div>

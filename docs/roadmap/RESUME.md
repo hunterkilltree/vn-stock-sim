@@ -8,7 +8,7 @@ api-spec.md, charting-library-integration.md) for the full spec. See
 RUNNING.md to run backend + frontend locally with hot reload, or
 DOCKER.md for a one-command demo.
 
-Last updated: 2026-09-24.
+Last updated: 2026-09-25.
 
 **Docs reorganized (2026-09-24, branch `docs-structure`):** every Markdown
 file moved out of the repo root into `docs/{product,architecture,guides,roadmap,roadmap/phases}/`,
@@ -1434,32 +1434,77 @@ Verified:
 
 Not verified: a real phone (only Chromium emulation here).
 
+**Phase K (finish V1: order matching, fees, watchlist, backtest page) --
+branch `phase-k-finish-v1`, from master `f9b077d`, 2026-09-25.** Plan,
+decisions and verification: phase-k.md. Re-scoped from FULL-APP-PLAN.md's
+stretch list (now Phase L) after checking master showed these V1 gaps.
+
+- **Fees are charged.** The ledger takes the fee on every fill: buys pay
+  value + fee, sells receive value − fee. Replay's session NAV pays the
+  same fees. Equity, total P&L and the equity curve are now net of fees;
+  average cost stays the pure price.
+- **Queued orders fill.**
+  - A background matcher (`order/matcher.go`, every
+    `ORDER_MATCH_INTERVAL`, default 20 s) checks limit/stop/OCO orders
+    against the 5-minute bars since each was placed, for stocks and
+    crypto:
+    - limit fills at the price or better;
+    - stop fills at its trigger or the gap open;
+    - OCO fills one leg (a tie goes to the stop).
+  - ATC fills at the 14:45 Hanoi close on weekdays.
+  - Orders already marketable fill at once.
+  - A fill the account can't cover becomes `rejected` with a reason.
+  - The Portfolio page and the crypto wallet list pending orders with
+    their conditions, plus "Vừa xử lý" (filled / rejected / cancelled).
+- **Watchlist**:
+  - The API adds names and exchange, refuses unknown symbols and accepts
+    crypto pairs.
+  - A bookmark button on both Detail pages (desktop and phone).
+  - A "Danh sách theo dõi" card on Main.
+- **Backtest page** (`/backtest`, the nav's "Kiểm thử lịch sử" is now
+  built):
+  - A form for symbol, rule and its parameters, range and capital.
+  - Results: KPIs against buy-and-hold, equity curve, trade list, and
+    previous runs.
+  - The API adds equity per bar, trades, a benchmark and the run inputs.
+  - Linked from Detail ("Kiểm thử mã này") and from Quant's strategy card
+    ("Xem kết quả đầy đủ").
+- Detail's desktop "Replay mã này" is now a working link (it was a
+  disabled button).
+
+Verified:
+- 41 Go tests and Newman 67/0.
+- A browser run: a queued stop placed from the ticket filled in the
+  background at the gap open.
+- The watchlist on desktop and phone, and the backtest page from Detail
+  and Quant.
+- The Phase I and J suites still pass, with 0 overflowing views at 390
+  and 1024 px.
+
+Still open (documented): queued buys don't reserve cash; backtests ignore
+fees.
+
 ---
 
 ## Plan (where to pick up)
 
-Phases A-J of FULL-APP-PLAN.md's rebuild are now done (see the Done
-section above). Next up:
+Phases A-K are done (K re-scoped to finish V1 -- see phase-k.md).
+Next up:
 
-1. **Merge Phase I then Phase J**: PR #26 (`phase-i-crypto`, open), then
-   `phase-j-mobile` (stacked on it, no PR yet). G, docs and H are merged.
-2. **See real prices**: run with normal internet access (or allow
-   `data-api.binance.vision` and `trading.vietcap.com.vn` in the cloud
-   environment's network settings) -- the one Phase I check this sandbox
-   couldn't do.
-3. **Try Quant with a real key** (Settings › Mô hình AI → Claude → paste a
-   key → Kiểm tra) -- the one Phase H check this sandbox couldn't do.
-4. **Deduct trading fees from cash** (the phase-e.md gap, now visible on
-   crypto wallets too).
-5. **Check the phone layouts on a real device** (iOS Safari safe areas,
-   Android Chrome) -- the one Phase J check this sandbox couldn't do.
-6. **Phase K** (WILL items, English); Quant-Chart is Phase H's deferred
-   stretch item; crypto Quant and a crypto Portfolio page are Phase I's.
-7. Independently of the lettered phases: wire a real Postgres database
-   behind auth/watchlist/portfolio/order (all in-memory MemoryStores that
-   reset on restart today -- also what free hosts other than an always-on
-   VM need), and replace the VCI market-data adapter with a licensed
-   vendor if the user decides to pursue that.
+1. **Merge `phase-k-finish-v1`** (from master; no PR yet). I and J are
+   merged (PR #27); PR #26 duplicates Phase I and can be closed.
+2. **Persistence (Postgres)** -- now the biggest V1 gap: auth, watchlist,
+   portfolios, orders, backtests and Replay sessions are in-memory and
+   reset on restart, which also rules out most free hosts.
+3. **Real-world checks this sandbox couldn't do**: live VCI/Binance
+   prices (allow `trading.vietcap.com.vn` and `data-api.binance.vision`),
+   Quant with a real API key, the phone layouts on a real device.
+4. **Phase L** (FULL-APP-PLAN.md's stretch list): standalone screener,
+   trade journal, Strategy Builder, the remaining Settings sections,
+   English. Also: crypto Quant, a crypto Portfolio page, crypto backtests,
+   Quant-Chart.
+5. Smaller follow-ups from Phase K: reserve cash for queued buys; fees in
+   backtests.
 
 ---
 
@@ -1467,8 +1512,6 @@ section above). Next up:
 
 - Indicators beyond SMA/EMA: RSI, MACD, Bollinger, VWAP
   (vn-stock-sim-summary.md lists all of these for V1 chart).
-- Limit order matching — currently orders of type limit are accepted and
-  stored as queued forever; nothing ever fills them.
 - Real backtest worker pool — POST /backtests runs synchronously today;
   the response shape already matches the spec async queue-then-poll
   contract, so adding a real queue later should not require an API

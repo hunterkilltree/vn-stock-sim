@@ -3,6 +3,7 @@ package order
 import (
 	"errors"
 	"math"
+	"sync"
 	"time"
 
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/portfolio"
@@ -15,7 +16,8 @@ var ErrInsufficientShares = portfolio.ErrInsufficientShares
 var ErrNotFound = errors.New("order not found")
 
 type Ledger interface {
-	ApplyFill(portfolioID, sym, side string, quantity float64, price float64) error
+	// fee is charged to cash on top of the fill value (phase-k.md decision 1).
+	ApplyFill(portfolioID, sym, side string, quantity, price, fee float64) error
 }
 
 type QuotePort interface {
@@ -26,6 +28,7 @@ var ErrPortfolioNotFound = errors.New("portfolio not found")
 var ErrWrongMarket = errors.New("this symbol belongs to the other market than this portfolio")
 var ErrInvalidQuantity = errors.New("invalid quantity for this market")
 var ErrOCOPrices = errors.New("an OCO order needs both a limit price and a stop price")
+var ErrPriceRequired = errors.New("limit and stop orders need a price")
 var ErrReplayPortfolio = errors.New("replay portfolios only accept fills from their own replay session")
 
 // PortfolioResolver lets Service resolve a request's optional
@@ -41,17 +44,26 @@ type Service struct {
 	ledger     Ledger
 	quotes     QuotePort
 	portfolios PortfolioResolver
+	// mu serialises fills from the matcher with Create/Cancel, so a
+	// cancelled order can't also fill (matcher.go).
+	mu sync.Mutex
+	// bars and checked are the matcher's bar source and per-order
+	// watermark (last bar time examined); nil bars = matching off.
+	bars    BarsPort
+	checked map[string]int64
 }
 
 func NewService(store *MemoryStore, ledger Ledger, quotes QuotePort, portfolios PortfolioResolver) *Service {
 	return &Service{store: store, ledger: ledger, quotes: quotes, portfolios: portfolios}
 }
 
-// Create places an order. V1 only fills "market" orders immediately
-// against the current mock quote (paper trading); "limit"/"atc"/"stop"
-// orders are accepted and stored as "queued" — matching against future
-// price moves is not implemented yet (see RESUME.md future work).
+// Create places an order. "market" fills immediately at the current
+// quote; limit/stop/OCO fill immediately too when they are already
+// marketable at that quote (phase-k.md decision 6), otherwise they -- and
+// every ATC order -- are stored as "queued" for the matcher (matcher.go).
 func (s *Service) Create(userID string, req createRequest) (Order, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	detail, ok := s.quotes.Detail(req.Symbol)
 	if !ok {
 		return Order{}, ErrSymbolNotFound
@@ -87,6 +99,9 @@ func (s *Service) Create(userID string, req createRequest) (Order, error) {
 	if req.Type == "oco" && (req.Price <= 0 || req.StopPrice <= 0) {
 		return Order{}, ErrOCOPrices
 	}
+	if (req.Type == "limit" || req.Type == "stop") && req.Price <= 0 {
+		return Order{}, ErrPriceRequired
+	}
 	now := time.Now()
 	o := Order{
 		PortfolioID: portfolioID,
@@ -98,18 +113,23 @@ func (s *Service) Create(userID string, req createRequest) (Order, error) {
 	}
 
 	if req.Type != "market" {
-		o.Status = "queued"
 		o.Price = req.Price
 		o.StopPrice = req.StopPrice
-		return s.store.Append(userID, o), nil
+		leg, now := triggeredNow(o, detail.LastPrice)
+		if !now || req.Type == "atc" {
+			o.Status = "queued"
+			return s.store.Append(userID, o), nil
+		}
+		o.TriggeredBy = leg
 	}
 
-	if err := s.ledger.ApplyFill(portfolioID, detail.Symbol.Symbol, req.Side, req.Quantity, detail.LastPrice); err != nil {
+	fee := round2(detail.LastPrice * req.Quantity * feeRate)
+	if err := s.ledger.ApplyFill(portfolioID, detail.Symbol.Symbol, req.Side, req.Quantity, detail.LastPrice, fee); err != nil {
 		return Order{}, err
 	}
 	o.Status = "filled"
 	o.FilledPrice = detail.LastPrice
-	o.Fee = round2(detail.LastPrice * req.Quantity * feeRate)
+	o.Fee = fee
 	o.FilledAt = formatTime(now)
 	return s.store.Append(userID, o), nil
 }
@@ -123,9 +143,9 @@ func (s *Service) List(userID string) []Order {
 }
 
 // FilledOrders satisfies portfolio.OrdersPort -- see phase-e.md item 2.
-// Only "filled" orders carry a real FilledPrice/FilledAt (queued
-// limit/atc/stop orders never fill in V1, see Create above), so those
-// are the only ones portfolio.Service's FIFO trade reconstruction needs.
+// Only "filled" orders carry a real FilledPrice/FilledAt (market orders,
+// and queued ones once the matcher fills them), so those are the only
+// ones portfolio.Service's FIFO trade reconstruction needs.
 func (s *Service) FilledOrders(userID, portfolioID string) []portfolio.OrderRecord {
 	all := s.store.List(userID)
 	out := make([]portfolio.OrderRecord, 0, len(all))
@@ -155,6 +175,8 @@ func (s *Service) Get(userID, id string) (Order, error) {
 // Cancel marks a still-queued (limit) order as cancelled. Filled market
 // orders cannot be cancelled.
 func (s *Service) Cancel(userID, id string) (Order, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	o, ok := s.store.ByID(userID, id)
 	if !ok {
 		return Order{}, ErrNotFound
@@ -163,5 +185,6 @@ func (s *Service) Cancel(userID, id string) (Order, error) {
 		return Order{}, errors.New("only queued orders can be cancelled")
 	}
 	o.Status = "cancelled"
+	delete(s.checked, o.ID) // the matcher's watermark for it (nil-map safe)
 	return s.store.Replace(userID, o), nil
 }

@@ -1,6 +1,9 @@
 package order
 
-import "sync"
+import (
+	"sort"
+	"sync"
+)
 
 // MemoryStore is an in-memory, per-user order history. No database wired
 // up for V1 yet (see RESUME.md).
@@ -53,6 +56,28 @@ func idOf(n int) string {
 		buf = []byte{'0'}
 	}
 	return "ord_" + string(buf)
+}
+
+type queuedOrder struct {
+	userID string
+	order  Order
+}
+
+// Queued lists every user's still-queued orders, oldest first -- the
+// matcher's work list.
+func (s *MemoryStore) Queued() []queuedOrder {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var out []queuedOrder
+	for uid, list := range s.byUser {
+		for _, o := range list {
+			if o.Status == "queued" {
+				out = append(out, queuedOrder{userID: uid, order: o})
+			}
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].order.CreatedAt < out[j].order.CreatedAt })
+	return out
 }
 
 // Replace overwrites the stored order with the same ID (used by Cancel to

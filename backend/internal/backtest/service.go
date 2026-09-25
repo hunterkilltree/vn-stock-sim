@@ -61,6 +61,14 @@ func (s *Service) Create(userID string, req createRequest) (Backtest, error) {
 		RuleType:           req.Rule.Type,
 		MaxDrawdownPercent: round2(result.maxDrawdownPercent),
 		ProfitFactor:       round2(result.profitFactor),
+
+		From:                   req.From,
+		To:                     req.To,
+		StartingCapital:        req.StartingCapital,
+		Params:                 req.Rule.Params,
+		BenchmarkReturnPercent: round2(result.benchmarkReturnPercent),
+		Equity:                 result.equity,
+		Trades:                 result.trades,
 	}
 	return s.store.Append(userID, bt), nil
 }
@@ -74,8 +82,15 @@ func paramOr(params map[string]int, key string, def int) int {
 	return def
 }
 
+// List returns summaries: the per-bar equity and trade list stay on the
+// single-backtest endpoints, so a long history doesn't bloat the list.
 func (s *Service) List(userID string) []Backtest {
-	return s.store.List(userID)
+	out := s.store.List(userID)
+	for i := range out {
+		out[i].Equity = nil
+		out[i].Trades = nil
+	}
+	return out
 }
 
 func (s *Service) Get(userID, id string) (Backtest, error) {

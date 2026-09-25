@@ -2,6 +2,7 @@ package order
 
 import (
 	"errors"
+	"math"
 	"testing"
 
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/portfolio"
@@ -61,8 +62,9 @@ func TestQuantityRulesAndCryptoFee(t *testing.T) {
 	if o.Quantity != 0.025 || o.Fee != 1.5 {
 		t.Fatalf("want 0.025 BTC with a 1.50 USDT fee, got %+v", o)
 	}
+	// The fee comes out of cash (phase-k.md decision 1): 10,000 − 1,500 − 1.50.
 	sum := pfs.Summary(wallet.ID)
-	if sum.CashBalance != 8500 || sum.MarketValue != 1500 {
+	if sum.CashBalance != 8498.5 || sum.MarketValue != 1500 {
 		t.Fatalf("wallet after buy: %+v", sum)
 	}
 	for _, q := range []float64{0.01, 0.015} {
@@ -72,6 +74,10 @@ func TestQuantityRulesAndCryptoFee(t *testing.T) {
 	}
 	if pos := pfs.Positions(wallet.ID); len(pos) != 0 {
 		t.Fatalf("selling 0.01 + 0.015 of 0.025 must close the position, left %+v", pos)
+	}
+	// Proceeds are net of fees too: + (600 − 0.60) + (900 − 0.90).
+	if cash := pfs.Summary(wallet.ID).CashBalance; math.Abs(cash-9997) > 1e-6 {
+		t.Fatalf("cash after selling everything: want 9997 (3 fees paid), got %v", cash)
 	}
 }
 

@@ -458,6 +458,85 @@
             },
             "description": "204 No Content, whether or not the symbol was actually on the list."
           }
+        },
+        {
+          "name": "Add to Watchlist (unknown -> 404)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/watchlist",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "watchlist"
+              ]
+            },
+            "description": "Unknown symbols are refused (Phase K; before, any string was stored).",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"symbol\": \"NOPE\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add to Watchlist (crypto pair)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/watchlist",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "watchlist"
+              ]
+            },
+            "description": "Pairs by their full name. Items carry companyName and exchange (\"CRYPTO\" for pairs).",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"symbol\": \"btcusdt\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('pair listed with its name', () => { const i = pm.response.json().data.find(x => x.symbol === 'BTCUSDT'); pm.expect(i.exchange).to.eql('CRYPTO'); pm.expect(i.companyName).to.eql('Bitcoin'); });"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -681,7 +760,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "orders"]
             },
-            "description": "price is the requested limit/stop trigger price (Phase E addition -- previously collected by the order ticket UI but never sent to or stored by the backend). type can also be \"atc\" or \"stop\" (LO/ATC/Stop from the design's order ticket) -- all three behave identically today: accepted, status \"queued\", fee 0, never actually filled (no matching engine yet). Its test script overwrites {{orderId}} with this queued order's id (not the market order's above), so the default top-to-bottom run demonstrates a real successful Cancel below rather than a 409."
+            "description": "price is the requested limit/stop trigger price (Phase E addition -- previously collected by the order ticket UI but never sent to or stored by the backend). type can also be \"atc\" or \"stop\" (LO/ATC/Stop from the design's order ticket) -- since Phase K a background matcher fills them against 5-minute bars (limit/stop when touched, ATC at the 14:45 close, OCO one leg; phase-k.md), and one already marketable at the current price fills at once. This one (20,000, far below the price) stays \"queued\", fee 0. Its test script overwrites {{orderId}} with this queued order's id (not the market order's above), so the default top-to-bottom run demonstrates a real successful Cancel below rather than a 409."
           },
           "event": [
             {
@@ -743,6 +822,85 @@
               "script": {
                 "type": "text/javascript",
                 "exec": ["pm.test('returns 404', function () { pm.response.to.have.status(404); });"]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Order (limit without price -> 400)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders"
+              ]
+            },
+            "description": "limit and stop orders need a price (Phase K).",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"portfolioId\": \"{{portfolioId}}\",\n  \"symbol\": \"{{symbol}}\",\n  \"side\": \"buy\",\n  \"type\": \"limit\",\n  \"quantity\": 100\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Order (marketable limit fills at once)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders"
+              ]
+            },
+            "description": "A buy limit at or above the current price is marketable: it fills immediately at that price, with the fee taken from cash (phase-k.md decisions 1 and 6).",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"portfolioId\": \"{{portfolioId}}\",\n  \"symbol\": \"{{symbol}}\",\n  \"side\": \"buy\",\n  \"type\": \"limit\",\n  \"quantity\": 100,\n  \"price\": 999999999\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('filled at the current price with a fee', () => { const o = pm.response.json(); pm.expect(o.status).to.eql('filled'); pm.expect(o.filledPrice).to.be.below(999999999); pm.expect(o.fee).to.be.above(0); });"
+                ]
               }
             }
           ]
@@ -831,6 +989,37 @@
             },
             "description": "Run \"Create Backtest\" first to populate {{backtestId}}."
           }
+        },
+        {
+          "name": "Get Backtest (equity, trades, benchmark)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/backtests/{{backtestId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "backtests",
+                "{{backtestId}}"
+              ]
+            },
+            "description": "The single-backtest endpoint carries per-bar equity next to buy-and-hold, the trade list, and the run inputs (Phase K /backtest page); the list endpoint leaves equity and trades out."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('equity, benchmark and inputs', () => { const b = pm.response.json(); pm.expect(b.equity.length).to.be.above(10); pm.expect(b.equity[0]).to.have.keys('time','equity','benchmark'); pm.expect(b).to.have.property('benchmarkReturnPercent'); pm.expect(b.startingCapital).to.be.above(0); });"
+                ]
+              }
+            }
+          ]
         }
       ]
     },

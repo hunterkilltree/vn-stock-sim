@@ -151,6 +151,14 @@ export default function QuantAssistantCard({ response, backtest, backtestError, 
               >
                 {runningBacktest ? "Đang kiểm thử…" : backtest ? "Kiểm thử lại" : "Mở trong Kiểm thử"}
               </button>
+              {backtest && (
+                <Link
+                  href={`/backtest?id=${encodeURIComponent(backtest.id)}`}
+                  className="flex h-10 items-center rounded-[10px] border border-app-border px-4 text-[13px] font-medium text-app-text"
+                >
+                  Xem kết quả đầy đủ
+                </Link>
+              )}
               {backtestSymbol && (
                 <Link
                   href={`/replay?symbol=${encodeURIComponent(backtestSymbol)}`}

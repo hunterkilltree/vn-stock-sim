@@ -182,10 +182,12 @@ func (s *MemoryStore) accountFor(portfolioID string) *account {
 }
 
 // ApplyFill books a filled order against a portfolio's ledger: buy debits
-// cash and grows the position at a blended average cost, sell credits
-// cash and shrinks the position. Returns the fill error (if any) without
+// cash (value + fee) and grows the position at a blended average cost,
+// sell credits cash (value − fee) and shrinks the position. The fee lives
+// in cash only -- average cost stays the pure price, as the designs show
+// it (phase-k.md decision 1). Returns the fill error (if any) without
 // mutating state, so a rejected order never partially applies.
-func (s *MemoryStore) ApplyFill(portfolioID, sym, side string, quantity float64, price float64) error {
+func (s *MemoryStore) ApplyFill(portfolioID, sym, side string, quantity, price, fee float64) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	acc := s.accountFor(portfolioID)
@@ -193,7 +195,7 @@ func (s *MemoryStore) ApplyFill(portfolioID, sym, side string, quantity float64,
 
 	switch side {
 	case "buy":
-		if acc.cash < cost {
+		if acc.cash < cost+fee {
 			return ErrInsufficientCash
 		}
 		pos, ok := acc.positions[sym]
@@ -204,7 +206,7 @@ func (s *MemoryStore) ApplyFill(portfolioID, sym, side string, quantity float64,
 		totalCost := pos.avgCost*float64(pos.quantity) + cost
 		pos.quantity += quantity
 		pos.avgCost = totalCost / float64(pos.quantity)
-		acc.cash -= cost
+		acc.cash -= cost + fee
 	case "sell":
 		pos, ok := acc.positions[sym]
 		if !ok || pos.quantity < quantity-qtyEpsilon {
@@ -214,7 +216,7 @@ func (s *MemoryStore) ApplyFill(portfolioID, sym, side string, quantity float64,
 		if pos.quantity <= qtyEpsilon {
 			delete(acc.positions, sym)
 		}
-		acc.cash += cost
+		acc.cash += cost - fee
 	}
 	return nil
 }

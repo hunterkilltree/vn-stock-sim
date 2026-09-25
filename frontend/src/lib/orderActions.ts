@@ -101,5 +101,6 @@ export async function cancelOrderAction(orderId: string): Promise<{ error: strin
   }
 
   revalidatePath("/portfolio");
+  revalidatePath("/crypto"); // crypto wallets list their orders there (phase-k.md)
   return { error: null };
 }

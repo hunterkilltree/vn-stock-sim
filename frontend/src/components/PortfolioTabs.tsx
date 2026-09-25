@@ -15,6 +15,7 @@ type Props = {
   positions: Position[];
   allocation: Allocation[];
   pendingOrders: Order[];
+  recentOrders: Order[];
   startingCapital: number;
 };
 
@@ -24,7 +25,7 @@ const TABS = ["Tổng quan", "Vị thế", "Lệnh chờ", "Sổ giao dịch"] a
 // once server-side (page.tsx) and passed down as props, tab-switching
 // happens client-side with no re-fetch/reload, matching the design's
 // instant tab switching.
-export default function PortfolioTabs({ stats, equityHistory, positions, allocation, pendingOrders, startingCapital }: Props) {
+export default function PortfolioTabs({ stats, equityHistory, positions, allocation, pendingOrders, recentOrders, startingCapital }: Props) {
   const [tab, setTab] = useState<(typeof TABS)[number]>("Tổng quan");
 
   return (
@@ -62,14 +63,14 @@ export default function PortfolioTabs({ stats, equityHistory, positions, allocat
           </div>
           <div className="flex w-full flex-col gap-[18px] lg:w-[352px] lg:shrink-0">
             <SectorAllocationCard allocation={allocation} />
-            <PendingOrdersCard orders={pendingOrders} />
+            <PendingOrdersCard orders={pendingOrders} recent={recentOrders} />
           </div>
         </div>
       )}
 
       {tab === "Vị thế" && <HoldingsTable positions={positions} totalEquity={stats.totalEquity} />}
 
-      {tab === "Lệnh chờ" && <PendingOrdersCard orders={pendingOrders} />}
+      {tab === "Lệnh chờ" && <PendingOrdersCard orders={pendingOrders} recent={recentOrders} />}
 
       {tab === "Sổ giao dịch" && (
         <div className="flex min-h-0 flex-1 flex-col gap-[18px] lg:flex-row">

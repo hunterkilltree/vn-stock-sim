@@ -1,6 +1,13 @@
 package watchlist
 
-import "github.com/hunterkilltree/vn-stock-sim/backend/internal/symbol"
+import (
+	"errors"
+	"strings"
+
+	"github.com/hunterkilltree/vn-stock-sim/backend/internal/symbol"
+)
+
+var ErrUnknownSymbol = errors.New("unknown symbol")
 
 // QuotePort is the small interface watchlist depends on for live quote
 // fields (lastPrice/change/volume) — satisfied by *symbol.Service. Kept as
@@ -19,12 +26,21 @@ func NewService(store *MemoryStore, quotes QuotePort) *Service {
 	return &Service{store: store, quotes: quotes}
 }
 
-func (s *Service) Add(userID, sym string) {
-	s.store.Add(userID, sym)
+// Add stores the canonical symbol ("fpt" -> "FPT", "btcusdt" ->
+// "BTCUSDT"; pairs by their full name, so a coin never shadows a stock
+// ticker) and refuses ones the app has no quote for -- before Phase K any
+// string was stored.
+func (s *Service) Add(userID, sym string) error {
+	d, ok := s.quotes.Detail(strings.ToUpper(strings.TrimSpace(sym)))
+	if !ok {
+		return ErrUnknownSymbol
+	}
+	s.store.Add(userID, d.Symbol.Symbol)
+	return nil
 }
 
 func (s *Service) Remove(userID, sym string) {
-	s.store.Remove(userID, sym)
+	s.store.Remove(userID, strings.ToUpper(sym))
 }
 
 func (s *Service) List(userID string) []Item {
@@ -36,6 +52,8 @@ func (s *Service) List(userID string) []Item {
 			item.LastPrice = d.LastPrice
 			item.Change = d.Change
 			item.ChangePercent = d.ChangePercent
+			item.CompanyName = d.CompanyName
+			item.Exchange = d.Exchange
 		}
 		items = append(items, item)
 	}
