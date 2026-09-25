@@ -25,7 +25,7 @@ type MarketPort interface {
 
 // Service generates a deterministic, rule-based "insight" from data the
 // backend already has (price/fundamentals + bars + SMA) -- not an LLM
-// call. See types.go's Insight.Source and RESUME.md for why: a real
+// call. See types.go's Insight.Source and phase-0-mvp.md for why: a real
 // model needs an API key and has a real per-call cost, which is a
 // decision for the user to make explicitly, not something to wire up
 // silently. The rules here are intentionally simple and inspectable.

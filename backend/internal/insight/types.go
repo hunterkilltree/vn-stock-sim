@@ -11,7 +11,7 @@ type Signal struct {
 }
 
 // Insight is deliberately not called "AIInsight" in the API: Source makes
-// explicit that this is rule-based today, not an LLM call (see RESUME.md
+// explicit that this is rule-based today, not an LLM call (see phase-0-mvp.md
 // -- that needs an API key and real per-call cost, a decision left to the
 // user, not assumed here). A future real integration would keep this same
 // shape and just set Source to "llm".

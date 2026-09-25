@@ -87,7 +87,7 @@ func ema(bars []Bar, period int) []IndicatorPoint {
 // callers (symbol.Service, for its quote fields) can derive a live
 // last price/change instead of carrying a separately-seeded static
 // value that can drift arbitrarily far from what the chart actually
-// shows -- see RESUME.md for the bug this fixes. ok is false if fewer
+// shows -- see phase-0-mvp.md for the bug this fixes. ok is false if fewer
 // than two bars are available.
 func (s *Service) LatestClose(sym string) (today, yesterday float64, ok bool) {
 	to := time.Now().Unix()

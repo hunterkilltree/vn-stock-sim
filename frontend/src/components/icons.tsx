@@ -1,8 +1,9 @@
 // Small inline SVG icon set for the dark app shell (SidebarNav/RailNav).
 // No icon package added -- package.json intentionally has no icon
 // dependency yet, matching this repo's existing habit of avoiding extra
-// dependencies where a few hand-rolled SVGs do the job (see RESUME.md's
-// note on hand-rolled auth tokens instead of a JWT library).
+// dependencies where a few hand-rolled SVGs do the job (see
+// phase-0-mvp.md's note on hand-rolled auth tokens instead of a JWT
+// library).
 import type { SVGProps } from "react";
 
 type IconProps = SVGProps<SVGSVGElement>;

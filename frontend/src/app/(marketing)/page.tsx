@@ -23,7 +23,7 @@ function formatUTCDate(unixSeconds: number): string {
 // Hero layout follows luxalgo.com (badge + bold headline + subtext + two
 // pill CTAs, then a dark card showing a live chart as the product
 // preview) -- fetched with the browser pane and inspected before writing
-// this, see RESUME.md. Unlike their static marketing graphic, this one is
+// this, see phase-0-mvp.md. Unlike their static marketing graphic, this one is
 // a real chart backed by our own mock VNM data, reusing the same
 // StockChart component the stock detail page uses (theme="dark" for the
 // dark-card treatment).

@@ -42,7 +42,7 @@ function formatDateVN(iso: string): string {
 // container's TZ (UTC in this repo's Docker image), which would render
 // e.g. "07:45" and label it as if it were the VN session's "14:45" --
 // wrong by exactly the UTC+7 offset. This is the same class of bug as
-// the 2026-09-21 stock-price/chart UTC-freshness fix (see RESUME.md):
+// the 2026-09-21 stock-price/chart UTC-freshness fix (see phase-0-mvp.md):
 // a real timestamp rendered against the wrong reference, not a design
 // choice.
 const VN_TIME_ZONE = "Asia/Ho_Chi_Minh";

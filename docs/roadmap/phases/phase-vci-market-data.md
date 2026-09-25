@@ -173,3 +173,139 @@ for from the dependency-inversion shape.
 6. Full Docker rebuild + curl, matching this repo's standing habit.
 7. Record the outcome in RESUME.md, replacing the top-of-file priority
    note with what was actually built and verified.
+
+## Background: why VCI, not TradingView's data API
+
+The user's first instruction here was to use "provider tradingview api as already plan." Researched before writing any code (not guessed):
+
+The user's explicit instruction: **"next time we take data from provider
+tradingview api as already plan"**, clarified in-session to mean option
+(2) below -- they want TradingView itself to be the actual source of
+market data, not just the charting widget. Researched via WebSearch/
+WebFetch in this session (not guessed); findings below.
+
+**Research findings (2026-09-23):**
+
+- TradingView does not sell a self-serve "market data API" the way a
+  licensed data vendor (SSI, VNDIRECT, TCBS, etc.) does. Their three
+  real developer surfaces are: the Charting Library (free, self-hosted
+  chart widget -- you supply the data), the Datafeed API (the spec for
+  piping data INTO that widget from your own source), and the Broker
+  REST API (for brokerages applying to let TradingView's own users trade
+  through them -- not a way to pull data out).
+- TradingView's own platform DOES cover Vietnamese exchanges -- HOSE and
+  HNX (which UPCoM listings fall under) are both listed on
+  https://www.tradingview.com/data-coverage/. So the data exists on
+  their platform; the question is only whether/how it can be licensed
+  out to a third-party app like this one.
+- That page has no self-serve licensing/API-access flow for third-party
+  applications -- it only shows individual-user subscription tiers
+  (delayed / non-professional real-time / professional real-time). The
+  only stated path is **contacting TradingView's sales/partnerships team
+  directly** -- a business conversation the user has to initiate, with
+  unknown pricing/terms, not something this session can request or
+  estimate.
+- Search results also surfaced third-party services (e.g. a site
+  branded "TradingView Data API" with $0-$80/mo tiers, and an
+  unofficial GitHub scraper hitting TradingView's undocumented internal
+  endpoints) claiming to resell/scrape TradingView's data. **These are
+  explicitly out of scope for this project** -- api-spec.md already
+  rules out scraped data, and neither is an official, licensed
+  TradingView product.
+
+**Bottom line at the time this was written: there was no code to write
+yet** -- the only real next action was the user contacting TradingView's
+sales/partnerships team. Separately, still true and unresolved: the
+self-hosted Charting Library (the UI-only path from charting-library-
+integration.md, distinct from this data-source question) still needs
+TradingView's GitHub-gated access approval, which the user has not
+requested.
+
+**Resolved below, same day:** rather than wait on that business
+conversation, the user redirected to a different, real, free-to-access
+Vietnamese data source found via further research (VCI). See the next
+entry.
+
+**Resolved same day**: rather than wait on that business conversation, the user redirected to VCI (the decisions below).
+
+## Verification (done)
+
+Resolution of the TradingView note above -- the user chose not to wait
+on TradingView's sales/partnerships process and redirected to a
+different real data source instead.
+
+**User's explicit decision**, verbatim: "go with this way" (accepting
+the unofficial/undocumented-endpoint category `api-spec.md` otherwise
+rules out -- an informed, deliberate override, not something this
+session decided unilaterally) "... the module is 'Inversion Principle'
+mean work as adapt easy to change later." Full research trail and every
+decision is in phase-vci-market-data.md; this entry is the outcome.
+
+`market.MarketDataProvider` now has a real, live adapter --
+`VCIProvider` (backend/internal/market/vciprovider.go) -- against
+Vietcap Securities (VCI)'s own trading-platform API
+(`https://trading.vietcap.com.vn/api/chart/OHLCChart/gap-chart`, POST,
+no API key -- the same endpoint their own web app calls, not an
+officially published third-party developer API; `vnstock`'s own README
+says as much: "licenses the software, not the source data"). Request/
+response shape was verified with real `curl` calls before writing any
+Go code, not assumed from reading the (cloned, inspected) `vnstock`
+Python source.
+
+Because every price-dependent feature in this backend already reads
+through the single `MarketDataProvider` port (CLAUDE.md's dependency-
+inversion rule, applied consistently since the backend was first
+scaffolded), swapping this one adapter made all of the following real
+simultaneously, with zero changes to `symbol`, `screener`, `backtest`,
+or any handler: `symbol.Detail`'s live price/change/reference/ceiling/
+floor, `screener`'s heatmap/movers, `market.GetIndicator`'s SMA/EMA (and
+RSI on the separate Phase D branch), backtests, and `market.GetIndex`
+(VN-Index/VN30/HNX-Index/UPCOM-Index, swapped explicitly). The **order
+book stays synthetic** (VCI's real depth data wasn't confirmed in this
+research pass -- flagged, not silently inconsistent) and **symbol
+static fundamentals stay hand-seeded mock** (company name, sector,
+marketCap, P/E, P/B, ROE, EPS, dividendYield -- a separate adapter swap,
+out of scope here).
+
+Built as a decorator, not a bare swap, per the user's explicit
+Inversion-Principle instruction: `LiveProvider`
+(backend/internal/market/liveprovider.go) tries `VCIProvider` first,
+falls back per-call to the existing `MockProvider` on any error or empty
+result (a real risk for an undocumented upstream that owes this app
+nothing), and caches successful results for 5 seconds both for
+performance and so this app isn't hammering someone else's unofficial
+endpoint on every page load. `LiveProvider` is itself just another
+`MarketDataProvider`, so `main.go` still wires exactly one implementation
+into `market.NewService` -- swapping to a licensed vendor later (e.g.
+SSI FastConnect, already researched as a real, likely-free alternative
+if the user follows up on that registration) means writing one new file
+and changing one line in `main.go`, not touching callers.
+
+Config: `MARKET_DATA_SOURCE` env var (`config.Config.MarketDataSource`),
+default `"vci"` (the user asked for this live now, not opt-in-later);
+`"mock"` still available (e.g. for a fully offline demo) by construction
+of the port. `docker-compose.yml` sets it explicitly to `vci`.
+
+Verified, not just written:
+
+- `go build ./... && go vet ./...` clean (Docker, no local Go).
+- Curled the real backend's `GET /market/bars?symbol=FPT` and
+  `GET /market/indices` directly and confirmed real, current values
+  (FPT closing at 66,600 VND on 2026-09-22, VN-Index at 1,816.93) --
+  matching independently-verified direct calls to VCI's own endpoint.
+- **Actually exercised the fallback path**, not just read the code:
+  temporarily pointed `VCIProvider`'s base URL at an unreachable host,
+  rebuilt the Docker image, confirmed `GET /market/bars` still returned
+  a full, valid response (11 bars, FPT closing at 51,751.75 -- the
+  exact known mock-generator value, confirming this really was the
+  fallback and not a coincidence) with a clear "falling back to mock
+  data" log line instead of an error or empty response. Reverted,
+  rebuilt again, confirmed real data returned once more.
+- Browser-pane check at 1440x960 on `/stocks`: all four index cards,
+  the sector heatmap, and both movers tables show real, current VCI
+  data (VN-Index 1.816,93, VN30 1.965,36, HNX-Index 276,93, UPCOM-Index
+  126,56, real per-symbol change percentages and prices) -- confirming
+  the dependency-inversion payoff described above actually happened in
+  the running app, not just in theory.
+- Full Docker image rebuild (both services) + curl: all 6 routes return
+  HTTP 200, real VN-Index value present in the served `/stocks` HTML.
