@@ -1,6 +1,7 @@
 package watchlist
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -32,7 +33,10 @@ func addHandler(svc *Service) gin.HandlerFunc {
 			return
 		}
 		userID := c.GetString(middleware.ContextUserIDKey)
-		svc.Add(userID, req.Symbol)
+		if err := svc.Add(userID, req.Symbol); errors.Is(err, ErrUnknownSymbol) {
+			httpx.Error(c, http.StatusNotFound, "not_found", "symbol not found")
+			return
+		}
 		c.JSON(http.StatusOK, gin.H{"data": svc.List(userID)})
 	}
 }

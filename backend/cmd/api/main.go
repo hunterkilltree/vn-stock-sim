@@ -5,6 +5,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"time"
 
@@ -65,7 +66,9 @@ func main() {
 	quotes := crypto.QuoteRouter{Crypto: cryptoSvc, Stock: symbolSvc}
 
 	authSvc := auth.NewService(auth.NewMemoryStore(), tokens)
-	watchlistSvc := watchlist.NewService(watchlist.NewMemoryStore(), symbolSvc)
+	// quotes (not symbolSvc) so a watchlist can hold crypto pairs too
+	// (phase-k.md decision 11).
+	watchlistSvc := watchlist.NewService(watchlist.NewMemoryStore(), quotes)
 	portfolioStore := portfolio.NewMemoryStore()
 	portfolioSvc := portfolio.NewService(portfolioStore, quotes)
 	// orderStore is a named variable (not inlined) because Phase F's
@@ -80,6 +83,10 @@ func main() {
 	// needs order history) after both services exist, avoiding an import
 	// cycle -- see portfolio/types.go's OrdersPort comment.
 	portfolioSvc.SetOrdersPort(orderSvc)
+	// Queued limit/stop/ATC/OCO orders are matched against 5-minute bars
+	// in the background (phase-k.md decisions 4-10).
+	orderSvc.EnableMatching(crypto.BarsRouter{Crypto: cryptoSvc, Stock: marketSvc})
+	go orderSvc.RunMatcher(context.Background(), cfg.OrderMatchInterval)
 	backtestSvc := backtest.NewService(backtest.NewMemoryStore(), marketSvc)
 	insightSvc := insight.NewService(symbolSvc, marketSvc)
 	screenerSvc := screener.NewService(symbolSvc, marketSvc)

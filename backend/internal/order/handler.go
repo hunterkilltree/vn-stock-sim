@@ -43,7 +43,7 @@ func createHandler(svc *Service) gin.HandlerFunc {
 				httpx.Error(c, http.StatusNotFound, "portfolio_not_found", "portfolio not found")
 			case errors.Is(err, ErrWrongMarket):
 				httpx.Error(c, http.StatusConflict, "wrong_market", err.Error())
-			case errors.Is(err, ErrInvalidQuantity), errors.Is(err, ErrOCOPrices):
+			case errors.Is(err, ErrInvalidQuantity), errors.Is(err, ErrOCOPrices), errors.Is(err, ErrPriceRequired):
 				httpx.ValidationError(c, err.Error(), nil)
 			case errors.Is(err, ErrReplayPortfolio):
 				httpx.Error(c, http.StatusConflict, "replay_portfolio", err.Error())

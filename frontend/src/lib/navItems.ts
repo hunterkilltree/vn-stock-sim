@@ -56,7 +56,7 @@ export const navItems: NavItem[] = [
     href: "/backtest",
     label: "Kiểm thử lịch sử",
     d: "M12 21a9 9 0 100-18 9 9 0 000 18zM12 7.5V12l3 2",
-    kind: "will",
+    kind: "built", // Phase K (phase-k.md decision 14)
   },
   {
     href: "/portfolio",

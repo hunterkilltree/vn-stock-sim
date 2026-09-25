@@ -236,6 +236,26 @@ func round2(v float64) float64 {
 	return math.Round(v*100) / 100
 }
 
+// StockBars is the stock market service's GetBars.
+type StockBars interface {
+	GetBars(sym, resolution string, from, to int64) []market.Bar
+}
+
+// BarsRouter gives the order matcher 5-minute bars for either market:
+// pairs from this service, tickers from the stock market service
+// (phase-k.md decision 4).
+type BarsRouter struct {
+	Crypto *Service
+	Stock  StockBars
+}
+
+func (r BarsRouter) IntradayBars(sym string, from, to int64) []market.Bar {
+	if IsPair(sym) {
+		return r.Crypto.GetBars(sym, "5", from, to)
+	}
+	return r.Stock.GetBars(sym, "5", from, to)
+}
+
 // StockQuotes is the stock symbol service's Detail.
 type StockQuotes interface {
 	Detail(sym string) (symbol.Detail, bool)

@@ -1,7 +1,10 @@
 // Package config reads process environment into a typed Config for main.go.
 package config
 
-import "os"
+import (
+	"os"
+	"time"
+)
 
 type Config struct {
 	Port      string
@@ -17,6 +20,10 @@ type Config struct {
 	// machine). Off by default: on a shared server it would let any user
 	// make the backend call internal services -- see phase-h.md decision 11.
 	QuantAllowPrivateEndpoints bool
+	// OrderMatchInterval is how often queued limit/stop/ATC/OCO orders
+	// are checked against new bars (ORDER_MATCH_INTERVAL, default 20s --
+	// phase-k.md decision 9).
+	OrderMatchInterval time.Duration
 }
 
 func Load() Config {
@@ -26,7 +33,15 @@ func Load() Config {
 		MarketDataSource: getenv("MARKET_DATA_SOURCE", "vci"),
 
 		QuantAllowPrivateEndpoints: os.Getenv("QUANT_ALLOW_PRIVATE_ENDPOINTS") == "true",
+		OrderMatchInterval:         getDuration("ORDER_MATCH_INTERVAL", 20*time.Second),
 	}
+}
+
+func getDuration(key string, fallback time.Duration) time.Duration {
+	if d, err := time.ParseDuration(os.Getenv(key)); err == nil && d > 0 {
+		return d
+	}
+	return fallback
 }
 
 func getenv(key, fallback string) string {

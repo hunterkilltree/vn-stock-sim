@@ -7,6 +7,7 @@ import CryptoMoversTable from "@/components/CryptoMoversTable";
 import CryptoSearch from "@/components/CryptoSearch";
 import OpenCryptoWalletButton from "@/components/OpenCryptoWalletButton";
 import WillBadge from "@/components/WillBadge";
+import PendingOrdersCard from "@/components/PendingOrdersCard";
 import MarketSwitch from "@/components/MarketSwitch";
 import { MobileChips, MobileHero, MobileMoverList, MobileSectionHead, MobileTileGrid } from "@/components/MobileMarket";
 import {
@@ -14,10 +15,13 @@ import {
   getCryptoMovers,
   getCryptoOverview,
   getCryptoPairs,
+  getOrders,
   getPortfolioPositionsByID,
   getPortfolioSummaryByID,
+  recentlyProcessed,
   type CryptoOverview,
   type CryptoPairQuote,
+  type Order,
   type Portfolio,
   type PortfolioSummary,
   type Position,
@@ -59,16 +63,24 @@ export default async function CryptoMainPage() {
   let wallet: Portfolio | null = null;
   let summary: PortfolioSummary | null = null;
   let positions: Position[] = [];
+  let pending: Order[] = [];
+  let recent: Order[] = [];
   if (user) {
     try {
       const token = await getSessionToken();
       if (token) {
         wallet = (await getActivePortfolio(token, "crypto")).active;
         if (wallet) {
-          [summary, positions] = await Promise.all([
+          const [s, p, orders] = await Promise.all([
             getPortfolioSummaryByID(wallet.id, token),
             getPortfolioPositionsByID(wallet.id, token).then((r) => r.data),
+            getOrders(token).then((r) => r.data),
           ]);
+          summary = s;
+          positions = p;
+          // Limit/stop/OCO orders are matched in the background (phase-k.md).
+          pending = orders.filter((o) => o.status === "queued" && o.portfolioId === wallet!.id);
+          recent = recentlyProcessed(orders, wallet.id);
         }
       }
     } catch {
@@ -297,6 +309,7 @@ export default async function CryptoMainPage() {
                     </table>
                   )}
                 </section>
+                {(pending.length > 0 || recent.length > 0) && <PendingOrdersCard orders={pending} recent={recent} market="crypto" />}
               </>
             )}
 

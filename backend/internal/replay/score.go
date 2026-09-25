@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/market"
+	"github.com/hunterkilltree/vn-stock-sim/backend/internal/order"
 )
 
 // computeSkillScore is the heuristic from phase-f.md section 7 -- never
@@ -59,6 +60,15 @@ func computeSkillScore(sess *Session) SkillScore {
 // run over historical data (cash +/- fill notional, mark the remaining
 // position to the *replay's own* current close), applied bar-by-bar so
 // max drawdown can be computed too.
+// sessionFeeRate is the fee every Replay fill pays: the market's paper
+// trading rate (phase-k.md decision 3).
+func sessionFeeRate(sess *Session) float64 {
+	if sess.Market == "crypto" {
+		return order.CryptoFeeRate
+	}
+	return order.FeeRate
+}
+
 func replayAccounting(sess *Session) (nav, pnlPercent, maxDrawdownPercent float64) {
 	fillsByBar := make(map[int][]Fill)
 	for _, f := range sess.Fills {
@@ -73,6 +83,9 @@ func replayAccounting(sess *Session) (nav, pnlPercent, maxDrawdownPercent float6
 	for i := 0; i < sess.CurrentBar; i++ {
 		for _, f := range fillsByBar[i] {
 			notional := f.Price * float64(f.Quantity)
+			// Same fee the portfolio ledger charged (fill() above), so the
+			// session NAV and the replay portfolio agree.
+			cash -= round2(notional * sessionFeeRate(sess))
 			if f.Side == "buy" {
 				cash -= notional
 				qty += f.Quantity

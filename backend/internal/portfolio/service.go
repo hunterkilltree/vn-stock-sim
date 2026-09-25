@@ -40,8 +40,8 @@ func (s *Service) SetOrdersPort(orders OrdersPort) {
 // (instead of the bare store), so every fill grows the equity-history
 // series Stats' max-drawdown and the equity-curve chart both read (see
 // phase-e.md item 1).
-func (s *Service) ApplyFill(portfolioID, sym, side string, quantity float64, price float64) error {
-	if err := s.store.ApplyFill(portfolioID, sym, side, quantity, price); err != nil {
+func (s *Service) ApplyFill(portfolioID, sym, side string, quantity, price, fee float64) error {
+	if err := s.store.ApplyFill(portfolioID, sym, side, quantity, price, fee); err != nil {
 		return err
 	}
 	s.store.AppendEquitySnapshot(portfolioID, s.Summary(portfolioID).TotalEquity)

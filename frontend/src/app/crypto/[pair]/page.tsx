@@ -7,12 +7,14 @@ import CryptoOrderTicket from "@/components/CryptoOrderTicket";
 import CryptoOrderBook from "@/components/CryptoOrderBook";
 import CompactChart from "@/components/CompactChart";
 import MobileActionBar from "@/components/MobileActionBar";
+import WatchlistButton from "@/components/WatchlistButton";
 import {
   getCryptoBars,
   getCryptoOrderBook,
   getCryptoPair,
   getPortfolioPositionsByID,
   getPortfolioSummaryByID,
+  getWatchlist,
   type Bar,
   type CryptoInterval,
   type CryptoPairDetail,
@@ -99,12 +101,14 @@ export default async function CryptoDetailPage({ params, searchParams }: Props) 
   let usdtBalance: number | null | undefined = null;
   let positionQty = 0;
   let walletName: string | null = null;
+  let watched = false;
   const user = await getSessionUser();
   if (user) {
     usdtBalance = undefined;
     try {
       const token = await getSessionToken();
       if (token) {
+        watched = (await getWatchlist(token)).data.some((w) => w.symbol === detail.symbol);
         const { active } = await getActivePortfolio(token, "crypto");
         if (active) {
           walletName = active.name;
@@ -169,6 +173,7 @@ export default async function CryptoDetailPage({ params, searchParams }: Props) 
               {detail.name} · {live ? "Binance" : "dữ liệu mô phỏng"}
             </span>
           </div>
+          <WatchlistButton symbol={detail.symbol} watched={watched} signedIn={!!user} />
           <AccountMenuButton placement="below" />
         </header>
         <div className="flex items-end justify-between gap-3 lg:hidden">
@@ -222,7 +227,8 @@ export default async function CryptoDetailPage({ params, searchParams }: Props) 
             </div>
           </div>
           <div className="flex items-center gap-[10px]">
-            <span className="box-border flex h-11 items-center gap-[7px] rounded-[11px] border border-app-border bg-app-surface px-[13px] text-xs text-app-text-3">
+            <WatchlistButton symbol={detail.symbol} watched={watched} signedIn={!!user} />
+            <span className="box-border flex h-11 items-center gap-[7px] whitespace-nowrap rounded-[11px] border border-app-border bg-app-surface px-[13px] text-xs text-app-text-3">
               <span className="h-[7px] w-[7px] rounded-full bg-price-up" />
               Thị trường mở 24/7
             </span>
@@ -262,11 +268,11 @@ export default async function CryptoDetailPage({ params, searchParams }: Props) 
                   );
                 })}
               </nav>
-              <div className="hidden items-center gap-2 lg:flex">
+              <div className="hidden items-center gap-2 xl:flex">
                 {INDICATOR_CHIPS.map((c) => (
                   <span
                     key={c.label}
-                    className="flex h-7 items-center gap-[7px] rounded-lg border border-app-border bg-app-surface-2 px-[11px] text-[11.5px] text-app-text-2"
+                    className="flex h-7 items-center gap-[7px] whitespace-nowrap rounded-lg border border-app-border bg-app-surface-2 px-[11px] text-[11.5px] text-app-text-2"
                   >
                     <span className="h-2 w-2 rounded-[2px]" style={{ background: c.color }} />
                     {c.label}

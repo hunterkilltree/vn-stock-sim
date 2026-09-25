@@ -589,6 +589,13 @@ C to I, not new backend surface. This phase is Tailwind breakpoint work.
 
 ## 13. Phase K — Stretch: the "WILL"-badged items
 
+> **Re-scoped (2026-09-25):** checking master after Phase J showed four V1
+> gaps still open (orders never filling, fees not charged, no watchlist
+> UI, no backtest page). Phase K closed those instead; see
+> `phases/phase-k.md`. The stretch list below moves to **Phase L**; its
+> item 2 (standalone heatmap) was done in Phase I and item 5 (backtesting
+> UI) in Phase K.
+
 Everything the canvas itself marks as planned-but-not-drawn. No screen
 exists yet for any of these in the design artifact, so building them
 means designing the screen first (or asking for a canvas update), not

@@ -29,7 +29,7 @@ type BarsPort interface {
 // why it is created as a "replay"-kind portfolio live orders can't reach.
 type PortfolioPort interface {
 	CreateReplayPortfolio(userID, name, market string, startingCapital float64) portfolio.Portfolio
-	ApplyFill(portfolioID, sym, side string, quantity float64, price float64) error
+	ApplyFill(portfolioID, sym, side string, quantity, price, fee float64) error
 	Positions(portfolioID string) []portfolio.Position
 	Stats(portfolioID string, startingCapital float64) portfolio.Stats
 }
@@ -232,16 +232,12 @@ func (s *Service) fill(sess *Session, side string, quantity float64, price float
 		}
 	}
 
-	if err := s.portfolios.ApplyFill(sess.PortfolioID, sess.Symbol, side, quantity, price); err != nil {
+	fee := round2(price * quantity * sessionFeeRate(sess))
+	if err := s.portfolios.ApplyFill(sess.PortfolioID, sess.Symbol, side, quantity, price, fee); err != nil {
 		return err
 	}
 
 	barDate := time.Unix(sess.Bars[sess.CurrentBar-1].Time, 0).UTC().Format("2006-01-02T15:04:05Z")
-	feeRate := order.FeeRate
-	if sess.Market == "crypto" {
-		feeRate = order.CryptoFeeRate
-	}
-	fee := round2(price * quantity * feeRate)
 	s.orders.Append(sess.UserID, order.Order{
 		PortfolioID: sess.PortfolioID,
 		Symbol:      sess.Symbol,

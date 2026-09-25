@@ -301,14 +301,28 @@ export type Order = {
   side: "buy" | "sell";
   type: "market" | "limit" | "atc" | "stop" | "oco";
   quantity: number;
-  status: "filled" | "queued" | "cancelled";
+  status: "filled" | "queued" | "cancelled" | "rejected";
   price?: number;
   stopPrice?: number;
   filledPrice?: number;
   fee: number;
   filledAt?: string;
   createdAt: string;
+  // Phase K matcher: which OCO leg filled, and why a triggered order
+  // couldn't be booked (status "rejected").
+  triggeredBy?: "limit" | "stop";
+  rejectReason?: string;
 };
+
+// The latest limit/stop/ATC/OCO orders the matcher has finished with
+// (filled, rejected) or the user cancelled -- the pending card's "Vừa xử
+// lý" list (phase-k.md decision 15).
+export function recentlyProcessed(orders: Order[], portfolioId: string, limit = 5): Order[] {
+  return orders
+    .filter((o) => o.portfolioId === portfolioId && o.type !== "market" && o.status !== "queued")
+    .sort((a, b) => (b.filledAt ?? b.createdAt).localeCompare(a.filledAt ?? a.createdAt))
+    .slice(0, limit);
+}
 
 export function getOrders(token: string): Promise<{ data: Order[] }> {
   return apiFetch<{ data: Order[] }>("/api/v1/orders", { token });
@@ -448,4 +462,54 @@ export function getCryptoOrderBook(pair: string, levels = 4): Promise<{ data: { 
   return apiFetch<{ data: { bids: DepthLevel[]; asks: DepthLevel[]; source: string } }>(
     `/api/v1/crypto/orderbook?pair=${encodeURIComponent(pair)}&levels=${levels}`,
   );
+}
+
+// -- Phase K: watchlist (backend/internal/watchlist) --
+
+export type WatchlistItem = {
+  symbol: string; // "FPT" or a pair, "BTCUSDT"
+  addedAt: string;
+  companyName: string;
+  exchange: string; // "HOSE" | "HNX" | "UPCOM" | "CRYPTO"
+  lastPrice: number;
+  change: number;
+  changePercent: number;
+};
+
+export function getWatchlist(token: string): Promise<{ data: WatchlistItem[] }> {
+  return apiFetch<{ data: WatchlistItem[] }>("/api/v1/watchlist", { token });
+}
+
+// -- Phase K: backtest page (backend/internal/backtest) --
+
+export type BacktestRule = "ema_crossover" | "rsi_reversion";
+
+export type BacktestRun = {
+  id: string;
+  symbol: string;
+  status: string;
+  createdAt: string;
+  ruleType: BacktestRule;
+  params: Record<string, number>;
+  from: string; // "2023-09-25"
+  to: string;
+  startingCapital: number;
+  finalCapital: number;
+  returnPercent: number;
+  benchmarkReturnPercent: number;
+  totalTrades: number;
+  winRate: number;
+  maxDrawdownPercent: number;
+  profitFactor: number;
+  // Only on the single-backtest endpoint.
+  equity?: { time: number; equity: number; benchmark: number }[];
+  trades?: { entryTime: number; entryPrice: number; exitTime: number; exitPrice: number; returnPercent: number; open?: boolean }[];
+};
+
+export function getBacktests(token: string): Promise<{ data: BacktestRun[] }> {
+  return apiFetch<{ data: BacktestRun[] }>("/api/v1/backtests", { token });
+}
+
+export function getBacktest(id: string, token: string): Promise<BacktestRun> {
+  return apiFetch<BacktestRun>(`/api/v1/backtests/${encodeURIComponent(id)}`, { token });
 }

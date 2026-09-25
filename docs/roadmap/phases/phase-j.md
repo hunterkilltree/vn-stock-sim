@@ -184,6 +184,6 @@ All on the production build (`next start`) with the backend on mock data
 
 - A real device check (iOS Safari safe areas, Android Chrome). Only
   Chromium mobile emulation was available here.
-- Voice input, and the design's watchlist button on Detail (see
-  decisions 6 and 10).
+- Voice input (decision 10). The design's watchlist button on Detail was
+  built in Phase K (phase-k.md decision 12).
 

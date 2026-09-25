@@ -8,6 +8,7 @@ import {
   getAllocation,
   getPortfolioStats,
   getOrders,
+  recentlyProcessed,
   type Portfolio,
   type PortfolioSummary,
   type Position,
@@ -38,6 +39,7 @@ export default async function PortfolioPage() {
   let allocation: Allocation[] = [];
   let stats: PortfolioStats | null = null;
   let pendingOrders: Order[] = [];
+  let recentOrders: Order[] = [];
   let error: string | null = null;
 
   if (token) {
@@ -58,6 +60,7 @@ export default async function PortfolioPage() {
         allocation = allocRes.data;
         stats = statsRes;
         pendingOrders = ordersRes.data.filter((o) => o.status === "queued" && o.portfolioId === portfolio!.id);
+        recentOrders = recentlyProcessed(ordersRes.data, portfolio.id);
       }
     } catch (e) {
       error = e instanceof Error ? e.message : "Failed to load portfolio data";
@@ -131,6 +134,7 @@ export default async function PortfolioPage() {
             positions={positions}
             allocation={allocation}
             pendingOrders={pendingOrders}
+            recentOrders={recentOrders}
             startingCapital={portfolio.startingCapital}
           />
         )}
