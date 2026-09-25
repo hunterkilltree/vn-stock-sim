@@ -5,11 +5,11 @@ import "github.com/hunterkilltree/vn-stock-sim/backend/internal/authtoken"
 // Service holds auth business rules. It depends only on the store and the
 // token issuer — no HTTP concerns leak in here (those stay in handler.go).
 type Service struct {
-	store  *MemoryStore
+	store  Store
 	tokens *authtoken.Issuer
 }
 
-func NewService(store *MemoryStore, tokens *authtoken.Issuer) *Service {
+func NewService(store Store, tokens *authtoken.Issuer) *Service {
 	return &Service{store: store, tokens: tokens}
 }
 

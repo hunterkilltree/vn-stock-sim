@@ -13,8 +13,16 @@ type entry struct {
 	addedAt time.Time
 }
 
-// MemoryStore is an in-memory per-user watchlist. Same rationale as
-// auth.MemoryStore: no database wired up for V1 yet.
+// Store is the watchlist port: MemoryStore or PGStore
+// (phase-persistence.md decision 3).
+type Store interface {
+	Add(userID, symbol string)
+	Remove(userID, symbol string)
+	List(userID string) []entry
+}
+
+// MemoryStore is an in-memory per-user watchlist, used when DATABASE_URL
+// is unset (PGStore otherwise).
 type MemoryStore struct {
 	mu    sync.RWMutex
 	byUse map[string][]entry

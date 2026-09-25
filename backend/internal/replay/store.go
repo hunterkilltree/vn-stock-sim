@@ -2,9 +2,19 @@ package replay
 
 import "sync"
 
+// Store is the Replay session port: MemoryStore or PGStore
+// (phase-persistence.md decision 3). Save persists a session the service
+// changed; MemoryStore's is a no-op, since it hands out the stored pointer.
+type Store interface {
+	nextSessionID() string
+	Append(userID string, sess *Session)
+	Get(userID, id string) (*Session, bool)
+	Save(sess *Session)
+}
+
 // MemoryStore is an in-memory, per-user Replay session store -- same
-// pattern as every other V1 feature (order, backtest). No database wired
-// up for V1 yet (see RESUME.md).
+// pattern as every other feature (order, backtest). Used when
+// DATABASE_URL is unset; PGStore otherwise (phase-persistence.md).
 type MemoryStore struct {
 	mu     sync.Mutex
 	byUser map[string][]*Session
@@ -40,6 +50,9 @@ func (s *MemoryStore) Append(userID string, sess *Session) {
 	defer s.mu.Unlock()
 	s.byUser[userID] = append(s.byUser[userID], sess)
 }
+
+// Save is a no-op: Get returns the stored pointer itself.
+func (s *MemoryStore) Save(*Session) {}
 
 // Get returns the session only if it belongs to userID, so callers can't
 // act on another user's session by guessing an id.

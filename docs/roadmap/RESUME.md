@@ -8,7 +8,7 @@ api-spec.md, charting-library-integration.md) for the full spec. See
 RUNNING.md to run backend + frontend locally with hot reload, or
 DOCKER.md for a one-command demo.
 
-Last updated: 2026-09-25.
+Last updated: 2026-09-25 (Persistence).
 
 **Docs reorganized (2026-09-24, branch `docs-structure`):** every Markdown
 file moved out of the repo root into `docs/{product,architecture,guides,roadmap,roadmap/phases}/`,
@@ -1484,27 +1484,63 @@ Verified:
 Still open (documented): queued buys don't reserve cash; backtests ignore
 fees.
 
+**Persistence (Postgres) -- branch `phase-persistence`, from master
+`13a78db`, 2026-09-25.** Plan, decisions and verification:
+phase-persistence.md.
+
+- Set `DATABASE_URL` and all user data is stored in Postgres through pgx
+  v5 (the backend migrates the schema on startup):
+  - accounts;
+  - portfolios with cash, positions and the equity history;
+  - orders, including queued ones the matcher resumes after a restart;
+  - watchlists;
+  - backtests (JSONB body);
+  - Replay sessions (JSONB).
+- Unset, the in-memory stores work exactly as before.
+- Each feature now depends on its own `Store` interface, with a
+  `MemoryStore` and a `PGStore` adapter. `main.go` picks one.
+- Fills are one transaction with row locks.
+- Replay saves the session after every change.
+- IDs and JSON shapes are unchanged.
+- `GET /healthz` reports `db: ok | down | off`.
+- `docker-compose.yml` adds `postgres:16-alpine` with a `pgdata` volume.
+
+Verified against a local Postgres 16:
+- Contract tests run on both stores, including 20 concurrent buys where
+  exactly the affordable 10 fill.
+- A kill-and-restart test: every snapshot was identical after the
+  restart, the Replay session continued, and a queued order filled after
+  it.
+- Newman 67/0, and the Phase I/J/K browser suites.
+
+Not verified: the compose stack itself, since there is no Docker daemon
+in this sandbox (the compose file validates).
+
 ---
 
 ## Plan (where to pick up)
 
-Phases A-K are done (K re-scoped to finish V1 -- see phase-k.md).
-Next up:
+Phases A-K and Persistence are done. Next up:
 
-1. **Merge `phase-k-finish-v1`** (from master; no PR yet). I and J are
-   merged (PR #27); PR #26 duplicates Phase I and can be closed.
-2. **Persistence (Postgres)** -- now the biggest V1 gap: auth, watchlist,
-   portfolios, orders, backtests and Replay sessions are in-memory and
-   reset on restart, which also rules out most free hosts.
+1. **Merge `phase-persistence`** (from master; no PR yet). PR #26
+   duplicates Phase I (already merged) and can be closed.
+2. **Deploy** -- now possible on a free host with a managed Postgres
+   (e.g. an always-free VM with `./run.sh`, or Render/Fly + a hosted
+   Postgres): set `DATABASE_URL`, a real `JWT_SECRET`, secure cookies
+   behind HTTPS, and `NEXT_PUBLIC_API_BASE_URL`. Check `./run.sh` with
+   the new `db` service on a machine with Docker.
 3. **Real-world checks this sandbox couldn't do**: live VCI/Binance
-   prices (allow `trading.vietcap.com.vn` and `data-api.binance.vision`),
-   Quant with a real API key, the phone layouts on a real device.
+   prices, Quant with a real API key, phone layouts on a real device.
 4. **Phase L** (FULL-APP-PLAN.md's stretch list): standalone screener,
-   trade journal, Strategy Builder, the remaining Settings sections,
-   English. Also: crypto Quant, a crypto Portfolio page, crypto backtests,
+   trade journal, Strategy Builder, remaining Settings sections, English.
+   Also: crypto Quant, a crypto Portfolio page, crypto backtests,
    Quant-Chart.
-5. Smaller follow-ups from Phase K: reserve cash for queued buys; fees in
-   backtests.
+5. Smaller follow-ups:
+   - reserve cash for queued buys;
+   - fees in backtests;
+   - return store errors instead of logging them;
+   - `SKIP LOCKED` on the matcher's scan before running more than one
+     backend.
 
 ---
 

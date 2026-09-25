@@ -1,7 +1,22 @@
-# Runs the V1 MVP demo: Go backend + Next.js frontend, both built from
-# source. No database yet (see RESUME.md) -- the backend keeps its
-# in-memory state for the life of the container, so it resets on restart.
+# Runs the demo: Postgres + Go backend + Next.js frontend, both apps built
+# from source. Accounts, portfolios, orders, watchlists, backtests and
+# Replay sessions live in the "pgdata" volume, so they survive restarts
+# (phase-persistence.md); `./run.sh down -v` wipes them.
 services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: vss
+      POSTGRES_PASSWORD: vss-dev-password
+      POSTGRES_DB: vss
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vss -d vss"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
   backend:
     build:
       context: ./backend
@@ -15,6 +30,11 @@ services:
       # phase-vci-market-data.md. Set to "mock" here for a fully
       # offline demo (e.g. no outbound network access).
       MARKET_DATA_SOURCE: vci
+      # Unset = in-memory stores (data resets on restart).
+      DATABASE_URL: postgres://vss:vss-dev-password@db:5432/vss?sslmode=disable
+    depends_on:
+      db:
+        condition: service_healthy
 
   frontend:
     build:
@@ -27,3 +47,6 @@ services:
       - "3000:3000"
     depends_on:
       - backend
+
+volumes:
+  pgdata:

@@ -26,6 +26,21 @@ type account struct {
 	positions map[string]*position
 }
 
+// Store is the portfolio + ledger port: MemoryStore or PGStore
+// (phase-persistence.md decision 3).
+type Store interface {
+	Create(userID, name, market string, startingCapital float64, currency, kind string) Portfolio
+	DefaultFor(userID string) string
+	List(userID string) []Portfolio
+	Get(userID, id string) (Portfolio, bool)
+	OwnerOf(portfolioID string) (string, bool)
+	ApplyFill(portfolioID, sym, side string, quantity, price, fee float64) error
+	Cash(portfolioID string) float64
+	Positions(portfolioID string) map[string]position
+	AppendEquitySnapshot(portfolioID string, nav float64)
+	EquityHistory(portfolioID string) []EquityPoint
+}
+
 // MemoryStore is the in-memory paper-trading ledger. Reworked in Phase B
 // (see phase-b.md decision 1) from one account per user to one account
 // per Portfolio: a user may own several portfolios, each with its own
@@ -33,8 +48,8 @@ type account struct {
 // user's portfolio IDs for listing; byUserDefault remembers each user's
 // lazily-created default portfolio so the pre-Phase-B single-portfolio
 // callers (GET /portfolio, /portfolio/positions, orders with no
-// portfolioId) keep working unchanged. No database wired up for V1 yet
-// (see RESUME.md).
+// portfolioId) keep working unchanged. Used when DATABASE_URL is unset;
+// PGStore is the Postgres version (phase-persistence.md).
 type MemoryStore struct {
 	mu            sync.Mutex
 	portfolios    map[string]*Portfolio

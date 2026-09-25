@@ -13,7 +13,7 @@ type QuotePort interface {
 }
 
 type Service struct {
-	store  *MemoryStore
+	store  Store
 	quotes QuotePort
 	// orders is set after order.Service exists (main.go calls
 	// SetOrdersPort) -- order.Service depends on *Service for order
@@ -23,7 +23,7 @@ type Service struct {
 	orders OrdersPort
 }
 
-func NewService(store *MemoryStore, quotes QuotePort) *Service {
+func NewService(store Store, quotes QuotePort) *Service {
 	return &Service{store: store, quotes: quotes}
 }
 

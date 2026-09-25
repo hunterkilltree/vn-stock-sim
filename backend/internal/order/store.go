@@ -5,8 +5,19 @@ import (
 	"sync"
 )
 
-// MemoryStore is an in-memory, per-user order history. No database wired
-// up for V1 yet (see RESUME.md).
+// Store is the order port: MemoryStore or PGStore
+// (phase-persistence.md decision 3). Replay logs its fills through
+// Append too.
+type Store interface {
+	Append(userID string, o Order) Order
+	List(userID string) []Order
+	ByID(userID, id string) (Order, bool)
+	Queued() []queuedOrder
+	Replace(userID string, updated Order) Order
+}
+
+// MemoryStore is an in-memory, per-user order history, used when
+// DATABASE_URL is unset (PGStore otherwise -- phase-persistence.md).
 type MemoryStore struct {
 	mu     sync.Mutex
 	byUser map[string][]Order

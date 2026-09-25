@@ -18,11 +18,11 @@ type QuotePort interface {
 }
 
 type Service struct {
-	store  *MemoryStore
+	store  Store
 	quotes QuotePort
 }
 
-func NewService(store *MemoryStore, quotes QuotePort) *Service {
+func NewService(store Store, quotes QuotePort) *Service {
 	return &Service{store: store, quotes: quotes}
 }
 

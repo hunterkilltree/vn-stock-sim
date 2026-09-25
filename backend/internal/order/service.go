@@ -40,7 +40,7 @@ type PortfolioResolver interface {
 }
 
 type Service struct {
-	store      *MemoryStore
+	store      Store
 	ledger     Ledger
 	quotes     QuotePort
 	portfolios PortfolioResolver
@@ -53,7 +53,7 @@ type Service struct {
 	checked map[string]int64
 }
 
-func NewService(store *MemoryStore, ledger Ledger, quotes QuotePort, portfolios PortfolioResolver) *Service {
+func NewService(store Store, ledger Ledger, quotes QuotePort, portfolios PortfolioResolver) *Service {
 	return &Service{store: store, ledger: ledger, quotes: quotes, portfolios: portfolios}
 }
 
