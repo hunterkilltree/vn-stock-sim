@@ -152,7 +152,7 @@ to the VI one, i18n should be a string-dictionary swap (next-intl or a
 hand-rolled dictionary keyed by the same strings already hardcoded in
 each page), applied once the VI version of a screen is done and stable —
 not built screen-by-screen alongside VI. This plan treats English as
-Phase K (stretch), matching the canvas's own EN rows being a straight
+Phase L (stretch), matching the canvas's own EN rows being a straight
 copy of the VI rows.
 
 ### 2.5 Order book and Replay scoring both need an explicit algorithm, not just a UI
@@ -209,7 +209,7 @@ each page reinventing the sidebar, without redoing work already merged
    **Output:** both components render with real routes for the six
    screens that will exist by the end of this plan (Main, Detail,
    Replay, Portfolio, Quant, Settings) and a visible but disabled "WILL"
-   badge for every screen still in Phase K. Verified visually in the
+   badge for every screen still in Phase L. Verified visually in the
    browser pane at desktop width.
 4. Replace the current flat `Navbar` with `SidebarNav`/`RailNav` on a
    per-page basis (each page picks which shell it uses, matching the
@@ -259,7 +259,7 @@ single-portfolio shape.
    is exactly the regression class already fixed once in this repo —
    write it correctly the first time here).
 4. **New `internal/screener` package** (backs both the sector heatmap and
-   the eventual Phase K standalone screener): `GetSectorHeatmap()`
+   the eventual Phase L standalone screener): `GetSectorHeatmap()`
    groups the existing mock symbol fixtures by `symbol.Sector` and
    returns per-sector and per-ticker day change percent;
    `GET /api/v1/market/heatmap`. `GetTopMovers(direction, limit)` sorts
@@ -363,7 +363,7 @@ by real backend computation, not hardcoded numbers.
    `(timestamp, nav)` point whenever a fill happens, plus a daily
    snapshot job (simplest V1: compute it on read, from order history plus
    current mark-to-market, rather than a real background job — a real
-   scheduled snapshot is a Phase K-level refinement). `GET
+   scheduled snapshot is a Phase L-level refinement). `GET
    /api/v1/portfolios/:id/equity-history`.
    **Output:** curl after a few test fills shows a plausible, monotonic-ish
    history.
@@ -440,7 +440,7 @@ V2's signature feature — this phase is the actual build.
 Goal: Account-Menu.dc.html's multi-portfolio switcher, and a Settings
 page shell with the subnav from Settings-AI.dc.html (seven of its eight
 sections stay "WILL" per the canvas itself — only AI Model gets built in
-this phase, the rest in Phase K if ever).
+this phase, the rest in Phase L if ever).
 
 1. `frontend/src/components/AccountMenu.tsx` (Client Component popover,
    triggered from the avatar button already present in `SidebarNav`/
@@ -587,14 +587,15 @@ C to I, not new backend surface. This phase is Tailwind breakpoint work.
 
 ---
 
-## 13. Phase K — Stretch: the "WILL"-badged items
+## 13. Phase L — Stretch: the "WILL"-badged items
 
 > **Re-scoped (2026-09-25):** checking master after Phase J showed four V1
 > gaps still open (orders never filling, fees not charged, no watchlist
-> UI, no backtest page). Phase K closed those instead; see
-> `phases/phase-k.md`. The stretch list below moves to **Phase L**; its
-> item 2 (standalone heatmap) was done in Phase I and item 5 (backtesting
-> UI) in Phase K.
+> UI, no backtest page). A phase called "Phase K" closed those instead
+> (finish-V1 work, not the stretch list below); see `phases/phase-k.md`.
+> The stretch list that was originally planned as Phase K moved here,
+> to **Phase L**; its item 2 (standalone heatmap) was done in Phase I
+> and item 5 (backtesting UI) in Phase K.
 
 Everything the canvas itself marks as planned-but-not-drawn. No screen
 exists yet for any of these in the design artifact, so building them

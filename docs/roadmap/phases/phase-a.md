@@ -42,7 +42,7 @@ yet (that is Phases C/D).
    real entries in the shared nav list so the shell is complete, but
    render as disabled (no real route yet, would 404). This is distinct
    from the canvas's own "WILL" badge, which is reserved for the true
-   Phase K backlog (Screener, standalone Heatmap, Strategy Builder,
+   Phase L backlog (Screener, standalone Heatmap, Strategy Builder,
    standalone Backtesting UI, standalone Trade Journal) — those get the
    actual muted "WILL" pill; Portfolio/Replay/Quant/Settings get a
    plainer "soon" treatment since they are scheduled (Phases D-H), not
