@@ -107,3 +107,67 @@ yet (that is Phases C/D).
    verifying inside the real image, not just the dev server.
 5. Record the outcome in RESUME.md, same format as every previous
    completed unit of work in this repo.
+
+## Verification (done)
+
+- frontend/src/app/globals.css gained a second, additive token block
+  (does not touch the existing --background/--foreground pair used by
+  the light luxalgo palette): --app-bg #0F0F0E, --app-card #171715,
+  --app-border #2C2C28, --app-hover #23231F, --app-surface #1A1A17,
+  --app-accent #E08A3C, --app-fg #EDEDEA, plus the five VN price colors
+  (--price-up/down/ref/ceiling/floor), all exposed as Tailwind utilities
+  via @theme inline (bg-app-bg, text-price-up, etc.).
+- frontend/src/app/layout.tsx loads Lora, Be Vietnam Pro, and IBM Plex
+  Mono from next/font/google alongside the existing Geist fonts
+  (additive -- font-serif now resolves to Lora via @theme, the
+  marketing pages are unaffected since they never used font-serif).
+- New frontend/src/components/icons.tsx (8 small inline SVGs -- no icon
+  package added, matching this repo's existing habit of avoiding extra
+  dependencies), frontend/src/lib/navItems.ts (single source of truth
+  nav list shared by both shells: Market/Chart built; Portfolio/Replay/
+  Quant/Settings marked "soon" -- disabled, not linked, since those
+  routes don't exist until Phases D-H), frontend/src/components/
+  SidebarNav.tsx (236px full sidebar) and RailNav.tsx (72px icon rail).
+- Wired in: /stocks now uses SidebarNav, /stocks/[symbol] and /chart now
+  use RailNav -- content on all three is untouched (still the old light
+  styling), only the nav strip changed, exactly as scoped.
+
+Hit a real build failure fixing this, not just a style choice: the
+original plan was "each of /, /login, /register calls <Navbar/>
+directly" after removing Navbar from the root layout. /login and
+/register are Client Components ("use client"); Navbar is an async
+Server Component that reads cookies() via session.ts. A Client
+Component importing a Server Component directly breaks the client/
+server boundary -- `next build` failed with "You're importing a module
+that depends on next/headers ... in the Pages Router" (misleading
+wording; the real cause was the boundary violation, not the Pages
+Router, confirmed via the import-trace Turbopack printed). Fixed by
+moving /, /login, /register into a frontend/src/app/(marketing)/ route
+group (URLs unchanged -- route groups don't affect the path) with its
+own layout.tsx that renders <Navbar/> once for the whole group, so the
+two client pages never import Navbar themselves.
+
+Verified, not just read: `npx tsc --noEmit`, `npx eslint .`, and
+`npm run build` all clean after the fix. The build's route table still
+lists the same six routes with no regressions -- and /chart actually
+improved from "ƒ Dynamic" to "○ Static", since it no longer depends
+(transitively, via a root-layout Navbar) on cookies(). Checked visually
+in the browser pane (dev server, backend not running): / and /login
+render pixel-identical to before (Navbar, light theme, confirmed via
+screenshot); /stocks shows the new dark SidebarNav with the active
+"Market" item highlighted and Portfolio/Replay/Quant/Settings correctly
+greyed out with "Soon" pills, existing content (including the
+backend-unreachable error message) unchanged to its right; /chart shows
+the new dark RailNav with the active icon highlighted. Also checked at
+375x812: the fixed-width shells overflow the viewport horizontally at
+that width -- expected and NOT a bug, responsive collapsing to a bottom
+tab bar is explicitly Phase J's scope, not this phase's.
+
+Re-verified inside the actual Docker image once Docker Desktop finished
+starting: `docker compose build` succeeded for both images (frontend
+build's route table matched the standalone build exactly), `docker
+compose up -d`, then curl against /, /stocks, /stocks/VNM, /chart, and
+/login all returned HTTP 200, /stocks' HTML contained the expected
+SidebarNav labels (Market/Portfolio/Replay/Quant/Settings) and the
+"Soon" pill text, and GET /api/v1/symbols returned real mock data from
+the backend container. Merged as PR #13.

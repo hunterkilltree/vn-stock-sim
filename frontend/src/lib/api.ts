@@ -47,7 +47,7 @@ async function apiFetch<T>(path: string, opts?: { token?: string }): Promise<T> 
     // means fetching before the backend container exists -- that build-time
     // fetch always failed and baked the error page into the image, only
     // self-healing after the first background ISR revalidation. no-store
-    // forces this route to render per-request instead (see RESUME.md).
+    // forces this route to render per-request instead (see phase-0-mvp.md).
     cache: "no-store",
     headers,
   });
@@ -132,7 +132,7 @@ export type Insight = {
   symbol: string;
   summary: string;
   signals: InsightSignal[];
-  // "rule-based" today; see RESUME.md -- a real LLM call needs an API key
+  // "rule-based" today; see phase-0-mvp.md -- a real LLM call needs an API key
   // and has a real per-call cost, a decision left to the user.
   source: string;
   generatedAt: string;

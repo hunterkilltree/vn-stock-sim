@@ -12,7 +12,7 @@ type Props = {
 // Pulled out of the component body -- eslint-config-next's
 // react-hooks/purity rule flags Date.now() called directly during
 // render, the same class of fix this repo already applied once before
-// (see RESUME.md's 2026-09-21 entry).
+// (see phase-0-mvp.md's 2026-09-21 entry).
 function nowMillis(): number {
   return Date.now();
 }

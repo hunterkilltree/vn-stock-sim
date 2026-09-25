@@ -24,7 +24,7 @@ const sparklinePoints = 20
 // GetIndex synthesizes a deterministic index value, same technique as
 // closeFor in provider.go (a pure function of (name, t), not an
 // iterative walk) so repeated calls at nearly the same instant report
-// identical numbers -- see RESUME.md's 2026-09-21 price-consistency bug
+// identical numbers -- see phase-0-mvp.md's 2026-09-21 price-consistency bug
 // for why this matters.
 func (p *MockProvider) GetIndex(name string) IndexSnapshot {
 	now := time.Now().Unix()

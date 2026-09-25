@@ -4,7 +4,7 @@ import AccountMenuButton from "@/components/AccountMenuButton";
 
 export const metadata = { title: "Chart — VN Stock Sim" };
 
-// Step 1 of the TradingView integration plan (see RESUME.md): confirm a
+// Step 1 of the TradingView integration plan (see phase-0-mvp.md): confirm a
 // TradingView chart renders in the app using their public embed widget,
 // defaulting to BTC. Not wired to our own /api/v1/market/bars data yet --
 // that requires the separately-gated self-hosted Charting Library and a
@@ -20,7 +20,7 @@ export default function ChartPage() {
         <p className="mb-6 text-sm text-neutral-500">
           BTC/USD via TradingView&apos;s public Advanced Chart widget — proof of concept. This
           proves the chart renders end-to-end before wiring the licensed Charting Library +
-          custom Datafeed against our own VN symbol data — see RESUME.md.
+          custom Datafeed against our own VN symbol data — see phase-0-mvp.md.
         </p>
         <div className="rounded-2xl border border-neutral-800 bg-neutral-950 p-6">
           <TradingViewWidget symbol="BITSTAMP:BTCUSD" theme="dark" />
