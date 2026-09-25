@@ -2,6 +2,14 @@ package backtest
 
 import "sync"
 
+// Store is the backtest port: MemoryStore or PGStore
+// (phase-persistence.md decision 3).
+type Store interface {
+	Append(userID string, b Backtest) Backtest
+	List(userID string) []Backtest
+	ByID(userID, id string) (Backtest, bool)
+}
+
 // MemoryStore is an in-memory backtest result store. api-spec.md's
 // "queues onto the worker pool; poll GET /backtests/:id" contract is
 // preserved in the response shape, but V1 runs the rule synchronously and

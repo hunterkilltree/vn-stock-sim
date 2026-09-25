@@ -24,6 +24,9 @@ type Config struct {
 	// are checked against new bars (ORDER_MATCH_INTERVAL, default 20s --
 	// phase-k.md decision 9).
 	OrderMatchInterval time.Duration
+	// DatabaseURL turns on Postgres storage (phase-persistence.md
+	// decision 2); empty keeps every store in memory, as before.
+	DatabaseURL string
 }
 
 func Load() Config {
@@ -34,6 +37,7 @@ func Load() Config {
 
 		QuantAllowPrivateEndpoints: os.Getenv("QUANT_ALLOW_PRIVATE_ENDPOINTS") == "true",
 		OrderMatchInterval:         getDuration("ORDER_MATCH_INTERVAL", 20*time.Second),
+		DatabaseURL:                os.Getenv("DATABASE_URL"),
 	}
 }
 

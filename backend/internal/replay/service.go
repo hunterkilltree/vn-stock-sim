@@ -45,7 +45,7 @@ type OrderLog interface {
 }
 
 type Service struct {
-	store      *MemoryStore
+	store      Store
 	bars       BarsPort
 	cryptoBars BarsPort
 	portfolios PortfolioPort
@@ -54,7 +54,7 @@ type Service struct {
 
 // cryptoBars serves crypto sessions (crypto.Service.GetBars) -- see
 // phase-i.md decision 11.
-func NewService(store *MemoryStore, bars, cryptoBars BarsPort, portfolios PortfolioPort, orders OrderLog) *Service {
+func NewService(store Store, bars, cryptoBars BarsPort, portfolios PortfolioPort, orders OrderLog) *Service {
 	return &Service{store: store, bars: bars, cryptoBars: cryptoBars, portfolios: portfolios, orders: orders}
 }
 
@@ -170,6 +170,9 @@ func (s *Service) Advance(userID, id string) (SessionView, error) {
 			s.fill(sess, "sell", 0, sess.StopLoss, "Tự động cắt lỗ", 0)
 		}
 	}
+	// Sessions are values in Postgres, so every change is saved
+	// explicitly (phase-persistence.md decision 8).
+	s.store.Save(sess)
 
 	return s.view(sess), nil
 }
@@ -209,6 +212,7 @@ func (s *Service) PlaceOrder(userID, id string, req OrderRequest) (SessionView, 
 	if req.Side == "buy" && req.StopLoss > 0 {
 		sess.StopLoss = req.StopLoss
 	}
+	s.store.Save(sess)
 	return s.view(sess), nil
 }
 
@@ -276,6 +280,7 @@ func (s *Service) End(userID, id string) (SessionView, error) {
 		return SessionView{}, ErrNotFound
 	}
 	sess.Status = "completed"
+	s.store.Save(sess)
 	return s.view(sess), nil
 }
 

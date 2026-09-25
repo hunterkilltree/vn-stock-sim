@@ -15,11 +15,11 @@ type BarsPort interface {
 }
 
 type Service struct {
-	store *MemoryStore
+	store Store
 	bars  BarsPort
 }
 
-func NewService(store *MemoryStore, bars BarsPort) *Service {
+func NewService(store Store, bars BarsPort) *Service {
 	return &Service{store: store, bars: bars}
 }
 

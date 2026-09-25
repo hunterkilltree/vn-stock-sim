@@ -21,14 +21,19 @@ Then open:
 - Frontend: http://localhost:3000 (stock browser at /stocks)
 - Backend API: http://localhost:8080/api/v1/symbols
 
-Stop with `./run.sh down` (or `docker compose down`; add `-v` if you ever
-add volumes later -- there are none yet, everything is in-memory and
-resets on restart, see RESUME.md).
+Stop with `./run.sh down` (or `docker compose down`). Data is kept in the
+`pgdata` volume across restarts; `./run.sh down -v` removes it and starts
+the next run empty.
 
-Two services, both built from source, no database yet:
+Three services:
 
-- `backend` -- Go/Gin API, built by `backend/Dockerfile`, in-memory state
-  only (resets on restart).
+- `db` -- `postgres:16-alpine`, data in the named volume `pgdata`. The
+  backend waits for its health check before starting.
+- `backend` -- Go/Gin API, built by `backend/Dockerfile`, storing
+  accounts, portfolios, orders, watchlists, backtests and Replay sessions
+  in `db` via `DATABASE_URL` (phase-persistence.md). The schema is
+  migrated on startup. Remove `DATABASE_URL` from `docker-compose.yml` to
+  go back to in-memory state.
 - `frontend` -- Next.js (standalone output), built by `frontend/Dockerfile`.
   `NEXT_PUBLIC_API_BASE_URL` is baked in at build time (see
   `docker-compose.yml`) to `http://backend:8080`, the backend service's

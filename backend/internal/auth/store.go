@@ -11,6 +11,14 @@ var ErrEmailTaken = errors.New("email already registered")
 var ErrInvalidCredentials = errors.New("invalid email or password")
 var ErrUserNotFound = errors.New("user not found")
 
+// Store is the user store port: MemoryStore (no DATABASE_URL) or
+// PGStore (phase-persistence.md decision 3).
+type Store interface {
+	Create(email, displayName, password, marketInterest string) (User, error)
+	VerifyCredentials(email, password string) (User, error)
+	ByID(id string) (User, error)
+}
+
 // record is a stored user plus its password hash. Not exported — the
 // Service never hands raw records back across the package boundary.
 type record struct {
@@ -18,9 +26,8 @@ type record struct {
 	passwordHash []byte
 }
 
-// MemoryStore is an in-memory, mutex-guarded user store. It exists so V1
-// can run without a database wired up yet; swap for a Postgres-backed
-// store behind the same interface once persistence lands (see RESUME.md).
+// MemoryStore is an in-memory, mutex-guarded user store, used when
+// DATABASE_URL is unset (PGStore otherwise -- phase-persistence.md).
 type MemoryStore struct {
 	mu      sync.RWMutex
 	byEmail map[string]*record
