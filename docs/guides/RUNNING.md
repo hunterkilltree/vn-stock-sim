@@ -72,6 +72,23 @@ TEST_DATABASE_URL="postgres://$USER@localhost:5432/vss_test?sslmode=disable" go 
 
 Without `TEST_DATABASE_URL`, the Postgres half is skipped.
 
+### Optional: the Gemini bridge (Máy chủ riêng)
+
+`services/quant-gemini-bridge/` is a small Python service giving Trợ lý
+Quant's "Máy chủ riêng" (self-hosted) provider something real to talk to:
+an OpenAI-compatible server that forwards to Google Gemini with your own
+key (phase-quant-gemini-bridge.md). Not needed for the rest of the app.
+
+```bash
+cd services/quant-gemini-bridge
+pip install -r requirements.txt
+GEMINI_API_KEY=your-key-here uvicorn main:app --port 8090
+```
+
+Then in Settings -> Mô hình AI, pick "Máy chủ riêng" and set the endpoint
+to `http://localhost:8090/v1` (set `QUANT_ALLOW_PRIVATE_ENDPOINTS=true`
+on the backend first, per the table above).
+
 ## 2. Start the frontend
 
 In a second terminal:

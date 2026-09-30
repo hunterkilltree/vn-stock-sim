@@ -32,6 +32,10 @@ services:
       MARKET_DATA_SOURCE: vci
       # Unset = in-memory stores (data resets on restart).
       DATABASE_URL: postgres://vss:vss-dev-password@db:5432/vss?sslmode=disable
+      # gemini-bridge's compose-network address is a private IP; this lets
+      # Trợ lý Quant's "Máy chủ riêng" provider reach it in this demo (see
+      # phase-quant-gemini-bridge.md). Leave unset on a shared/public host.
+      QUANT_ALLOW_PRIVATE_ENDPOINTS: "true"
     depends_on:
       db:
         condition: service_healthy
@@ -47,6 +51,20 @@ services:
       - "3000:3000"
     depends_on:
       - backend
+
+  # Reference "Máy chủ riêng" (self-hosted) provider for Trợ lý Quant: an
+  # OpenAI-compatible bridge that forwards to Google Gemini using this
+  # operator's own key -- see phase-quant-gemini-bridge.md. In Settings ->
+  # Mô hình AI, pick "Máy chủ riêng" and set the endpoint to
+  # http://gemini-bridge:8090/v1 (that's how the *backend* reaches it; the
+  # browser never talks to it directly).
+  gemini-bridge:
+    build:
+      context: ./services/quant-gemini-bridge
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+    ports:
+      - "8090:8090"
 
 volumes:
   pgdata:

@@ -41,6 +41,15 @@ Three services:
   both the client bundle and the server render code, so this has to be a
   build arg, not just a runtime env var.
 
+- `gemini-bridge` -- optional fourth service: the reference "Máy chủ
+  riêng" (self-hosted) provider for Trợ lý Quant, an OpenAI-compatible
+  Python service (`services/quant-gemini-bridge/`) forwarding to Google
+  Gemini with your own key (phase-quant-gemini-bridge.md). Copy
+  `.env.example` to `.env` and set `GEMINI_API_KEY` before `./run.sh`, or
+  leave it unset and skip this provider -- the other three services start
+  fine either way. In Settings -> Mô hình AI, pick "Máy chủ riêng" and
+  set the endpoint to `http://gemini-bridge:8090/v1`.
+
 This was verified end-to-end on 2026-09-21: `docker compose build` (both
 services), `docker compose up`, then `curl localhost:8080/api/v1/symbols`
 and `curl localhost:3000/stocks` both returned real data from the mock

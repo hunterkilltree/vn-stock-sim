@@ -13,6 +13,7 @@ real plan, decisions and verification results -- open the one you need
 instead of reading this file's history. Code comments cite these docs by
 bare filename (e.g. "phase-f.md decision 4"); filenames are unique.
 
+Last updated: 2026-09-26 (Quant Gemini bridge).
 Last updated: 2026-09-30 (Phase M planned).
 
 ## Status
@@ -37,6 +38,7 @@ Vietnamese unless noted; English localization is deferred (Phase L).
 | J | Mobile responsive layouts | phase-j.md |
 | K | Finish V1: order matching, fees, watchlist, backtest page | phase-k.md |
 | — | Postgres persistence for all user data (`DATABASE_URL`) | phase-persistence.md |
+| — | Reference "Máy chủ riêng" server: Python/FastAPI bridge to Gemini | phase-quant-gemini-bridge.md |
 
 Planned next: Phase M (ship it: CI, security, a safe ledger, deploy) --
 phase-m.md. Then Phase L (FULL-APP-PLAN.md's stretch list).
