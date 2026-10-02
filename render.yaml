@@ -1,0 +1,42 @@
+# Render Blueprint: Postgres + Go backend (private) + Next.js frontend (public),
+# each built from its own Dockerfile. Used by ./deploy.sh -- see
+# docs/guides/RENDER.md. Pushing to the linked branch auto-deploys.
+databases:
+  - name: vss-db
+    databaseName: vss
+    user: vss
+    plan: free # free Postgres expires after 30 days on Render; bump for real use
+
+services:
+  - type: pserv # private: only reachable from the frontend over Render's network
+    name: vss-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: starter
+    healthCheckPath: /healthz
+    envVars:
+      - key: PORT
+        value: "8080"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MARKET_DATA_SOURCE
+        value: vci
+      - key: DATABASE_URL
+        fromDatabase:
+          name: vss-db
+          property: connectionString
+
+  - type: web
+    name: vss-frontend
+    runtime: docker
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    plan: free
+    envVars:
+      - key: PORT
+        value: "3000"
+      # Render passes env vars to Docker builds as build args; the
+      # frontend Dockerfile bakes this into the Next.js bundle.
+      - key: NEXT_PUBLIC_API_BASE_URL
+        value: http://vss-backend:8080 # private-network host:port of vss-backend
