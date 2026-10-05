@@ -73,6 +73,10 @@ export type Bar = {
   low: number;
   close: number;
   volume: number;
+  // Aggressor split of volume (stocks only; estimated, see backend
+  // volumesplit.go). Absent on crypto bars.
+  buyVolume?: number;
+  sellVolume?: number;
 };
 
 export type IndicatorPoint = {

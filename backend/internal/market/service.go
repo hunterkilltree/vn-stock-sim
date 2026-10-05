@@ -14,7 +14,10 @@ func NewService(data MarketDataProvider) *Service {
 }
 
 func (s *Service) GetBars(sym, resolution string, from, to int64) []Bar {
-	return s.data.GetBars(sym, resolution, from, to)
+	bars := s.data.GetBars(sym, resolution, from, to)
+	// LiveProvider caches and returns its slice to every caller, so split
+	// on a copy rather than mutating the cached bars.
+	return withVolumeSplit(append([]Bar(nil), bars...))
 }
 
 func (s *Service) GetIndex(name string) IndexSnapshot {
