@@ -21,6 +21,7 @@ import TimeframePills, { TIMEFRAMES, type TimeframeKey } from "@/components/Time
 import DetailChart from "@/components/DetailChart";
 import OrderTicket from "@/components/OrderTicket";
 import OrderBookPanel from "@/components/OrderBookPanel";
+import BuySellPressurePanel from "@/components/BuySellPressurePanel";
 import FundamentalsGrid from "@/components/FundamentalsGrid";
 import AIInsightCard from "@/components/AIInsightCard";
 import CompactChart from "@/components/CompactChart";
@@ -302,6 +303,7 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
               initialSide={initialSide}
             />
             <OrderBookPanel bids={orderBook.bids} asks={orderBook.asks} />
+            <BuySellPressurePanel bars={bars} />
             <FundamentalsGrid detail={detail} avgVolume20d={avgVolume20d} />
           </div>
         </div>

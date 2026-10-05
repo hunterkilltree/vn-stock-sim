@@ -7,6 +7,10 @@ type Bar struct {
 	Low    float64 `json:"low"`
 	Close  float64 `json:"close"`
 	Volume int64   `json:"volume"`
+	// BuyVolume/SellVolume split Volume by trade aggressor. Estimated for
+	// stocks (see volumesplit.go); BuyVolume+SellVolume == Volume.
+	BuyVolume  int64 `json:"buyVolume"`
+	SellVolume int64 `json:"sellVolume"`
 }
 
 type IndicatorPoint struct {

@@ -89,16 +89,21 @@ export default function DetailChart({ bars, sma20, sma50, rsi, macd, scale = 100
       .join(" ");
 
   const maxV = Math.max(...bars.map((b) => b.volume), 1);
-  const vol = bars.map((b, i) => {
-    const h = (b.volume / maxV) * 62;
-    return {
-      key: b.time,
-      x: (x(i) - bw / 2).toFixed(1),
-      y: (72 - h).toFixed(1),
-      w: bw.toFixed(1),
-      h: Math.max(1.5, h).toFixed(1),
-      col: closes[i] >= opens[i] ? "#35C77F" : "#FF5C5C",
-    };
+  // Stacked volume: buy (green) on the bottom, sell (red) on top. Bars
+  // without a split (crypto) fall back to one candle-coloured block.
+  const vol = bars.flatMap((b, i) => {
+    const total = (b.volume / maxV) * 62;
+    const bx = (x(i) - bw / 2).toFixed(1);
+    const w = bw.toFixed(1);
+    if (b.buyVolume === undefined || b.sellVolume === undefined || b.volume <= 0) {
+      return [{ key: `${b.time}`, x: bx, y: (72 - total).toFixed(1), w, h: Math.max(1.5, total).toFixed(1), col: closes[i] >= opens[i] ? "#35C77F" : "#FF5C5C" }];
+    }
+    const buyH = (b.buyVolume / b.volume) * total;
+    const sellH = total - buyH;
+    return [
+      { key: `${b.time}b`, x: bx, y: (72 - buyH).toFixed(1), w, h: buyH.toFixed(1), col: "#35C77F" },
+      { key: `${b.time}s`, x: bx, y: (72 - total).toFixed(1), w, h: sellH.toFixed(1), col: "#FF5C5C" },
+    ];
   });
 
   const rsiScale = (v: number) => 96 - 8 - (v / 100) * 80;
@@ -185,7 +190,15 @@ export default function DetailChart({ bars, sma20, sma50, rsi, macd, scale = 100
       </svg>
 
       <div className="flex flex-col gap-1">
-        <span className="text-[10.5px] uppercase tracking-[0.07em] text-app-text-muted">Khối lượng</span>
+        <div className="flex items-center gap-[10px] text-[10.5px] uppercase tracking-[0.07em] text-app-text-muted">
+          <span>Khối lượng</span>
+          {lastBar.buyVolume !== undefined && lastBar.sellVolume !== undefined && (
+            <>
+              <span className="font-plex-mono normal-case tracking-normal text-price-up">Mua {fmtVol(lastBar.buyVolume)}</span>
+              <span className="font-plex-mono normal-case tracking-normal text-price-down">Bán {fmtVol(lastBar.sellVolume)}</span>
+            </>
+          )}
+        </div>
         <svg viewBox="0 0 924 74" width="100%" height="74" fill="none" role="img" aria-label="Biểu đồ khối lượng giao dịch theo phiên">
           {vol.map((v) => (
             <rect key={v.key} x={v.x} y={v.y} width={v.w} height={v.h} fill={v.col} opacity="0.65" rx="0.8" />
