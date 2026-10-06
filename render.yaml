@@ -33,6 +33,7 @@ services:
     dockerfilePath: ./frontend/Dockerfile
     dockerContext: ./frontend
     plan: free
+    healthCheckPath: /login # static page; no backend dependency
     envVars:
       - key: PORT
         value: "3000"
