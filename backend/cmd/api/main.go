@@ -57,6 +57,17 @@ func main() {
 	symbolProvider := symbol.NewMockProvider()
 	symbolSvc := symbol.NewService(symbolProvider, marketSvc)
 
+	// Keep the shared quote table warm so market/heatmap/movers/detail
+	// requests are in-memory reads instead of a VCI fetch per symbol.
+	marketSvc.StartQuoteRefresher(context.Background(), func() []string {
+		all, _ := symbolSvc.Search("", "", 1, 1000)
+		codes := make([]string, len(all))
+		for i, sym := range all {
+			codes[i] = sym.Symbol
+		}
+		return codes
+	}, 20*time.Second)
+
 	// Crypto market (Phase I): Binance's public market data with the same
 	// per-call mock fallback as the stock side, or mock only when
 	// MARKET_DATA_SOURCE=mock. QuoteRouter lets order/portfolio price both
