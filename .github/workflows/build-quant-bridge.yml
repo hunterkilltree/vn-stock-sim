@@ -1,0 +1,31 @@
+# Manual build of the Python Gemini bridge (services/quant-gemini-bridge/).
+# Run from Actions -> "Build quant-gemini-bridge".
+name: Build quant-gemini-bridge
+
+on:
+  workflow_dispatch:
+    inputs:
+      docker:
+        description: Also build the bridge Docker image
+        type: boolean
+        default: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/quant-gemini-bridge
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: services/quant-gemini-bridge/requirements.txt
+      - run: pip install -r requirements.txt
+      - name: Syntax check
+        run: python -m py_compile main.py
+      - name: Docker image
+        if: ${{ inputs.docker }}
+        run: docker build -t vn-stock-sim-quant-gemini-bridge .
