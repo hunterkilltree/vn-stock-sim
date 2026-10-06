@@ -41,19 +41,27 @@ async function apiFetch<T>(path: string, opts?: { token?: string }): Promise<T> 
   if (opts?.token) {
     headers.Authorization = `Bearer ${opts.token}`;
   }
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    // no-store, not next: { revalidate }: revalidate let Next.js
-    // statically prerender /stocks at `next build` time, which in Docker
-    // means fetching before the backend container exists -- that build-time
-    // fetch always failed and baked the error page into the image, only
-    // self-healing after the first background ISR revalidation. no-store
-    // forces this route to render per-request instead (see phase-0-mvp.md).
-    cache: "no-store",
-    headers,
-    // Fail fast instead of hanging until the host proxy gives up with a 502
-    // when the backend is asleep or unreachable; pages then hit error.tsx.
-    signal: AbortSignal.timeout(8000),
-  });
+  const attempt = (timeoutMs: number) =>
+    fetch(`${API_BASE_URL}${path}`, {
+      // no-store, not next: { revalidate }: revalidate let Next.js
+      // statically prerender /stocks at `next build` time, which in Docker
+      // means fetching before the backend container exists -- that build-time
+      // fetch always failed and baked the error page into the image, only
+      // self-healing after the first background ISR revalidation. no-store
+      // forces this route to render per-request instead (see phase-0-mvp.md).
+      cache: "no-store",
+      headers,
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  // Fail fast when the backend is unreachable, but retry once with a longer
+  // budget: a sleeping Render instance needs ~30-60s to wake, and a single
+  // 8s attempt would show "Could not reach the API" on the first visit.
+  let res: Response;
+  try {
+    res = await attempt(8000);
+  } catch {
+    res = await attempt(40000);
+  }
   if (!res.ok) {
     throw new Error(`API ${path} failed: ${res.status} ${res.statusText}`);
   }
