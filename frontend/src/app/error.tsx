@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 // Route-level fallback: any Server/Client Component that throws (e.g. the
 // backend is down and a page's data fetch fails) renders this instead of
 // a blank 500 page.
@@ -16,9 +18,9 @@ export default function Error({ reset }: { error: Error & { digest?: string }; r
         <button onClick={() => reset()} className="rounded-full bg-neutral-900 px-5 py-2 text-white">
           Thử lại / Retry
         </button>
-        <a href="/" className="rounded-full border border-neutral-300 px-5 py-2">
+        <Link href="/" className="rounded-full border border-neutral-300 px-5 py-2">
           Trang chủ / Home
-        </a>
+        </Link>
       </div>
     </main>
   );
