@@ -4,10 +4,14 @@ name: Build backend
 on:
   workflow_dispatch:
     inputs:
-      docker:
-        description: Also build the backend Docker image
+      push:
+        description: Build and push the image to Docker Hub (testfeaturedev/vn-stock-sim-be)
         type: boolean
-        default: false
+        default: true
+      tag:
+        description: Image tag (also pushes latest)
+        type: string
+        default: latest
 
 jobs:
   build:
@@ -24,6 +28,20 @@ jobs:
       - run: go build ./...
       - run: go vet ./...
       - run: go test ./...
-      - name: Docker image
-        if: ${{ inputs.docker }}
-        run: docker build -t vn-stock-sim-backend .
+      - uses: docker/setup-buildx-action@v3
+      - name: Log in to Docker Hub
+        if: ${{ inputs.push }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push image
+        if: ${{ inputs.push }}
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          push: true
+          tags: |
+            testfeaturedev/vn-stock-sim-be:${{ inputs.tag }}
+            testfeaturedev/vn-stock-sim-be:latest
+            testfeaturedev/vn-stock-sim-be:${{ github.sha }}
