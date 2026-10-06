@@ -8,10 +8,14 @@ on:
         description: NEXT_PUBLIC_API_BASE_URL baked into the build
         type: string
         default: http://localhost:8080
-      docker:
-        description: Also build the frontend Docker image
+      push:
+        description: Build and push the image to Docker Hub (testfeaturedev/vn-stock-sim-fe)
         type: boolean
-        default: false
+        default: true
+      tag:
+        description: Image tag (also pushes latest)
+        type: string
+        default: latest
 
 jobs:
   build:
@@ -32,6 +36,22 @@ jobs:
       - run: npx tsc --noEmit
       - run: npx eslint .
       - run: npm run build
-      - name: Docker image
-        if: ${{ inputs.docker }}
-        run: docker build --build-arg NEXT_PUBLIC_API_BASE_URL="$NEXT_PUBLIC_API_BASE_URL" -t vn-stock-sim-frontend .
+      - uses: docker/setup-buildx-action@v3
+      - name: Log in to Docker Hub
+        if: ${{ inputs.push }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push image
+        if: ${{ inputs.push }}
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          push: true
+          build-args: |
+            NEXT_PUBLIC_API_BASE_URL=${{ inputs.api_base_url }}
+          tags: |
+            testfeaturedev/vn-stock-sim-fe:${{ inputs.tag }}
+            testfeaturedev/vn-stock-sim-fe:latest
+            testfeaturedev/vn-stock-sim-fe:${{ github.sha }}
