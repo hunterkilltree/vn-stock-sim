@@ -37,7 +37,7 @@ Build/lint/test commands:
 
 ```bash
 cd backend && go build ./... && go vet ./... && go test ./...
-cd frontend && npx tsc --noEmit && npx eslint . && npm run build
+cd frontend && npm run typecheck && npx eslint . && npm run build
 ```
 
 Backend unit tests exist for `internal/quant`, `internal/backtest` (Phase H), `internal/crypto`, `internal/order` and `internal/screener` (Phase I), and `internal/replay` and `internal/watchlist` (Phase K). Each user-data store (`auth`, `watchlist`, `portfolio`, `order`, `backtest`, `replay`) has a contract test that runs against the memory store and, when `TEST_DATABASE_URL` points at a scratch Postgres database, against its `PGStore` too. The frontend has no tests. Don't run a bare `go mod tidy` on Go 1.25+: it bumps the `go` line past the Dockerfile's 1.24. The backend needs Go 1.24+ (the Anthropic Go SDK requires it).
