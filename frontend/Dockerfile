@@ -27,5 +27,8 @@ COPY --from=build --chown=appuser:appgroup /src/.next/static ./.next/static
 
 USER appuser
 ENV PORT=3000
+# Docker sets HOSTNAME to the container id, which makes Next standalone bind
+# to that one interface only; bind all so Render's proxy can reach it.
+ENV HOSTNAME=0.0.0.0
 EXPOSE 3000
 CMD ["node", "server.js"]
