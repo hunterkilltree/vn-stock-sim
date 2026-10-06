@@ -1,0 +1,64 @@
+# Runs the published Docker Hub images (built by the "Build ..." GitHub
+# workflows) instead of building from source:
+#   testfeaturedev/vn-stock-sim-be  (Go backend)
+#   testfeaturedev/vn-stock-sim-fe  (Next.js frontend)
+#   testfeaturedev/vn-stock-sim-ai  (Python Gemini bridge)
+#
+# Copy .env.hub.example to .env and edit, then:
+#   docker compose -f docker-compose.hub.yml --env-file .env up -d
+#
+# URLs:
+#  - The frontend image has the BACKEND's public URL baked in at build time
+#    (workflow input api_base_url / repo variable API_BASE_URL). It must be
+#    reachable from the user's browser.
+#  - The AI server URL is NOT baked in anywhere. Each user enters it in
+#    Settings -> Mo hinh AI -> "May chu rieng". Only the backend calls it, so
+#    inside this compose network use http://ai:8090/v1.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: vss
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: vss
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vss -d vss"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    image: testfeaturedev/vn-stock-sim-be:${IMAGE_TAG:-latest}
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      MARKET_DATA_SOURCE: ${MARKET_DATA_SOURCE:-vci}
+      DATABASE_URL: postgres://vss:${POSTGRES_PASSWORD}@db:5432/vss?sslmode=disable
+      # The ai service resolves to a private IP; the backend blocks private
+      # endpoints unless this is "true". Set "false" if your AI server is a
+      # public https URL instead.
+      QUANT_ALLOW_PRIVATE_ENDPOINTS: ${QUANT_ALLOW_PRIVATE_ENDPOINTS:-true}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    image: testfeaturedev/vn-stock-sim-fe:${IMAGE_TAG:-latest}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+  ai:
+    image: testfeaturedev/vn-stock-sim-ai:${IMAGE_TAG:-latest}
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY:?set GEMINI_API_KEY}
+    ports:
+      - "8090:8090"
+
+volumes:
+  pgdata:
