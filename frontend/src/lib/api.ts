@@ -50,6 +50,9 @@ async function apiFetch<T>(path: string, opts?: { token?: string }): Promise<T> 
     // forces this route to render per-request instead (see phase-0-mvp.md).
     cache: "no-store",
     headers,
+    // Fail fast instead of hanging until the host proxy gives up with a 502
+    // when the backend is asleep or unreachable; pages then hit error.tsx.
+    signal: AbortSignal.timeout(8000),
   });
   if (!res.ok) {
     throw new Error(`API ${path} failed: ${res.status} ${res.statusText}`);
