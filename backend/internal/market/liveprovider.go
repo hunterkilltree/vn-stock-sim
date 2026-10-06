@@ -8,11 +8,46 @@ import (
 	"time"
 )
 
-// liveCacheTTL is short on purpose: long enough to absorb one page
-// load's fan-out of several GetBars/GetIndicator/GetIndex calls that
-// often share the same underlying series, short enough that "now" stays
-// genuinely fresh -- see phase-vci-market-data.md decision 5.
-const liveCacheTTL = 5 * time.Second
+// Cache windows, see phase-vci-market-data.md decision 5. Fresh values are
+// served as is; stale ones are served instantly while one background
+// reload refreshes them (swrcache.go), so a page load almost never waits
+// on VCI. Outside session hours nothing changes, so values stay fresh far
+// longer.
+const (
+	liveFreshOpen   = 15 * time.Second
+	liveFreshClosed = 5 * time.Minute
+	liveStaleFor    = 15 * time.Minute
+	liveCacheMax    = 4000
+
+	// A request whose "to" is within this of now is a "latest" request:
+	// callers compute to=now themselves, so an exact-window key would
+	// change every second and never hit.
+	latestSlack = 120 // seconds
+	// "Latest" windows are keyed by span rounded up to this, so spans like
+	// 10d and 10d+3s share one entry.
+	spanBucket = 3600 // seconds
+)
+
+var vnLocation = time.FixedZone("ICT", 7*60*60)
+
+// vnSessionOpen reports whether the HOSE/HNX/UPCOM continuous session
+// (09:00-15:00 ICT, Mon-Fri) is plausibly running at t. Holidays are not
+// modelled: a holiday just gets the short TTL, which is harmless.
+func vnSessionOpen(t time.Time) bool {
+	t = t.In(vnLocation)
+	if wd := t.Weekday(); wd == time.Saturday || wd == time.Sunday {
+		return false
+	}
+	h := t.Hour()
+	return h >= 9 && h < 15
+}
+
+func liveTTL() (fresh, stale time.Duration) {
+	if vnSessionOpen(time.Now()) {
+		return liveFreshOpen, liveStaleFor
+	}
+	return liveFreshClosed, liveStaleFor
+}
 
 // LiveProvider composes a "live" adapter (VCIProvider) with MockProvider
 // as a fallback: if the live call fails or comes back empty (a real
@@ -28,9 +63,10 @@ type LiveProvider struct {
 	mock *MockProvider
 
 	mu        sync.Mutex
-	barsCache map[string]barsCacheEntry
 	downUntil time.Time
-	idxCache  map[string]idxCacheEntry
+
+	barsCache *swrCache[[]Bar]
+	idxCache  *swrCache[IndexSnapshot]
 }
 
 // liveDownFor is how long the provider skips VCI after a connection or
@@ -55,72 +91,70 @@ func (p *LiveProvider) markDown(err error) {
 	log.Printf("market: VCI unreachable (%v), serving mock data for %s", err, liveDownFor)
 }
 
-type barsCacheEntry struct {
-	bars    []Bar
-	expires time.Time
-}
-
-type idxCacheEntry struct {
-	snapshot IndexSnapshot
-	expires  time.Time
-}
-
 func NewLiveProvider(live *VCIProvider, mock *MockProvider) *LiveProvider {
 	return &LiveProvider{
 		live:      live,
 		mock:      mock,
-		barsCache: make(map[string]barsCacheEntry),
-		idxCache:  make(map[string]idxCacheEntry),
+		barsCache: newSWRCache[[]Bar](liveCacheMax),
+		idxCache:  newSWRCache[IndexSnapshot](liveCacheMax),
 	}
+}
+
+// barsWindow picks the cache key and the window actually fetched. "Latest"
+// requests (to ~ now) share one entry per symbol/resolution/span and fetch
+// up to the present; anything else keys on its exact window.
+func barsWindow(sym, resolution string, from, to int64, now time.Time) (key string, fetchFrom, fetchTo int64) {
+	nowUnix := now.Unix()
+	if to <= from || nowUnix-to > latestSlack || to-nowUnix > latestSlack {
+		return sym + "|" + resolution + "|" + strconv.FormatInt(from, 10) + "|" + strconv.FormatInt(to, 10), from, to
+	}
+	span := (to - from + spanBucket - 1) / spanBucket * spanBucket
+	return sym + "|" + resolution + "|L|" + strconv.FormatInt(span, 10), nowUnix - span, nowUnix
+}
+
+// trimFrom drops bars before from; cached "latest" entries cover a window
+// rounded up past what any one caller asked for.
+func trimFrom(bars []Bar, from int64) []Bar {
+	i := 0
+	for i < len(bars) && bars[i].Time < from {
+		i++
+	}
+	return bars[i:]
 }
 
 func (p *LiveProvider) GetBars(sym, resolution string, from, to int64) []Bar {
-	key := sym + "|" + resolution + "|" + strconv.FormatInt(from, 10) + "|" + strconv.FormatInt(to, 10)
-
-	p.mu.Lock()
-	if entry, ok := p.barsCache[key]; ok && time.Now().Before(entry.expires) {
-		p.mu.Unlock()
-		return entry.bars
-	}
-	p.mu.Unlock()
-
-	if p.liveDown() {
+	key, fetchFrom, fetchTo := barsWindow(sym, resolution, from, to, time.Now())
+	bars, ok := p.barsCache.get(key, liveTTL, func() ([]Bar, bool) {
+		if p.liveDown() {
+			return nil, false
+		}
+		bars, err := p.live.getBars(sym, resolution, fetchFrom, fetchTo)
+		if err != nil && !errors.Is(err, errVCINoData) {
+			p.markDown(err)
+		}
+		return bars, len(bars) > 0
+	})
+	if !ok {
 		return p.mock.GetBars(sym, resolution, from, to)
 	}
-	bars, err := p.live.getBars(sym, resolution, from, to)
-	if err != nil && !errors.Is(err, errVCINoData) {
-		p.markDown(err)
-	}
-	if len(bars) == 0 {
-		return p.mock.GetBars(sym, resolution, from, to)
-	}
-
-	p.mu.Lock()
-	p.barsCache[key] = barsCacheEntry{bars: bars, expires: time.Now().Add(liveCacheTTL)}
-	p.mu.Unlock()
-	return bars
+	return trimFrom(bars, from)
 }
 
 func (p *LiveProvider) GetIndex(name string) IndexSnapshot {
-	p.mu.Lock()
-	if entry, ok := p.idxCache[name]; ok && time.Now().Before(entry.expires) {
-		p.mu.Unlock()
-		return entry.snapshot
-	}
-	p.mu.Unlock()
-
-	if p.liveDown() {
+	snapshot, ok := p.idxCache.get(name, liveTTL, func() (IndexSnapshot, bool) {
+		if p.liveDown() {
+			return IndexSnapshot{}, false
+		}
+		snapshot := p.live.GetIndex(name)
+		if len(snapshot.Sparkline) == 0 {
+			log.Printf("market: VCI returned no data for index %s, falling back to mock data", name)
+			return IndexSnapshot{}, false
+		}
+		return snapshot, true
+	})
+	if !ok {
 		return p.mock.GetIndex(name)
 	}
-	snapshot := p.live.GetIndex(name)
-	if len(snapshot.Sparkline) == 0 {
-		log.Printf("market: VCI returned no data for index %s, falling back to mock data", name)
-		return p.mock.GetIndex(name)
-	}
-
-	p.mu.Lock()
-	p.idxCache[name] = idxCacheEntry{snapshot: snapshot, expires: time.Now().Add(liveCacheTTL)}
-	p.mu.Unlock()
 	return snapshot
 }
 
