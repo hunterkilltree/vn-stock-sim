@@ -41,6 +41,9 @@ Vietnamese unless noted; English localization is deferred (Phase L).
 | — | Reference "Máy chủ riêng" server: Python/FastAPI bridge to Gemini | phase-quant-gemini-bridge.md |
 | — | Rule-based Mua mạnh .. Bán mạnh rating card on the stock detail page | phase-rating.md |
 
+Planned feature: holding-horizon verdicts (3–6 months / 1–3 years) on
+the Khuyến nghị card -- phase-holding-horizon.md.
+
 Planned next: Phase M (ship it: CI, security, a safe ledger, deploy) --
 phase-m.md. Then Phase L (FULL-APP-PLAN.md's stretch list).
 
