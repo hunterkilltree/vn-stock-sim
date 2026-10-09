@@ -43,6 +43,10 @@ Vietnamese unless noted; English localization is deferred (Phase L).
 | — | Holding-horizon verdicts (3–6 tháng / 1–3 năm) + today's valuation buy zone on the same card; HOSE tiered tick sizes (H1 + V-1; H2/V-2 open) | phase-holding-horizon.md, phase-valuation.md |
 
 
+Planned feature: stage 2 of the rating card -- fundamentals history,
+valuation backtests vs lump sum/DCA, H2 factors, fair-value chart line,
+in five slices, one clearly named branch each -- phase-valuation-backtest.md.
+
 Planned next: Phase M (ship it: CI, security, a safe ledger, deploy) --
 phase-m.md. Then Phase L (FULL-APP-PLAN.md's stretch list).
 
