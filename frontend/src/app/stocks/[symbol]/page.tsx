@@ -6,6 +6,7 @@ import {
   getMACD,
   getOrderBook,
   getInsight,
+  getRating,
   getPortfolioSummaryByID,
   getWatchlist,
   type Bar,
@@ -13,6 +14,7 @@ import {
   type IndicatorMultiPoint,
   type PriceLevel,
   type Insight,
+  type Rating,
 } from "@/lib/api";
 import RailNav from "@/components/RailNav";
 import AccountMenuButton from "@/components/AccountMenuButton";
@@ -24,6 +26,7 @@ import OrderBookPanel from "@/components/OrderBookPanel";
 import BuySellPressurePanel from "@/components/BuySellPressurePanel";
 import FundamentalsGrid from "@/components/FundamentalsGrid";
 import AIInsightCard from "@/components/AIInsightCard";
+import RatingCard from "@/components/RatingCard";
 import CompactChart from "@/components/CompactChart";
 import MobileActionBar from "@/components/MobileActionBar";
 import WatchlistButton from "@/components/WatchlistButton";
@@ -110,12 +113,11 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
     // leave empty; OrderBookPanel renders an empty ladder rather than failing.
   }
 
-  let insight: Insight | null = null;
-  try {
-    insight = await getInsight(symbol);
-  } catch {
-    // leave insight null.
-  }
+  // Independent of each other; a failure in either just hides its card.
+  const [insight, rating] = await Promise.all([
+    getInsight(symbol).catch((): Insight | null => null),
+    getRating(symbol).catch((): Rating | null => null),
+  ]);
 
   const user = await getSessionUser();
   let buyingPower: number | null = null;
@@ -293,15 +295,19 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
             {insight && <AIInsightCard insight={insight} />}
           </div>
 
-          <div id="dat-lenh" className="flex w-full scroll-mt-4 flex-col gap-4 lg:w-[344px] lg:shrink-0">
-            <OrderTicket
-              key={initialSide}
-              symbol={detail.symbol}
-              lastPrice={detail.lastPrice}
-              buyingPower={buyingPower}
-              portfolioName={activePortfolioName}
-              initialSide={initialSide}
-            />
+          <div className="flex w-full flex-col gap-4 lg:w-[344px] lg:shrink-0">
+            {rating && <RatingCard rating={rating} />}
+            {/* The mobile Mua/Bán buttons jump here, past the rating card. */}
+            <div id="dat-lenh" className="scroll-mt-4">
+              <OrderTicket
+                key={initialSide}
+                symbol={detail.symbol}
+                lastPrice={detail.lastPrice}
+                buyingPower={buyingPower}
+                portfolioName={activePortfolioName}
+                initialSide={initialSide}
+              />
+            </div>
             <OrderBookPanel bids={orderBook.bids} asks={orderBook.asks} />
             <BuySellPressurePanel bars={bars} />
             <FundamentalsGrid detail={detail} avgVolume20d={avgVolume20d} />

@@ -39,6 +39,7 @@ Vietnamese unless noted; English localization is deferred (Phase L).
 | K | Finish V1: order matching, fees, watchlist, backtest page | phase-k.md |
 | — | Postgres persistence for all user data (`DATABASE_URL`) | phase-persistence.md |
 | — | Reference "Máy chủ riêng" server: Python/FastAPI bridge to Gemini | phase-quant-gemini-bridge.md |
+| — | Rule-based Mua mạnh .. Bán mạnh rating card on the stock detail page | phase-rating.md |
 
 Planned next: Phase M (ship it: CI, security, a safe ledger, deploy) --
 phase-m.md. Then Phase L (FULL-APP-PLAN.md's stretch list).

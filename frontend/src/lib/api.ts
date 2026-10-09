@@ -157,6 +157,42 @@ export function getInsight(symbol: string): Promise<Insight> {
   return apiFetch<Insight>(`/api/v1/symbols/${encodeURIComponent(symbol)}/insight`);
 }
 
+export type RatingKey = "strong_buy" | "buy" | "neutral" | "sell" | "strong_sell";
+
+export type RatingSummary = {
+  rating: RatingKey;
+  // Mean vote in [-1, 1].
+  score: number;
+  buy: number;
+  neutral: number;
+  sell: number;
+};
+
+export type RatingSignal = {
+  group: "technical" | "fundamental";
+  label: string;
+  value: string;
+  verdict: "buy" | "neutral" | "sell";
+  detail: string;
+};
+
+// GET /symbols/:symbol/rating -- rule-based Strong Buy .. Strong Sell
+// (backend/internal/rating, phase-rating.md). fundamental is null when the
+// symbol has no fundamentals.
+export type Rating = {
+  symbol: string;
+  overall: RatingSummary;
+  technical: RatingSummary;
+  fundamental: RatingSummary | null;
+  signals: RatingSignal[];
+  source: string;
+  generatedAt: string;
+};
+
+export function getRating(symbol: string): Promise<Rating> {
+  return apiFetch<Rating>(`/api/v1/symbols/${encodeURIComponent(symbol)}/rating`);
+}
+
 export type User = {
   id: string;
   email: string;
