@@ -43,6 +43,9 @@ Vietnamese unless noted; English localization is deferred (Phase L).
 
 Planned feature: holding-horizon verdicts (3–6 months / 1–3 years) on
 the Khuyến nghị card -- phase-holding-horizon.md.
+Planned feature: valuation buy prices (Graham, Lynch, Rule #1, Weiss,
+P/E bands) and backtesting them against lump sum / DCA --
+phase-valuation.md.
 
 Planned next: Phase M (ship it: CI, security, a safe ledger, deploy) --
 phase-m.md. Then Phase L (FULL-APP-PLAN.md's stretch list).
