@@ -40,11 +40,15 @@ func NewMockProvider() *MockProvider {
 	// capBn is market cap in billion VND; price is a rough seed used only
 	// until the quote source answers.
 	d := func(sym, name, exchange, sector string, price float64, capBn int64, pe, pb, roe, eps, dy float64) Detail {
-		return Detail{
-			Symbol:    Symbol{Symbol: sym, CompanyName: name, Exchange: exchange, Sector: sector, TickSize: 100},
+		det := Detail{
+			Symbol:    Symbol{Symbol: sym, CompanyName: name, Exchange: exchange, Sector: sector, TickSize: int(TickFor(exchange, price))},
 			LastPrice: price, MarketCap: capBn * 1_000_000_000,
 			PERatio: pe, PBRatio: pb, ROE: roe, EPS: eps, DividendYield: dy,
 		}
+		if pb > 0 {
+			det.BookValuePerShare = price / pb
+		}
+		return det
 	}
 	seed := []Detail{
 		d("VCB", "Joint Stock Commercial Bank for Foreign Trade of Vietnam", "HOSE", bank, 91200, 480500, 14.8, 2.9, 19.7, 6162, 1.2),
