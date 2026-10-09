@@ -159,9 +159,10 @@ Slices 1 and 5 can start immediately. Slices 2–4 wait on open question
    Recommendation: try (a) first, keep (c) for offline demos.
 2. **Adjusted prices:** are VCI `gap-chart` bars adjusted for stock
    dividends and bonus shares? Needs a check outside the sandbox.
-3. **Sell tax and T+2:** add the 0.1% sell tax and T+2 settlement to
-   both paper trading and backtests (more realistic), or keep the
-   current 0.15%-only, instant-settlement model?
+3. ~~**Sell tax and T+2**~~ — answered by phase-risk-rules.md (rules
+   7 and 9): yes, both, through one shared cost model. That lands in
+   `claude/risk-costs-settlement`, which should merge before slice 1
+   here.
 4. **The old branch:** once `claude/stage1-rating-horizon-valuation` is
    confirmed, can `claude/trusting-turing-k8v9v6` be deleted, or should
    it stay?
