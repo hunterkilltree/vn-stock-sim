@@ -58,8 +58,18 @@ func (s *Service) Detail(sym string) (Detail, bool) {
 		}
 		detail.Reference = yesterday
 		band := priceBandPercent(detail.Exchange)
-		detail.Ceiling = roundToTick(yesterday*(1+band), detail.TickSize)
-		detail.Floor = roundToTick(yesterday*(1-band), detail.TickSize)
+		// Ceiling rounds down and floor up, so both stay inside the band.
+		detail.Ceiling = FloorToTick(yesterday*(1+band), detail.Exchange)
+		detail.Floor = CeilToTick(yesterday*(1-band), detail.Exchange)
+		detail.TickSize = int(TickFor(detail.Exchange, today))
+		// The seeded P/E and P/B were taken at the seed price; re-derive
+		// them from the live price so they move with it.
+		if detail.EPS > 0 {
+			detail.PERatio = math.Round(today/detail.EPS*100) / 100
+		}
+		if detail.BookValuePerShare > 0 {
+			detail.PBRatio = math.Round(today/detail.BookValuePerShare*100) / 100
+		}
 	}
 	return detail, true
 }
@@ -82,10 +92,31 @@ func priceBandPercent(exchange string) float64 {
 	}
 }
 
-func roundToTick(price float64, tickSize int) float64 {
-	if tickSize <= 0 {
-		tickSize = 100
+// TickFor is the exchange's price step at price: HOSE is tiered (10 VND
+// below 10,000, 50 VND to 49,950, 100 VND from 50,000); HNX and UPCOM
+// use 100 VND throughout (phase-valuation.md "Checked against the code"
+// item 4).
+func TickFor(exchange string, price float64) float64 {
+	if exchange == "HOSE" {
+		switch {
+		case price < 10_000:
+			return 10
+		case price < 50_000:
+			return 50
+		}
 	}
-	t := float64(tickSize)
-	return math.Round(price/t) * t
+	return 100
+}
+
+// FloorToTick rounds price down onto the exchange's grid -- for buy
+// targets and ceilings, which must not exceed the computed price.
+func FloorToTick(price float64, exchange string) float64 {
+	t := TickFor(exchange, price)
+	return math.Floor(price/t+1e-9) * t
+}
+
+// CeilToTick rounds price up onto the grid -- for floors.
+func CeilToTick(price float64, exchange string) float64 {
+	t := TickFor(exchange, price)
+	return math.Ceil(price/t-1e-9) * t
 }

@@ -1,6 +1,6 @@
 # Phase: Holding horizon — "should I buy to hold 3–6 months or 1–3 years?"
 
-Status: **planned, not built.** Builds on phase-rating.md (the "Khuyến
+Status: **H1 built (2026-10-09), together with phase-valuation.md V-1; H2 not started.** Builds on phase-rating.md (the "Khuyến
 nghị" card and `internal/rating`).
 
 ## Goal
@@ -203,6 +203,51 @@ H2:
 - Render `/stocks/FPT` and a bank (VCB) at 1440px and 390px; check the
   tabs, that the mobile Mua/Bán anchor still lands on the order ticket,
   and that the history strip reads correctly.
+
+## Built (H1) — what changed from the plan
+
+- `backend/internal/rating/horizon.go` (pure `ComputeHorizons`),
+  `horizon_types.go`, `horizon_test.go`. `service.go` fetches ~8 years of
+  daily bars plus `GetBars("VN-Index", …)`. No new market interface was
+  needed: VCI already maps "VN-Index" to VNINDEX, and the mock generates
+  it. Sector median P/E is computed from the seeded universe and cached
+  for an hour.
+- **History windows are calendar time** (91/182/365/1095 days), not bar
+  counts. The mock has a bar per calendar day while VCI has one per
+  session, so bar counts would mean different spans. The medium tab shows
+  3- and 6-month holds; the long tab shows 1- and 3-year holds.
+- **Trend factor** = share of four checks passed (above SMA 50, SMA 50
+  rising over 20 sessions, above SMA 200, SMA 50 > SMA 200).
+- **Long-run price factor** = mean of 3-year CAGR vs VN-Index
+  (−10 → +10 pts) and 3-year max drawdown (−60% → −20%).
+- **Open questions taken at their defaults** (the user answered only the
+  order question): three-step verdicts; H2 data not hand-seeded (the
+  three H2 factors show "Thiếu dữ liệu" and are left out of the score);
+  the stop-loss is kept, labelled "Cắt lỗ tham khảo" (reference
+  stop-loss).
+- `symbol.Detail` now re-derives P/E and P/B from the live price
+  (`EPS`, new `BookValuePerShare`). Before this, they stayed at the seed
+  price while the price moved. On **mock** data the result can look odd,
+  because mock prices aren't anchored to the seed prices: the mock tech
+  sector median P/E comes out at ~43. On live VCI prices it's correct.
+- Frontend: `RatingTabs.tsx` (client, tab row), `HorizonPanel.tsx`; the
+  card is restructured into Ngắn hạn / 3–6 tháng / 1–3 năm tabs.
+
+## Verification (H1)
+
+- `go build ./... && go vet ./... && go test ./...` clean. New tests:
+  uptrend + quality → both *Phù hợp*, with 100% 1-year win rate and an
+  index comparison; downtrend + loss-making → both *Chưa phù hợp*;
+  illiquid → knock-out; missing data re-normalises (no index → absolute
+  return; no sector median → factor dropped, not scored as zero); short
+  history skips the 3-year rules; `holdStats` on a square wave; `lerp`.
+- Frontend `typecheck`, `eslint`, `build` clean.
+- Headless Chromium, `/stocks/VCB` (mock data) at 1440px and 390px: tabs
+  switch, factor lists expand, no console errors, and the mobile Mua/Bán
+  anchor (`#dat-lenh`) still lands on the order ticket. FPT shows the
+  downtrend knock-out capping a 67 score at *Cần theo dõi*.
+- **Not verified:** live VCI data (the sandbox can't reach VCI), so the
+  real VN-Index series and real 8-year history are untested.
 
 ## Open questions (for the user)
 

@@ -179,12 +179,85 @@ export type RatingSignal = {
 // GET /symbols/:symbol/rating -- rule-based Strong Buy .. Strong Sell
 // (backend/internal/rating, phase-rating.md). fundamental is null when the
 // symbol has no fundamentals.
+export type HorizonVerdict = "suitable" | "watch" | "avoid";
+
+export type HorizonFactor = {
+  key: string;
+  label: string;
+  value: string;
+  // 0..100; meaningless when available is false.
+  score: number;
+  weight: number;
+  available: boolean;
+  why: string;
+};
+
+export type HoldStats = {
+  label: string;
+  days: number;
+  samples: number;
+  winRate: number;
+  median: number;
+  p10: number;
+  p90: number;
+  index?: HoldStats;
+};
+
+export type Horizon = {
+  verdict: HorizonVerdict;
+  score: number;
+  knockout?: string;
+  // Some factors had no data and were left out of the score.
+  partial: boolean;
+  factors: HorizonFactor[];
+  risk: {
+    volatilityPct: number;
+    maxDrawdownPct: number;
+    drawdownWindow: string;
+    stopLoss?: number;
+    stopPct?: number;
+  };
+  history: HoldStats[];
+};
+
+export type ValuationMethod =
+  | "graham_number"
+  | "graham_formula"
+  | "lynch_fair_value"
+  | "rule1_sticker"
+  | "weiss_yield"
+  | "pe_band";
+
+// Today's buy zone (backend/internal/valuation, phase-valuation.md).
+export type Valuation = {
+  price: number;
+  values: {
+    method: ValuationMethod;
+    applicable: boolean;
+    reason?: string;
+    fairValue?: number;
+    buyPrice?: number;
+    marginOfSafety: number;
+  }[];
+  quality: { passed: boolean; reason?: string };
+  buyPrice?: number;
+  buyMethod?: ValuationMethod;
+  fairValue?: number;
+  inBuyZone: boolean;
+  upsidePct?: number;
+  bondYieldPct: number;
+  bondYieldAsOf: string;
+};
+
 export type Rating = {
   symbol: string;
   overall: RatingSummary;
   technical: RatingSummary;
   fundamental: RatingSummary | null;
   signals: RatingSignal[];
+  // phase-holding-horizon.md; null with too little history or for crypto.
+  horizons: { medium: Horizon; long: Horizon } | null;
+  valuation: Valuation | null;
   source: string;
   generatedAt: string;
 };

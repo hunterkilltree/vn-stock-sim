@@ -1,5 +1,7 @@
 package rating
 
+import "github.com/hunterkilltree/vn-stock-sim/backend/internal/valuation"
+
 // Verdict is one rule's vote, and Rating the five-step scale the votes
 // roll up into -- the same five steps (Strong Sell .. Strong Buy) as
 // TradingView's Technical Ratings and most broker research, so the badge
@@ -48,6 +50,10 @@ type Result struct {
 	Technical   Summary  `json:"technical"`
 	Fundamental *Summary `json:"fundamental"`
 	Signals     []Signal `json:"signals"`
-	Source      string   `json:"source"`
-	GeneratedAt string   `json:"generatedAt"`
+	// Horizons and Valuation are nil when there isn't enough data
+	// (phase-holding-horizon.md, phase-valuation.md); crypto never has them.
+	Horizons    *Horizons          `json:"horizons"`
+	Valuation   *valuation.Summary `json:"valuation"`
+	Source      string             `json:"source"`
+	GeneratedAt string             `json:"generatedAt"`
 }

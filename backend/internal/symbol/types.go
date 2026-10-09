@@ -21,6 +21,9 @@ type Detail struct {
 	ROE           float64 `json:"roe"`
 	EPS           float64 `json:"eps"`
 	DividendYield float64 `json:"dividendYield"`
+	// BookValuePerShare is derived once from the seed's price and P/B, so
+	// Detail can re-derive P/B from the live price (phase-valuation.md).
+	BookValuePerShare float64 `json:"bookValuePerShare"`
 	// Reference (tham chieu), Ceiling (tran), and Floor (san) are the real
 	// HOSE/HNX/UPCOM daily price-band rules, derived from the previous
 	// close by a fixed percentage band per exchange -- see

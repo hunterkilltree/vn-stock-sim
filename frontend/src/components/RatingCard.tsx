@@ -1,5 +1,8 @@
 import type { Rating, RatingKey, RatingSignal, RatingSummary } from "@/lib/api";
 import { formatVN } from "@/lib/format";
+import RatingTabs from "@/components/RatingTabs";
+import HorizonPanel from "@/components/HorizonPanel";
+import ValuationPanel from "@/components/ValuationPanel";
 
 // "Khuyến nghị": the rule-based Strong Buy .. Strong Sell rating from
 // backend/internal/rating (phase-rating.md). A five-step scale with the
@@ -63,18 +66,13 @@ function SignalList({ title, signals }: { title: string; signals: RatingSignal[]
   );
 }
 
-export default function RatingCard({ rating }: { rating: Rating }) {
+// The "Ngắn hạn" tab: today's Strong Buy .. Strong Sell (phase-rating.md).
+function ShortTermPanel({ rating }: { rating: Rating }) {
   const active = step(rating.overall.rating);
   const technical = rating.signals.filter((s) => s.group === "technical");
   const fundamental = rating.signals.filter((s) => s.group === "fundamental");
-
   return (
-    <section className="flex flex-col gap-3 rounded-2xl border border-app-border bg-app-surface p-[16px_18px]" aria-label="Khuyến nghị">
-      <div className="flex items-center justify-between">
-        <h2 className="m-0 text-[13px] font-semibold">Khuyến nghị</h2>
-        <span className="rounded-full border border-app-border px-[8px] py-[1px] text-[10px] text-app-text-muted">theo quy tắc</span>
-      </div>
-
+    <div className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between gap-3">
         <span className="font-display text-[24px] font-bold" style={{ color: active.color }}>
           {active.label}
@@ -123,10 +121,43 @@ export default function RatingCard({ rating }: { rating: Rating }) {
           <SignalList title="Cơ bản" signals={fundamental} />
         </div>
       </details>
+    </div>
+  );
+}
+
+export default function RatingCard({ rating }: { rating: Rating }) {
+  const { horizons, valuation } = rating;
+  return (
+    <section className="flex flex-col gap-3 rounded-2xl border border-app-border bg-app-surface p-[16px_18px]" aria-label="Khuyến nghị">
+      <div className="flex items-center justify-between">
+        <h2 className="m-0 text-[13px] font-semibold">Khuyến nghị</h2>
+        <span className="rounded-full border border-app-border px-[8px] py-[1px] text-[10px] text-app-text-muted">theo quy tắc</span>
+      </div>
+
+      {horizons ? (
+        <RatingTabs
+          tabs={[
+            { key: "short", label: "Ngắn hạn", content: <ShortTermPanel rating={rating} /> },
+            { key: "medium", label: "3–6 tháng", content: <HorizonPanel horizon={horizons.medium} symbol={rating.symbol} /> },
+            {
+              key: "long",
+              label: "1–3 năm",
+              content: (
+                <div className="flex flex-col gap-3">
+                  <HorizonPanel horizon={horizons.long} symbol={rating.symbol} />
+                  {valuation && <ValuationPanel valuation={valuation} />}
+                </div>
+              ),
+            },
+          ]}
+        />
+      ) : (
+        <ShortTermPanel rating={rating} />
+      )}
 
       <p className="m-0 text-[10px] leading-[1.45] text-app-text-faint">
-        Tổng hợp từ các quy tắc phổ biến (đường trung bình, RSI, MACD, động lượng, khối lượng, P/E, P/B, ROE, cổ tức). Chỉ
-        mang tính tham khảo cho mô phỏng, không phải khuyến nghị đầu tư.
+        Tổng hợp từ các quy tắc phổ biến về kỹ thuật, định giá và chất lượng doanh nghiệp. Chỉ mang tính tham khảo cho mô
+        phỏng, không phải khuyến nghị đầu tư.
       </p>
     </section>
   );

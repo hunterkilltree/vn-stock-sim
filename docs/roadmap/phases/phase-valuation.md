@@ -1,6 +1,6 @@
 # Phase: Valuation buy prices, and testing them against buy-and-hold
 
-Status: **planned, not built.** Companion to phase-holding-horizon.md (the
+Status: **V-1 built (2026-10-09), together with holding-horizon H1; V-2 not started.** Companion to phase-holding-horizon.md (the
 long-horizon tab is where a "buy zone" would show) and phase-rating.md.
 
 ## Goal
@@ -144,6 +144,36 @@ V-2 (after open question 1):
    price ≥ fair value or quality gate fails).
 7. Point-in-time fundamentals port + VN 10-year yield series; adjusted
    prices.
+
+## Built (V-1) — what changed from the plan
+
+- `backend/internal/valuation` (pure functions plus a table test of
+  every method, including Rule #1's g sensitivity: 30,000 → 12,823 when
+  g goes from 15% to 10%, a 57% cut).
+- **Served inside `GET /symbols/:symbol/rating`** as `valuation`, not a
+  separate endpoint. It renders on the same card (1–3 năm tab) and
+  reuses the same fetch. The package stays standalone, so a screener or
+  backtest can call it directly.
+- Tick fix landed in `symbol`: `TickFor`, `FloorToTick` and `CeilToTick`;
+  ceiling rounds down and floor rounds up; `Detail.TickSize` is now
+  price-dependent on HOSE. **Not changed:** `market/orderbook.go` still
+  steps the synthetic order book by 100 VND.
+- Live today: **Graham Number** only (BVPS from the seed's price ÷ P/B).
+  Graham 1974, Lynch and Rule #1 show "Thiếu dữ liệu tăng trưởng EPS"
+  until growth data exists. Weiss and P/E band show "Cần lịch sử …".
+  Quality gate: EPS > 0 and ROE ≥ 10%.
+- Bond yield is the constant 4.43% (2026-09-09) from the user's note,
+  shown with its date, and **not independently verified**.
+- **Not done from V-1 step 4:** the dashed fair-value line on the Detail
+  chart.
+
+## Verification (V-1)
+
+- `go test ./internal/valuation ./internal/symbol` (new tick tests:
+  tier boundaries; band rounding stays inside the band).
+- Rendered on `/stocks/VCB`: buy price 49,500 (Graham Number 66,031 ×
+  0.75 = 49,523, rounded down to the 100 VND step), "Chưa tới vùng mua",
+  and every other method listed with its reason.
 
 ## Open questions (for the user)
 
