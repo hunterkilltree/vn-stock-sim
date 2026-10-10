@@ -47,6 +47,10 @@ Planned feature: stage 2 of the rating card -- fundamentals history,
 valuation backtests vs lump sum/DCA, H2 factors, fair-value chart line,
 in five slices, one clearly named branch each -- phase-valuation-backtest.md.
 
+Planned feature: 12 risk-management rules (trade plan, risk sizing,
+6% monthly lock, T+2/floor/tax, R-multiple journal, process-based
+Replay score, backtest holdout) in coach/strict modes -- phase-risk-rules.md.
+
 Planned next: Phase M (ship it: CI, security, a safe ledger, deploy) --
 phase-m.md. Then Phase L (FULL-APP-PLAN.md's stretch list).
 
