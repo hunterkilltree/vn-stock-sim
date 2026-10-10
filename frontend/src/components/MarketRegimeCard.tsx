@@ -1,29 +1,14 @@
 import Link from "next/link";
 import type { MarketRegime, RegimeLevel, RegimeSignal } from "@/lib/api";
+import { formatVN } from "@/lib/format";
+import { exposurePct } from "@/lib/exposure";
+import { REGIME_LEVEL, regimeAdvice } from "@/lib/regime";
 
 // "Nhiệt kế thị trường": the market risk regime (phase-market-risk.md
 // feature 1). It measures conditions and says what to do about risk; it
 // never claims to predict a crash. The guidance per level is the
-// suggested tightening from feature 2 -- advice here, enforced only once
-// regime-aware risk limits land.
-const LEVEL: Record<RegimeLevel, { label: string; color: string; advice: string }> = {
-  normal: {
-    label: "Bình thường",
-    color: "#35C77F",
-    advice: "Giữ kỷ luật: mọi lệnh đều có điểm cắt lỗ, rủi ro tối đa 1% vốn mỗi lệnh.",
-  },
-  caution: {
-    label: "Thận trọng",
-    color: "#E3B341",
-    advice: "Giảm rủi ro mỗi lệnh còn một nửa, hạn chế mua mới, không dùng margin, nâng điểm cắt lỗ cho vị thế đang lãi.",
-  },
-  high_risk: {
-    label: "Rủi ro cao",
-    color: "#FF5C5C",
-    advice: "Ưu tiên bảo toàn vốn: tỷ trọng cổ phiếu tối đa khoảng 40%, rủi ro mỗi lệnh 0,25% vốn, chỉ giữ mã còn trên SMA 200.",
-  },
-};
-
+// suggested tightening from feature 2, built from the backend's limits:
+// advice, not enforced (the order ticket warns past the exposure cap).
 const ZONE: Record<RegimeSignal["zone"], { label: string; color: string }> = {
   ok: { label: "Ổn", color: "#35C77F" },
   caution: { label: "Cảnh báo", color: "#E3B341" },
@@ -38,10 +23,40 @@ function asOfDate(unix: number) {
   return new Date(unix * 1000).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
 }
 
+// Stock exposure vs the regime's cap, as a thin bar with the cap marked.
+function ExposureMeter({ pct, cap }: { pct: number; cap: number }) {
+  const over = pct > cap;
+  return (
+    <span className="flex min-w-0 flex-1 items-center gap-2" title="Tỷ trọng cổ phiếu so với trần gợi ý theo nhiệt kế thị trường">
+      <span className="shrink-0 text-[11.5px] text-app-text-muted">Cổ phiếu</span>
+      <span className="relative h-[6px] min-w-[60px] flex-1 rounded-full bg-app-hairline">
+        <span
+          className="absolute inset-y-0 left-0 rounded-full"
+          style={{ width: `${Math.min(pct, 100)}%`, background: over ? "#FF5C5C" : "var(--app-text-3)" }}
+        />
+        <span className="absolute inset-y-[-3px] w-[2px] bg-app-text" style={{ left: `${Math.min(cap, 100)}%` }} />
+      </span>
+      <span className={`shrink-0 font-plex-mono text-[11.5px] ${over ? "text-price-down" : "text-app-text-2"}`}>
+        {formatVN(pct, 0)}% / trần {formatVN(cap, 0)}%
+      </span>
+    </span>
+  );
+}
+
 // compact: a one-line banner for the Portfolio page, linking to the full
-// card on /stocks.
-export default function MarketRegimeCard({ regime, compact = false }: { regime: MarketRegime; compact?: boolean }) {
-  const lv = LEVEL[regime.level];
+// card on /stocks; with holdings it also shows stock exposure vs the cap.
+export default function MarketRegimeCard({
+  regime,
+  compact = false,
+  holdings,
+}: {
+  regime: MarketRegime;
+  compact?: boolean;
+  holdings?: { stockValue: number; equity: number };
+}) {
+  const lv = REGIME_LEVEL[regime.level];
+  const advice = regimeAdvice(regime);
+  const cap = regime.limits.exposureCapPct;
   const counted = regime.signals.filter((s) => s.zone !== "nodata");
   const missing = regime.signals.filter((s) => s.zone === "nodata");
 
@@ -56,7 +71,11 @@ export default function MarketRegimeCard({ regime, compact = false }: { regime: 
         <span className="shrink-0 text-[12px] font-semibold" style={{ color: lv.color }}>
           Thị trường: {lv.label}
         </span>
-        <span className="min-w-0 flex-1 truncate text-[11.5px] text-app-text-muted">{lv.advice}</span>
+        {holdings ? (
+          <ExposureMeter pct={exposurePct(holdings.stockValue, holdings.equity)} cap={cap} />
+        ) : (
+          <span className="min-w-0 flex-1 truncate text-[11.5px] text-app-text-muted">{advice}</span>
+        )}
         <span className="shrink-0 text-[11.5px] font-medium text-app-accent">Chi tiết</span>
       </Link>
     );
@@ -80,7 +99,7 @@ export default function MarketRegimeCard({ regime, compact = false }: { regime: 
 
       <div className="grid grid-cols-3 gap-[3px]" role="img" aria-label={`Mức: ${lv.label}`}>
         {(["normal", "caution", "high_risk"] as RegimeLevel[]).map((k) => (
-          <div key={k} className="h-[6px] rounded-full" style={{ background: LEVEL[k].color, opacity: k === regime.level ? 1 : 0.18 }} />
+          <div key={k} className="h-[6px] rounded-full" style={{ background: REGIME_LEVEL[k].color, opacity: k === regime.level ? 1 : 0.18 }} />
         ))}
       </div>
 
@@ -92,7 +111,7 @@ export default function MarketRegimeCard({ regime, compact = false }: { regime: 
 
       <p className="m-0 rounded-[10px] bg-app-surface-2 px-[11px] py-[9px] text-[11.5px] leading-[1.5] text-app-text-2">
         <b className="text-app-text">Nên làm: </b>
-        {lv.advice}
+        {advice}
       </p>
 
       <ul className="m-0 flex list-none flex-col p-0">

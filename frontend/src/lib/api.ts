@@ -284,6 +284,9 @@ export type MarketRegime = {
   score: number;
   maxScore: number;
   knockout?: string;
+  // Suggested limits for this level; advice until the risk-rules engine
+  // enforces them.
+  limits: { exposureCapPct: number; riskPerTradePct: number; lossLockPct: number };
   signals: RegimeSignal[];
   indexName: string;
   indexValue: number;

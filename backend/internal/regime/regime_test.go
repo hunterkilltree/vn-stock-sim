@@ -141,3 +141,16 @@ func TestAnnualVol(t *testing.T) {
 		t.Fatalf("vol = %v", v)
 	}
 }
+
+func TestLimitsTightenWithLevel(t *testing.T) {
+	n, c, h := LimitsFor(LevelNormal), LimitsFor(LevelCaution), LimitsFor(LevelHighRisk)
+	if !(n.ExposureCapPct > c.ExposureCapPct && c.ExposureCapPct > h.ExposureCapPct) ||
+		!(n.RiskPerTradePct > c.RiskPerTradePct && c.RiskPerTradePct > h.RiskPerTradePct) ||
+		!(n.LossLockPct > c.LossLockPct && c.LossLockPct > h.LossLockPct) {
+		t.Fatalf("limits must tighten: %+v %+v %+v", n, c, h)
+	}
+	r, _ := Compute(Input{Index: path(500, 100, constant(0.0005), 0.004)})
+	if r.Limits != LimitsFor(r.Level) {
+		t.Fatalf("regime limits %+v don't match its level %s", r.Limits, r.Level)
+	}
+}

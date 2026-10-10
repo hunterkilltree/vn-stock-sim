@@ -134,7 +134,13 @@ export default async function PortfolioPage() {
           </section>
         ) : (
           <>
-            {regime && portfolio.market !== "crypto" && <MarketRegimeCard regime={regime} compact />}
+            {regime && portfolio.market !== "crypto" && (
+              <MarketRegimeCard
+                regime={regime}
+                compact
+                holdings={summary ? { stockValue: summary.marketValue, equity: summary.totalEquity } : undefined}
+              />
+            )}
             <PortfolioTabs
               stats={stats}
               equityHistory={equityHistory}

@@ -1,6 +1,6 @@
 # Phase: Market risk regime, crash scenarios and stress tests
 
-Status: **slice 1 built (2026-10-10, branch `claude/market-regime-indicator`); slices 2–6 planned.** Asked for on 2026-10-10: "2008 had
+Status: **slice 1 built (2026-10-10, branch `claude/market-regime-indicator`); slice 2 partly built (exposure warning, branch `claude/regime-aware-risk-limits`); slices 3–6 planned.** Asked for on 2026-10-10: "2008 had
 many warning signs. If 2026 follows the same pattern, what can the app
 do so users see it coming and avoid losing money?"
 
@@ -204,6 +204,35 @@ market conditions from data the app already has.
   "Vì sao quan trọng?" expands, no console errors. The mock market reads
   Thận trọng (2/8: volatility 1.3× normal, breadth 52%).
 - **Not verified:** live VCI data (the sandbox can't reach VCI).
+
+## Built (slice 2, partial) — exposure warning
+
+The user chose to build only the part that works without the risk-rules
+engine (phase-risk-rules.md slices 1 and 3 don't exist yet):
+
+- `regime.LimitsFor(level)`: exposure cap 100/70/40%, risk per trade
+  1/0.5/0.25%, monthly loss lock 6/4/3%. Returned as `limits` on
+  `GET /market/regime`; the card's "Nên làm" text is built from it
+  (`frontend/src/lib/regime.ts`), so the numbers live in one place.
+- Order ticket (`OrderTicket.tsx`, `lib/exposure.ts`): on the stock page,
+  "Tỷ trọng cổ phiếu 57% → 97% / trần 70%" (stock exposure before → after,
+  against the cap); past the cap, a warning with a one-click "Giảm còn N
+  cổ phiếu" (largest whole-lot buy that stays under the cap, fee
+  included). **Warning only, the order still goes through** (coach mode
+  in phase-risk-rules.md terms).
+- Portfolio banner: stock exposure meter with the cap marked.
+
+**Still open in slice 2:** risk-per-trade and the loss lock need
+stop-losses and the monthly loss tally (phase-risk-rules.md slices 1 and
+3); strict-mode blocking needs its per-portfolio settings. When those
+land, the exposure check moves into `internal/riskrules` as one rule.
+
+Verification: `go test ./internal/regime` (limits tighten
+monotonically; a regime's limits match its level). Headless Chromium
+with a test user holding 57% VCB under a Thận trọng regime: "Tối đa"
+(700 shares) → 97% and the warning; "Giảm còn 200 cổ phiếu" sets 200
+and the warning clears (room 13.0M VND ÷ (56,930 × 1.0015) → 228 →
+200 in lots); banner shows 57% / trần 70%; no console errors.
 
 ## Open questions (for the user)
 

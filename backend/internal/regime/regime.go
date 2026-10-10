@@ -84,7 +84,22 @@ func Compute(in Input) (Regime, bool) {
 		r.Level = LevelCaution
 		r.Knockout = "VN-Index nằm dưới đường trung bình 200 phiên đang đi xuống"
 	}
+	r.Limits = LimitsFor(r.Level)
 	return r, true
+}
+
+// LimitsFor: risk per trade halves, then quarters, as conditions worsen;
+// the exposure cap and the monthly loss lock tighten with it. The
+// "normal" row matches phase-risk-rules.md's defaults (1%, 6%).
+func LimitsFor(level string) Limits {
+	switch level {
+	case LevelHighRisk:
+		return Limits{ExposureCapPct: 40, RiskPerTradePct: 0.25, LossLockPct: 3}
+	case LevelCaution:
+		return Limits{ExposureCapPct: 70, RiskPerTradePct: 0.5, LossLockPct: 4}
+	default:
+		return Limits{ExposureCapPct: 100, RiskPerTradePct: 1, LossLockPct: 6}
+	}
 }
 
 func trendSignal(bars []market.Bar) Signal {

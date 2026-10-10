@@ -24,6 +24,15 @@ type Signal struct {
 	Why   string `json:"why"`
 }
 
+// Limits are the risk limits suggested for a level (phase-market-risk.md
+// feature 2). Advice only until the risk-rules engine exists: the order
+// ticket warns past ExposureCapPct, nothing blocks.
+type Limits struct {
+	ExposureCapPct  float64 `json:"exposureCapPct"`  // max stocks as % of equity
+	RiskPerTradePct float64 `json:"riskPerTradePct"` // max loss per trade if its stop is hit, % of equity
+	LossLockPct     float64 `json:"lossLockPct"`     // month's losses + open risk that should stop new buys
+}
+
 // Regime is GET /market/regime. Score sums the zones (caution 1, risk 2)
 // over signals that have data.
 type Regime struct {
@@ -31,6 +40,7 @@ type Regime struct {
 	Score       int      `json:"score"`
 	MaxScore    int      `json:"maxScore"`
 	Knockout    string   `json:"knockout,omitempty"`
+	Limits      Limits   `json:"limits"`
 	Signals     []Signal `json:"signals"`
 	IndexName   string   `json:"indexName"`
 	IndexValue  float64  `json:"indexValue"`
