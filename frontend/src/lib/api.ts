@@ -300,6 +300,44 @@ export function getMarketRegime(): Promise<MarketRegime> {
   return apiFetch<MarketRegime>("/api/v1/market/regime");
 }
 
+export type StressHoldingImpact = {
+  symbol: string;
+  changePct: number;
+  lossVnd: number;
+  // No price history for that period: beta × index move instead of the real path.
+  estimated: boolean;
+  floorDays: number;
+  longestFloors: number;
+};
+
+export type StressScenario = {
+  key: string;
+  label: string;
+  kind: "historical" | "hypothetical";
+  from?: number;
+  to?: number;
+  indexChangePct: number;
+  lossVnd: number;
+  lossPct: number; // of total equity
+  holdings: StressHoldingImpact[];
+  note?: string;
+};
+
+// GET /portfolios/:id/stress-test (backend/internal/stress,
+// phase-market-risk.md slice 3).
+export type StressTest = {
+  equity: number;
+  stockValue: number;
+  cash: number;
+  betas: { symbol: string; value: number; beta: number; samples: number; crisisBeta: number }[];
+  scenarios: StressScenario[];
+  source: string;
+};
+
+export function getStressTest(portfolioId: string, token: string): Promise<StressTest> {
+  return apiFetch<StressTest>(`/api/v1/portfolios/${encodeURIComponent(portfolioId)}/stress-test`, { token });
+}
+
 export type User = {
   id: string;
   email: string;

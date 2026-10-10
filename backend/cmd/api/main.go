@@ -29,6 +29,7 @@ import (
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/regime"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/replay"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/screener"
+	"github.com/hunterkilltree/vn-stock-sim/backend/internal/stress"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/symbol"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/watchlist"
 )
@@ -108,6 +109,7 @@ func main() {
 	insightSvc := insight.NewService(symbolSvc, marketSvc)
 	ratingSvc := rating.NewService(symbolSvc, marketSvc)
 	regimeSvc := regime.NewService(symbolSvc, marketSvc)
+	stressSvc := stress.NewService(portfolioSvc, symbolSvc, marketSvc)
 	screenerSvc := screener.NewService(symbolSvc, marketSvc)
 	// replaySvc reuses marketSvc (historical bars are just GetBars with a
 	// date range in the past), portfolioSvc (each session gets its own
@@ -145,6 +147,7 @@ func main() {
 	insight.RegisterRoutes(v1, insightSvc)
 	rating.RegisterRoutes(v1, ratingSvc)
 	regime.RegisterRoutes(v1, regimeSvc)
+	stress.RegisterRoutes(v1, stressSvc, tokens)
 	screener.RegisterRoutes(v1, screenerSvc)
 	replay.RegisterRoutes(v1, replaySvc, tokens)
 	quant.RegisterRoutes(v1, quantSvc, tokens)

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import type { Allocation, EquityPoint, Order, Position, PortfolioStats } from "@/lib/api";
 import KpiRow from "./KpiRow";
 import EquityCurveChart from "./EquityCurveChart";
@@ -17,21 +17,24 @@ type Props = {
   pendingOrders: Order[];
   recentOrders: Order[];
   startingCapital: number;
+  // "Sức chịu đựng" tab content (phase-market-risk.md slice 3), rendered on
+  // the server; the tab is hidden when absent (crypto portfolios, errors).
+  stressTest?: ReactNode;
 };
 
-const TABS = ["Tổng quan", "Vị thế", "Lệnh chờ", "Sổ giao dịch"] as const;
+const TABS = ["Tổng quan", "Vị thế", "Lệnh chờ", "Sổ giao dịch", "Sức chịu đựng"] as const;
 
 // Portfolio.dc.html's 4-tab layout (phase-e.md item 4): data is fetched
 // once server-side (page.tsx) and passed down as props, tab-switching
 // happens client-side with no re-fetch/reload, matching the design's
 // instant tab switching.
-export default function PortfolioTabs({ stats, equityHistory, positions, allocation, pendingOrders, recentOrders, startingCapital }: Props) {
+export default function PortfolioTabs({ stats, equityHistory, positions, allocation, pendingOrders, recentOrders, startingCapital, stressTest }: Props) {
   const [tab, setTab] = useState<(typeof TABS)[number]>("Tổng quan");
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-[18px]">
       <div className="-mx-[18px] flex gap-[6px] overflow-x-auto px-[18px] lg:mx-0 lg:px-0">
-        {TABS.map((t) => (
+        {TABS.filter((t) => t !== "Sức chịu đựng" || stressTest).map((t) => (
           <button
             key={t}
             type="button"
@@ -67,6 +70,8 @@ export default function PortfolioTabs({ stats, equityHistory, positions, allocat
           </div>
         </div>
       )}
+
+      {tab === "Sức chịu đựng" && stressTest}
 
       {tab === "Vị thế" && <HoldingsTable positions={positions} totalEquity={stats.totalEquity} />}
 

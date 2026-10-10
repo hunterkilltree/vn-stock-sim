@@ -27,7 +27,7 @@ function asOfDate(unix: number) {
 function ExposureMeter({ pct, cap }: { pct: number; cap: number }) {
   const over = pct > cap;
   return (
-    <span className="flex min-w-0 flex-1 items-center gap-2" title="Tỷ trọng cổ phiếu so với trần gợi ý theo nhiệt kế thị trường">
+    <span className="order-3 flex w-full min-w-0 items-center gap-2 sm:order-none sm:w-auto sm:flex-1" title="Tỷ trọng cổ phiếu so với trần gợi ý theo nhiệt kế thị trường">
       <span className="shrink-0 text-[11.5px] text-app-text-muted">Cổ phiếu</span>
       <span className="relative h-[6px] min-w-[60px] flex-1 rounded-full bg-app-hairline">
         <span
@@ -64,7 +64,7 @@ export default function MarketRegimeCard({
     return (
       <Link
         href="/stocks#nhiet-ke"
-        className="flex items-center gap-3 rounded-[12px] border border-app-border bg-app-surface px-[14px] py-[10px]"
+        className="flex flex-wrap items-center gap-x-3 gap-y-[6px] rounded-[12px] border border-app-border bg-app-surface px-[14px] py-[10px]"
         aria-label={`Nhiệt kế thị trường: ${lv.label}`}
       >
         <span className="h-[10px] w-[10px] shrink-0 rounded-full" style={{ background: lv.color }} />
@@ -74,9 +74,9 @@ export default function MarketRegimeCard({
         {holdings ? (
           <ExposureMeter pct={exposurePct(holdings.stockValue, holdings.equity)} cap={cap} />
         ) : (
-          <span className="min-w-0 flex-1 truncate text-[11.5px] text-app-text-muted">{advice}</span>
+          <span className="order-3 w-full min-w-0 truncate text-[11.5px] text-app-text-muted sm:order-none sm:w-auto sm:flex-1">{advice}</span>
         )}
-        <span className="shrink-0 text-[11.5px] font-medium text-app-accent">Chi tiết</span>
+        <span className="order-2 ml-auto shrink-0 text-[11.5px] font-medium text-app-accent sm:order-none sm:ml-0">Chi tiết</span>
       </Link>
     );
   }

@@ -1,6 +1,6 @@
 # Phase: Market risk regime, crash scenarios and stress tests
 
-Status: **slice 1 built (2026-10-10, branch `claude/market-regime-indicator`); slice 2 partly built (exposure warning, branch `claude/regime-aware-risk-limits`); slices 3–6 planned.** Asked for on 2026-10-10: "2008 had
+Status: **slice 1 built (2026-10-10, branch `claude/market-regime-indicator`); slice 2 partly built (exposure warning, branch `claude/regime-aware-risk-limits`); slice 3 built (stress test, branch `claude/portfolio-stress-test`); slices 4–6 planned.** Asked for on 2026-10-10: "2008 had
 many warning signs. If 2026 follows the same pattern, what can the app
 do so users see it coming and avoid losing money?"
 
@@ -233,6 +233,49 @@ with a test user holding 57% VCB under a Thận trọng regime: "Tối đa"
 (700 shares) → 97% and the warning; "Giảm còn 200 cổ phiếu" sets 200
 and the warning clears (room 13.0M VND ÷ (56,930 × 1.0015) → 228 →
 200 in lots); banner shows 57% / trần 70%; no console errors.
+
+## Built (slice 3) — portfolio stress test
+
+- `backend/internal/stress`: pure `Compute` plus
+  `GET /api/v1/portfolios/:id/stress-test` (authenticated; 422 for
+  crypto portfolios). ~8 years of daily bars for VN-Index and each
+  holding.
+- **Historical scenarios are found in the data, not hard-coded.** Every
+  VN-Index fall of 20% or more (peak to the lowest close before the
+  peak is regained); the 3 deepest, most recent first. Each holding uses
+  its **real** change over that window. A holding with no history then
+  falls back to beta × the index move and is marked "ước tính qua beta"
+  (estimated through beta). Floor-price sessions (a close within 0.5
+  points of the band limit) and the longest run of them are counted per
+  holding: the days a stop-loss likely couldn't fill.
+- **Hypothetical scenarios:** VN-Index −20%, −40%, and "Lặp lại 2007–2009
+  (≈ −80%)", the last labelled approximate and outside the app's data.
+- **Beta:** cov/var of daily log returns vs VN-Index over the last 252
+  shared sessions (≥ 60 needed, otherwise 1), clamped to [0, 3]. **Shocks
+  use max(beta, 1).** Correlations go to one in a crash; on mock data,
+  where stocks don't follow the mock index, measured betas came out ~0
+  and made "2008 again" look like a 3.5% loss. The panel shows both betas.
+- Loss is expressed against total equity, so cash visibly cushions it.
+  The headline names the worst scenario and the stock share that would
+  keep it at ≤ 20% of the account.
+- Frontend: `StressTestPanel.tsx`, a new "Sức chịu đựng" tab in
+  `PortfolioTabs` (hidden for crypto portfolios or on error).
+- Also fixed: the slice-2 Portfolio banner overflowed at phone width
+  (the page was 415px wide at a 390px viewport). It now wraps the meter
+  onto its own line.
+
+Verification: `go test ./internal/stress`:
+- crash detection (−30% found, a 10% dip ignored)
+- real path for a stock falling twice as hard: 0.7² → −51%; beta ≈ 2;
+  with half the account in cash, −25.5% of equity
+- a stock listed after the crash → estimated at beta 1
+- shocks, including the −100% floor and the crisis-beta floor
+- floor-session counting (4 sessions, longest run 3)
+- worst-first ordering
+
+Headless Chromium with a test user holding VCB + FPT (55% in stocks) at
+1440px and 390px: tab renders, rows expand, no console errors, page
+width equals the viewport. **Not verified:** live VCI data.
 
 ## Open questions (for the user)
 

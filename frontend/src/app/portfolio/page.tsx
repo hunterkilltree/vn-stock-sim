@@ -2,9 +2,12 @@ import Link from "next/link";
 import SidebarNav from "@/components/SidebarNav";
 import PortfolioTabs from "@/components/PortfolioTabs";
 import MarketRegimeCard from "@/components/MarketRegimeCard";
+import StressTestPanel from "@/components/StressTestPanel";
 import {
   getMarketRegime,
+  getStressTest,
   type MarketRegime,
+  type StressTest,
   getPortfolioSummaryByID,
   getPortfolioPositionsByID,
   getEquityHistory,
@@ -44,6 +47,7 @@ export default async function PortfolioPage() {
   let pendingOrders: Order[] = [];
   let recentOrders: Order[] = [];
   let error: string | null = null;
+  let stress: StressTest | null = null;
   // Stock portfolios only; a failure just hides the banner.
   const regime: MarketRegime | null = token ? await getMarketRegime().catch(() => null) : null;
 
@@ -64,6 +68,10 @@ export default async function PortfolioPage() {
         equityHistory = equityRes.data;
         allocation = allocRes.data;
         stats = statsRes;
+        // Own catch: a failed stress test hides its tab, not the page.
+        if (portfolio.market !== "crypto") {
+          stress = await getStressTest(portfolio.id, token).catch(() => null);
+        }
         pendingOrders = ordersRes.data.filter((o) => o.status === "queued" && o.portfolioId === portfolio!.id);
         recentOrders = recentlyProcessed(ordersRes.data, portfolio.id);
       }
@@ -149,6 +157,7 @@ export default async function PortfolioPage() {
               pendingOrders={pendingOrders}
               recentOrders={recentOrders}
               startingCapital={portfolio.startingCapital}
+              stressTest={stress ? <StressTestPanel result={stress} /> : undefined}
             />
           </>
         )}
