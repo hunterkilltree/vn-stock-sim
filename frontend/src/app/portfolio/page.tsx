@@ -1,7 +1,10 @@
 import Link from "next/link";
 import SidebarNav from "@/components/SidebarNav";
 import PortfolioTabs from "@/components/PortfolioTabs";
+import MarketRegimeCard from "@/components/MarketRegimeCard";
 import {
+  getMarketRegime,
+  type MarketRegime,
   getPortfolioSummaryByID,
   getPortfolioPositionsByID,
   getEquityHistory,
@@ -41,6 +44,8 @@ export default async function PortfolioPage() {
   let pendingOrders: Order[] = [];
   let recentOrders: Order[] = [];
   let error: string | null = null;
+  // Stock portfolios only; a failure just hides the banner.
+  const regime: MarketRegime | null = token ? await getMarketRegime().catch(() => null) : null;
 
   if (token) {
     try {
@@ -128,15 +133,18 @@ export default async function PortfolioPage() {
             </Link>
           </section>
         ) : (
-          <PortfolioTabs
-            stats={stats}
-            equityHistory={equityHistory}
-            positions={positions}
-            allocation={allocation}
-            pendingOrders={pendingOrders}
-            recentOrders={recentOrders}
-            startingCapital={portfolio.startingCapital}
-          />
+          <>
+            {regime && portfolio.market !== "crypto" && <MarketRegimeCard regime={regime} compact />}
+            <PortfolioTabs
+              stats={stats}
+              equityHistory={equityHistory}
+              positions={positions}
+              allocation={allocation}
+              pendingOrders={pendingOrders}
+              recentOrders={recentOrders}
+              startingCapital={portfolio.startingCapital}
+            />
+          </>
         )}
       </div>
     </div>

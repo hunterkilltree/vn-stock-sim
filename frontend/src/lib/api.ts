@@ -266,6 +266,37 @@ export function getRating(symbol: string): Promise<Rating> {
   return apiFetch<Rating>(`/api/v1/symbols/${encodeURIComponent(symbol)}/rating`);
 }
 
+export type RegimeLevel = "normal" | "caution" | "high_risk";
+
+export type RegimeSignal = {
+  key: string;
+  label: string;
+  value: string;
+  zone: "ok" | "caution" | "risk" | "nodata";
+  rule: string;
+  why: string;
+};
+
+// GET /market/regime -- "Nhiệt kế thị trường" (backend/internal/regime,
+// phase-market-risk.md). A measured read of conditions, not a forecast.
+export type MarketRegime = {
+  level: RegimeLevel;
+  score: number;
+  maxScore: number;
+  knockout?: string;
+  signals: RegimeSignal[];
+  indexName: string;
+  indexValue: number;
+  asOf: number;
+  universe: number;
+  source: string;
+  generatedAt: string;
+};
+
+export function getMarketRegime(): Promise<MarketRegime> {
+  return apiFetch<MarketRegime>("/api/v1/market/regime");
+}
+
 export type User = {
   id: string;
   email: string;

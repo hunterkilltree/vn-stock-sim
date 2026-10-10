@@ -1,6 +1,6 @@
 # Phase: Market risk regime, crash scenarios and stress tests
 
-Status: **planned, not built.** Asked for on 2026-10-10: "2008 had
+Status: **slice 1 built (2026-10-10, branch `claude/market-regime-indicator`); slices 2–6 planned.** Asked for on 2026-10-10: "2008 had
 many warning signs. If 2026 follows the same pattern, what can the app
 do so users see it coming and avoid losing money?"
 
@@ -159,6 +159,51 @@ market conditions from data the app already has.
   drawdown compared with buy-and-hold, and costs are charged on every
   switch.
 - UI slices: headless-Chromium screenshots at 1440px and 390px.
+
+## Built (slice 1) — what changed from the plan
+
+- `backend/internal/regime`: pure `Compute` over VN-Index daily bars and
+  the stock universe's bars; `GET /api/v1/market/regime` (public);
+  service caches the result for 10 minutes (one bars fetch per universe
+  symbol otherwise).
+- Signals and thresholds:
+  - Trend: above SMA 200 with SMA 200 rising = ok; one of the two =
+    caution; below a falling SMA 200 = risk.
+  - Drawdown from the 52-week high: −10% caution, −20% risk.
+  - Volatility: 20-day volatility ÷ its 1-year median, 1.25× caution,
+    1.75× risk.
+  - Breadth: % of the universe above its own SMA 200, < 60% caution,
+    < 40% risk, plus 52-week highs and lows.
+
+  Caution = 1 point, risk = 2; level ≥ 2 Thận trọng, ≥ 4 Rủi ro cao.
+  Knock-out: below a falling SMA 200 is never "Bình thường".
+- Valuation and macro rows are shown as "Chưa có dữ liệu" and not
+  scored (data checks 2 and 4 still open).
+- **Mock fix:** `MockProvider.GetBars` for an index name now uses the
+  same `indexValueFor` series `GetIndex` shows on the index cards.
+  Before this, mock "VN-Index" bars came from the stock-price generator,
+  so the regime card and the index card disagreed.
+- Frontend: `MarketRegimeCard.tsx`, full card on `/stocks` (top of the
+  right column on desktop, after the VN-Index hero on mobile) and a
+  compact one-line banner on `/portfolio` for stock portfolios. Each
+  level carries the feature-2 tightening as advice ("Nên làm: …");
+  enforcement waits for slice 2.
+- Open questions taken at their defaults: placement on Main + Portfolio;
+  breadth over the ~40 seeded tickers (the card says so).
+
+## Verification (slice 1)
+
+- `go test ./internal/regime`: steady uptrend → Bình thường with 100%
+  breadth; synthetic crash (falling 0.4%/day with violent swings) → all
+  four signals risk → Rủi ro cao; slow bleed under a falling SMA 200 →
+  knock-out to Thận trọng; no-data signals excluded from the max score;
+  short history → not ok; annualised-volatility arithmetic.
+- `go build/vet/test ./...`, frontend `typecheck`/`eslint`/`build` clean.
+- Headless Chromium on mock data: `/stocks` at 1440px and 390px and
+  `/portfolio` (logged-in test user) at 1440px. Card and banner render,
+  "Vì sao quan trọng?" expands, no console errors. The mock market reads
+  Thận trọng (2/8: volatility 1.3× normal, breadth 52%).
+- **Not verified:** live VCI data (the sandbox can't reach VCI).
 
 ## Open questions (for the user)
 
