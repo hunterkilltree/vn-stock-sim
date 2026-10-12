@@ -266,6 +266,78 @@ export function getRating(symbol: string): Promise<Rating> {
   return apiFetch<Rating>(`/api/v1/symbols/${encodeURIComponent(symbol)}/rating`);
 }
 
+export type RegimeLevel = "normal" | "caution" | "high_risk";
+
+export type RegimeSignal = {
+  key: string;
+  label: string;
+  value: string;
+  zone: "ok" | "caution" | "risk" | "nodata";
+  rule: string;
+  why: string;
+};
+
+// GET /market/regime -- "Nhiệt kế thị trường" (backend/internal/regime,
+// phase-market-risk.md). A measured read of conditions, not a forecast.
+export type MarketRegime = {
+  level: RegimeLevel;
+  score: number;
+  maxScore: number;
+  knockout?: string;
+  // Suggested limits for this level; advice until the risk-rules engine
+  // enforces them.
+  limits: { exposureCapPct: number; riskPerTradePct: number; lossLockPct: number };
+  signals: RegimeSignal[];
+  indexName: string;
+  indexValue: number;
+  asOf: number;
+  universe: number;
+  source: string;
+  generatedAt: string;
+};
+
+export function getMarketRegime(): Promise<MarketRegime> {
+  return apiFetch<MarketRegime>("/api/v1/market/regime");
+}
+
+export type StressHoldingImpact = {
+  symbol: string;
+  changePct: number;
+  lossVnd: number;
+  // No price history for that period: beta × index move instead of the real path.
+  estimated: boolean;
+  floorDays: number;
+  longestFloors: number;
+};
+
+export type StressScenario = {
+  key: string;
+  label: string;
+  kind: "historical" | "hypothetical";
+  from?: number;
+  to?: number;
+  indexChangePct: number;
+  lossVnd: number;
+  lossPct: number; // of total equity
+  holdings: StressHoldingImpact[];
+  note?: string;
+};
+
+// GET /portfolios/:id/stress-test (backend/internal/stress,
+// phase-market-risk.md slice 3).
+export type StressTest = {
+  equity: number;
+  stockValue: number;
+  cash: number;
+  betas: { symbol: string; value: number; beta: number; samples: number; crisisBeta: number }[];
+  scenarios: StressScenario[];
+  source: string;
+};
+
+export function getStressTest(portfolioId: string, token: string): Promise<StressTest> {
+  return apiFetch<StressTest>(`/api/v1/portfolios/${encodeURIComponent(portfolioId)}/stress-test`, { token });
+}
+
 export type User = {
   id: string;
   email: string;

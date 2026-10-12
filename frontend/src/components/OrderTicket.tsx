@@ -3,6 +3,7 @@
 import { useActionState, useMemo, useState } from "react";
 import Link from "next/link";
 import { placeOrderAction, type OrderFormState } from "@/lib/orderActions";
+import { exposureAfter, exposurePct, maxSharesUnderCap, type Exposure } from "@/lib/exposure";
 import { formatVN } from "@/lib/format";
 
 type Props = {
@@ -12,6 +13,9 @@ type Props = {
   portfolioName: string | null; // the active portfolio this ticket trades
   // Phone bottom bar's "Mua giấy"/"Bán giấy" preselect a side (phase-j.md decision 6).
   initialSide?: "buy" | "sell";
+  // Stock exposure vs the market regime's cap (phase-market-risk.md slice
+  // 2); omitted for guests or when the regime is unavailable.
+  exposure?: Exposure | null;
 };
 
 const ORDER_TYPES: { label: string; value: "limit" | "market" | "atc" | "stop" }[] = [
@@ -31,7 +35,7 @@ const LOT_SIZE = 100;
 // the submit area with a sign-in prompt instead of a modal -- see
 // phase-d.md decision 5 (a modal over the order ticket is explicitly
 // listed as NOT YET DESIGNED in design/SCREENS.md).
-export default function OrderTicket({ symbol, lastPrice, buyingPower, portfolioName, initialSide = "buy" }: Props) {
+export default function OrderTicket({ symbol, lastPrice, buyingPower, portfolioName, initialSide = "buy", exposure = null }: Props) {
   const initialState: OrderFormState = { error: null, success: null };
   const [state, formAction, pending] = useActionState(placeOrderAction, initialState);
 
@@ -44,6 +48,11 @@ export default function OrderTicket({ symbol, lastPrice, buyingPower, portfolioN
   const orderValue = priceVnd * quantity;
   const fee = orderValue * FEE_RATE;
   const remaining = buyingPower !== null ? buyingPower - (side === "buy" ? orderValue + fee : 0) : null;
+
+  const exposureNow = exposure ? exposurePct(exposure.stockValue, exposure.equity) : 0;
+  const exposureNext = exposure ? exposureAfter(exposure, side, orderValue, fee) : 0;
+  const overCap = exposure !== null && side === "buy" && exposureNext > exposure.capPct;
+  const capShares = exposure ? maxSharesUnderCap(exposure, priceVnd, FEE_RATE) : 0;
 
   const maxShares = useMemo(() => {
     if (buyingPower === null || priceVnd <= 0) return 0;
@@ -171,7 +180,33 @@ export default function OrderTicket({ symbol, lastPrice, buyingPower, portfolioN
             <span className="font-plex-mono">{formatVN(remaining, 0)} ₫</span>
           </div>
         )}
+        {exposure && (
+          <div className="flex justify-between text-[12.5px]" title={`Trần khi thị trường ${exposure.levelLabel}: ${formatVN(exposure.capPct, 0)}%`}>
+            <span className="text-app-text-muted">Tỷ trọng cổ phiếu</span>
+            <span className="font-plex-mono">
+              {formatVN(exposureNow, 0)}% → <span className={overCap ? "text-price-down" : ""}>{formatVN(exposureNext, 0)}%</span>
+              <span className="text-app-text-muted"> / trần {formatVN(exposure.capPct, 0)}%</span>
+            </span>
+          </div>
+        )}
       </div>
+
+      {overCap && exposure && (
+        <div className="flex flex-col gap-1 rounded-[10px] border border-app-warn-border bg-app-warn-surface px-3 py-[9px] text-[11.5px] leading-[1.45] text-app-warn-text">
+          <span>
+            Thị trường đang <b style={{ color: exposure.color }}>{exposure.levelLabel}</b>: sau lệnh này cổ phiếu chiếm{" "}
+            {formatVN(exposureNext, 0)}% tài khoản, vượt trần gợi ý {formatVN(exposure.capPct, 0)}%.
+          </span>
+          {capShares > 0 ? (
+            <button type="button" onClick={() => setQuantity(capShares)} className="self-start font-semibold underline underline-offset-2">
+              Giảm còn {formatVN(capShares, 0)} cổ phiếu để nằm trong trần
+            </button>
+          ) : (
+            <span>Danh mục đã ở mức trần; cân nhắc không mua thêm.</span>
+          )}
+          <span className="text-[10.5px] opacity-80">Chỉ là cảnh báo, lệnh vẫn được đặt nếu bạn tiếp tục.</span>
+        </div>
+      )}
 
       {buyingPower === null ? (
         <Link

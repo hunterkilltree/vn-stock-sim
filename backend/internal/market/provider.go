@@ -45,10 +45,19 @@ func (p *MockProvider) GetBars(sym, resolution string, from, to int64) []Bar {
 	from -= from % step
 	to -= to % step
 
+	// Index names use the same series GetIndex shows on the index cards,
+	// so anything reading index bars (the market regime) agrees with them.
+	closeAt := closeFor
+	for _, name := range Indices {
+		if sym == name {
+			closeAt = indexValueFor
+		}
+	}
+
 	var bars []Bar
 	for t := from; t <= to; t += step {
-		open := closeFor(sym, t-step)
-		closePrice := closeFor(sym, t)
+		open := closeAt(sym, t-step)
+		closePrice := closeAt(sym, t)
 		high := max2(open, closePrice) * (1 + 0.004)
 		low := min2(open, closePrice) * (1 - 0.004)
 		volume := int64(500000 + (seedFromSymbol(sym)+t)%1500000)

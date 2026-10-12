@@ -7,8 +7,10 @@ import OpenPositionsCard from "@/components/OpenPositionsCard";
 import ReplayPromoCard from "@/components/ReplayPromoCard";
 import QuantPromptCard from "@/components/QuantPromptCard";
 import Link from "next/link";
+import MarketRegimeCard from "@/components/MarketRegimeCard";
 import {
   getIndices,
+  getMarketRegime,
   getHeatmap,
   getMovers,
   getPortfolioSummaryByID,
@@ -21,6 +23,7 @@ import {
   type PortfolioSummary,
   type Position,
   type Portfolio,
+  type MarketRegime,
 } from "@/lib/api";
 import { getActivePortfolio, getSessionToken, getSessionUser } from "@/lib/session";
 import AccountMenuButton from "@/components/AccountMenuButton";
@@ -78,6 +81,10 @@ export default async function MarketOverviewPage() {
   } catch (e) {
     error = e instanceof Error ? e.message : "Failed to load market data";
   }
+
+  // Separate from the batch above: a regime failure (e.g. too little
+  // VN-Index history) hides the card, not the whole page.
+  const regime: MarketRegime | null = await getMarketRegime().catch(() => null);
 
   const user = await getSessionUser();
   let summary: PortfolioSummary | null = null;
@@ -186,6 +193,7 @@ export default async function MarketOverviewPage() {
           {otherIndices.length > 0 && (
             <MobileChips chips={otherIndices.map((ix) => ({ name: ix.name.replace(/-INDEX$/, ""), value: formatVN(ix.value, 2), changePercent: ix.changePercent }))} />
           )}
+          {regime && <MarketRegimeCard regime={regime} />}
           <section className="flex flex-col gap-[10px]">
             <MobileSectionHead
               title="Bản đồ nhiệt"
@@ -228,6 +236,7 @@ export default async function MarketOverviewPage() {
           </div>
 
           <div className="flex w-[372px] shrink-0 flex-col gap-4">
+            {regime && <MarketRegimeCard regime={regime} />}
             {summary && activePortfolio ? (
               <>
                 <PaperAccountCard

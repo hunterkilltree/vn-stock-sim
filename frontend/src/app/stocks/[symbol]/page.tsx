@@ -7,6 +7,7 @@ import {
   getOrderBook,
   getInsight,
   getRating,
+  getMarketRegime,
   getPortfolioSummaryByID,
   getWatchlist,
   type Bar,
@@ -15,6 +16,7 @@ import {
   type PriceLevel,
   type Insight,
   type Rating,
+  type MarketRegime,
 } from "@/lib/api";
 import RailNav from "@/components/RailNav";
 import AccountMenuButton from "@/components/AccountMenuButton";
@@ -33,6 +35,8 @@ import WatchlistButton from "@/components/WatchlistButton";
 import Link from "next/link";
 import { formatThousandsVN, formatVN, formatVolumeVN, signVN, tone } from "@/lib/format";
 import { getActivePortfolio, getSessionToken, getSessionUser } from "@/lib/session";
+import { exposureFor } from "@/lib/regime";
+import type { Exposure } from "@/lib/exposure";
 
 type Props = {
   params: Promise<{ symbol: string }>;
@@ -114,13 +118,15 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
   }
 
   // Independent of each other; a failure in either just hides its card.
-  const [insight, rating] = await Promise.all([
+  const [insight, rating, regime] = await Promise.all([
     getInsight(symbol).catch((): Insight | null => null),
     getRating(symbol).catch((): Rating | null => null),
+    getMarketRegime().catch((): MarketRegime | null => null),
   ]);
 
   const user = await getSessionUser();
   let buyingPower: number | null = null;
+  let exposure: Exposure | null = null;
   let activePortfolioName: string | null = null;
   let watched = false;
   if (user) {
@@ -131,7 +137,9 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
         const { active } = await getActivePortfolio(token);
         if (active) {
           activePortfolioName = active.name;
-          buyingPower = (await getPortfolioSummaryByID(active.id, token)).cashBalance;
+          const summary = await getPortfolioSummaryByID(active.id, token);
+          buyingPower = summary.cashBalance;
+          if (regime) exposure = exposureFor(regime, summary.marketValue, summary.totalEquity);
         }
       }
     } catch {
@@ -306,6 +314,7 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
                 buyingPower={buyingPower}
                 portfolioName={activePortfolioName}
                 initialSide={initialSide}
+                exposure={exposure}
               />
             </div>
             <OrderBookPanel bids={orderBook.bids} asks={orderBook.asks} />

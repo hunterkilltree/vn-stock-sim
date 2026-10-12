@@ -51,6 +51,11 @@ Planned feature: 12 risk-management rules (trade plan, risk sizing,
 6% monthly lock, T+2/floor/tax, R-multiple journal, process-based
 Replay score, backtest holdout) in coach/strict modes -- phase-risk-rules.md.
 
+Planned feature: market risk -- slice 1 (Nhiệt kế thị trường card) built;
+slice 2 partly (exposure-cap warning on the order ticket); slice 3
+(portfolio stress test tab) built; crash Replays planned --
+phase-market-risk.md.
+
 Planned next: Phase M (ship it: CI, security, a safe ledger, deploy) --
 phase-m.md. Then Phase L (FULL-APP-PLAN.md's stretch list).
 
