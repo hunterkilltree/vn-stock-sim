@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"sync"
 	"time"
@@ -97,14 +98,17 @@ func (s *Service) AIReview(ctx context.Context, sym string) (AIReview, error) {
 	s.mu.Lock()
 	if c, ok := s.aiCache[key]; ok && time.Since(c.at) < aiCacheTTL {
 		s.mu.Unlock()
+		log.Printf("luk ai review: symbol=%s served from cache (no Gemini call)", res.Symbol)
 		return c.review, nil
 	}
 	s.mu.Unlock()
 
 	text, err := s.reviewer.Review(ctx, systemPrompt, userPrompt(res))
 	if err != nil {
+		log.Printf("luk ai review: symbol=%s FAILED: %v", res.Symbol, err)
 		return AIReview{}, err
 	}
+	log.Printf("luk ai review: symbol=%s OK verdict=%s", res.Symbol, res.Verdict)
 	out := AIReview{
 		Symbol:      res.Symbol,
 		Verdict:     res.Verdict,

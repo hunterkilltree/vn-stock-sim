@@ -3,7 +3,6 @@ package luk
 import (
 	"context"
 	"errors"
-	"log"
 	"net/http"
 	"time"
 
@@ -44,7 +43,6 @@ func writeErr(c *gin.Context, err error) {
 	case errors.Is(err, ErrAIDisabled):
 		httpx.Error(c, http.StatusServiceUnavailable, "ai_disabled", "GEMINI_API_KEY is not set on the server")
 	case errors.Is(err, ErrAIFailed):
-		log.Printf("luk ai review: %v", err)
 		httpx.Error(c, http.StatusBadGateway, "ai_failed", "the AI review failed; try again later")
 	default:
 		httpx.Error(c, http.StatusInternalServerError, "internal_error", "could not review symbol")

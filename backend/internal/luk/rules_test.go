@@ -179,3 +179,49 @@ func TestGeminiReviewerError(t *testing.T) {
 		t.Error("empty key should disable the reviewer")
 	}
 }
+
+func TestGeminiCheck(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet || r.URL.Path != "/models/good-model" || r.Header.Get("x-goog-api-key") != "k123" {
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = w.Write([]byte(`{"error":{"message":"models/bad-model is not found"}}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"name":"models/good-model"}`))
+	}))
+	defer srv.Close()
+	g := NewGeminiReviewer("k123", "good-model")
+	g.base = srv.URL
+	if err := g.Check(context.Background()); err != nil {
+		t.Fatalf("good setup: %v", err)
+	}
+	g.model = "bad-model"
+	if err := g.Check(context.Background()); err == nil || !strings.Contains(err.Error(), "is not found") {
+		t.Fatalf("bad model: %v", err)
+	}
+}
+
+func TestGeminiUsageAndEmptyText(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"candidates":[{"content":{"parts":[]},"finishReason":"MAX_TOKENS"}],"usageMetadata":{"promptTokenCount":12,"totalTokenCount":4108}}`))
+	}))
+	defer srv.Close()
+	g := NewGeminiReviewer("k", "m")
+	g.base = srv.URL
+	_, usage, err := g.generate(context.Background(), "s", "p")
+	if err == nil || !strings.Contains(err.Error(), "finish=MAX_TOKENS") {
+		t.Fatalf("err = %v", err)
+	}
+	if usage.PromptTokenCount != 12 || usage.TotalTokenCount != 4108 {
+		t.Errorf("usage = %+v", usage)
+	}
+}
+
+func TestMaskKey(t *testing.T) {
+	if got := maskKey("AIzaSyABCDEFGH1234"); got != "AIza…1234 (18 chars)" {
+		t.Errorf("got %q", got)
+	}
+	if got := maskKey("short"); strings.Contains(got, "short") {
+		t.Errorf("short key leaked: %q", got)
+	}
+}
