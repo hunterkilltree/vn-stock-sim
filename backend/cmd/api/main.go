@@ -161,7 +161,7 @@ func main() {
 	backtest.RegisterRoutes(v1, backtestSvc, tokens)
 	insight.RegisterRoutes(v1, insightSvc)
 	rating.RegisterRoutes(v1, ratingSvc)
-	luk.RegisterRoutes(v1, lukSvc, tokens)
+	luk.RegisterRoutes(v1, lukSvc)
 	regime.RegisterRoutes(v1, regimeSvc)
 	stress.RegisterRoutes(v1, stressSvc, tokens)
 	screener.RegisterRoutes(v1, screenerSvc)

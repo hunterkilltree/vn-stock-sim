@@ -1,22 +1,17 @@
 "use server";
 
-import { getSessionToken } from "./session";
-
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
 
 // POST /symbols/:symbol/luk-review/ai -- Gemini's commentary on the Martin
-// Luk checklist (phase-luk-review.md). Server-side so the session cookie
-// stays httpOnly; the Gemini key itself only ever lives on the backend.
+// Luk checklist (phase-luk-review.md). Public, no sign-in needed; the
+// Gemini key itself only ever lives on the backend.
 export async function lukAIReviewAction(
   symbol: string,
 ): Promise<{ text: string; model: string; error: null } | { error: string }> {
-  const token = await getSessionToken();
-  if (!token) return { error: "Bạn cần đăng nhập để nhờ AI nhận xét." };
   let res: Response;
   try {
     res = await fetch(`${API_BASE_URL}/api/v1/symbols/${encodeURIComponent(symbol)}/luk-review/ai`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
       signal: AbortSignal.timeout(70_000),
     });

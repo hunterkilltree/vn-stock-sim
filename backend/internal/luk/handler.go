@@ -8,14 +8,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/hunterkilltree/vn-stock-sim/backend/internal/authtoken"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/httpx"
-	"github.com/hunterkilltree/vn-stock-sim/backend/internal/middleware"
 )
 
-// RegisterRoutes mounts the checklist (public, like rating) and the
-// Gemini review (signed-in only: it spends the operator's API quota).
-func RegisterRoutes(v1 *gin.RouterGroup, svc *Service, tokens *authtoken.Issuer) {
+// RegisterRoutes mounts the checklist and the Gemini review, both public
+// like rating: anyone viewing a stock can ask for the review. The service's
+// 15-minute per-symbol cache bounds how often it spends the operator's
+// Gemini quota (phase-luk-review.md decision 6).
+func RegisterRoutes(v1 *gin.RouterGroup, svc *Service) {
 	v1.GET("/symbols/:symbol/luk-review", func(c *gin.Context) {
 		res, err := svc.Review(c.Param("symbol"))
 		if err != nil {
@@ -24,7 +24,7 @@ func RegisterRoutes(v1 *gin.RouterGroup, svc *Service, tokens *authtoken.Issuer)
 		}
 		httpx.Item(c, http.StatusOK, res)
 	})
-	v1.POST("/symbols/:symbol/luk-review/ai", middleware.RequireAuth(tokens), func(c *gin.Context) {
+	v1.POST("/symbols/:symbol/luk-review/ai", func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 60*time.Second)
 		defer cancel()
 		res, err := svc.AIReview(ctx, c.Param("symbol"))
