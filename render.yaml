@@ -26,6 +26,10 @@ services:
         fromDatabase:
           name: vss-db
           property: connectionString
+      # Martin Luk review's Gemini commentary (phase-luk-review.md); set the
+      # value in the Render dashboard, never in this file.
+      - key: GEMINI_API_KEY
+        sync: false
 
   - type: web
     name: vss-frontend

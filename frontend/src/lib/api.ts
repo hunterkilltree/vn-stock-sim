@@ -266,6 +266,48 @@ export function getRating(symbol: string): Promise<Rating> {
   return apiFetch<Rating>(`/api/v1/symbols/${encodeURIComponent(symbol)}/rating`);
 }
 
+// GET /symbols/:symbol/luk-review -- Martin Luk's swing-trading rules as a
+// checklist (backend/internal/luk, phase-luk-review.md). plan is null with
+// too little history; aiAvailable says whether the server has a Gemini key.
+export type LukCheck = {
+  key: string;
+  group: "setup" | "entry" | "risk";
+  label: string;
+  value: string;
+  status: "pass" | "warn" | "fail";
+  core: boolean;
+  detail: string;
+};
+
+export type LukPlan = {
+  entry: number;
+  stop: number;
+  stopPct: number;
+  riskPct: number;
+  positionPct: number;
+  target: number;
+  rewardRisk: number;
+  trailEma9: number;
+  ema21: number;
+};
+
+export type LukReview = {
+  symbol: string;
+  verdict: "buy" | "watch" | "avoid";
+  passed: number;
+  total: number;
+  checks: LukCheck[];
+  plan: LukPlan | null;
+  notes: string[];
+  aiAvailable: boolean;
+  source: string;
+  generatedAt: string;
+};
+
+export function getLukReview(symbol: string): Promise<LukReview> {
+  return apiFetch<LukReview>(`/api/v1/symbols/${encodeURIComponent(symbol)}/luk-review`);
+}
+
 export type RegimeLevel = "normal" | "caution" | "high_risk";
 
 export type RegimeSignal = {

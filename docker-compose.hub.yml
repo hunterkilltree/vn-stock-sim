@@ -42,6 +42,9 @@ services:
       # endpoints unless this is "true". Set "false" if your AI server is a
       # public https URL instead.
       QUANT_ALLOW_PRIVATE_ENDPOINTS: ${QUANT_ALLOW_PRIVATE_ENDPOINTS:-true}
+      # Martin Luk review's Gemini commentary (phase-luk-review.md).
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
     depends_on:
       db:
         condition: service_healthy

@@ -15,6 +15,7 @@ bare filename (e.g. "phase-f.md decision 4"); filenames are unique.
 
 Last updated: 2026-09-26 (Quant Gemini bridge).
 Last updated: 2026-09-30 (Phase M planned).
+Last updated: 2026-10-13 (Martin Luk rule review).
 
 ## Status
 
@@ -41,6 +42,7 @@ Vietnamese unless noted; English localization is deferred (Phase L).
 | — | Reference "Máy chủ riêng" server: Python/FastAPI bridge to Gemini | phase-quant-gemini-bridge.md |
 | — | Rule-based Mua mạnh .. Bán mạnh rating card on the stock detail page | phase-rating.md |
 | — | Holding-horizon verdicts (3–6 tháng / 1–3 năm) + today's valuation buy zone on the same card; HOSE tiered tick sizes (H1 + V-1; H2/V-2 open) | phase-holding-horizon.md, phase-valuation.md |
+| — | Martin Luk rule review card (pullback checklist, trade plan, optional Gemini commentary via `GEMINI_API_KEY`) | phase-luk-review.md |
 
 
 Planned feature: stage 2 of the rating card -- fundamentals history,

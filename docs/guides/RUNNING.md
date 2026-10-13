@@ -39,6 +39,8 @@ Environment variables (all optional, with defaults from
 | `DATABASE_URL`                  | unset (in-memory)      | Postgres connection URL, e.g. `postgres://vss:pw@localhost:5432/vss?sslmode=disable`. The schema is created and migrated on startup. |
 | `ORDER_MATCH_INTERVAL`          | `20s`                  | How often queued limit/stop/ATC/OCO orders are checked against new 5-minute bars (Go duration, e.g. `5s`) |
 | `QUANT_ALLOW_PRIVATE_ENDPOINTS` | unset (off)            | `true` lets Trợ lý Quant's "Máy chủ riêng" provider reach localhost/private addresses (e.g. Ollama on the same machine). Leave off on any shared server. |
+| `GEMINI_API_KEY`                | unset (AI review off)  | Google Gemini key (https://aistudio.google.com/apikey) for the "Nhờ AI nhận xét" button on the Martin Luk card (phase-luk-review.md). Server-side only; the checklist itself works without it. |
+| `GEMINI_MODEL`                  | `gemini-2.5-flash`     | Gemini model used for that review. |
 
 Verify it is up:
 

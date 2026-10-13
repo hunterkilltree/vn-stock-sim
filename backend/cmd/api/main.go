@@ -21,6 +21,7 @@ import (
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/crypto"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/db"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/insight"
+	"github.com/hunterkilltree/vn-stock-sim/backend/internal/luk"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/market"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/order"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/portfolio"
@@ -108,6 +109,12 @@ func main() {
 	backtestSvc := backtest.NewService(st.backtest, marketSvc)
 	insightSvc := insight.NewService(symbolSvc, marketSvc)
 	ratingSvc := rating.NewService(symbolSvc, marketSvc)
+	// A nil *GeminiReviewer must become a nil interface, not a typed nil.
+	var lukReviewer luk.Reviewer
+	if g := luk.NewGeminiReviewer(cfg.GeminiAPIKey, cfg.GeminiModel); g != nil {
+		lukReviewer = g
+	}
+	lukSvc := luk.NewService(symbolSvc, marketSvc, lukReviewer)
 	regimeSvc := regime.NewService(symbolSvc, marketSvc)
 	stressSvc := stress.NewService(portfolioSvc, symbolSvc, marketSvc)
 	screenerSvc := screener.NewService(symbolSvc, marketSvc)
@@ -146,6 +153,7 @@ func main() {
 	backtest.RegisterRoutes(v1, backtestSvc, tokens)
 	insight.RegisterRoutes(v1, insightSvc)
 	rating.RegisterRoutes(v1, ratingSvc)
+	luk.RegisterRoutes(v1, lukSvc, tokens)
 	regime.RegisterRoutes(v1, regimeSvc)
 	stress.RegisterRoutes(v1, stressSvc, tokens)
 	screener.RegisterRoutes(v1, screenerSvc)
