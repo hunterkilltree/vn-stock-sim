@@ -27,6 +27,11 @@ type Config struct {
 	// DatabaseURL turns on Postgres storage (phase-persistence.md
 	// decision 2); empty keeps every store in memory, as before.
 	DatabaseURL string
+	// GeminiAPIKey turns on the Gemini commentary under the Martin Luk
+	// checklist (phase-luk-review.md); empty hides it. GeminiModel picks
+	// the model (GEMINI_MODEL, default gemini-2.5-flash).
+	GeminiAPIKey string
+	GeminiModel  string
 }
 
 func Load() Config {
@@ -38,6 +43,8 @@ func Load() Config {
 		QuantAllowPrivateEndpoints: os.Getenv("QUANT_ALLOW_PRIVATE_ENDPOINTS") == "true",
 		OrderMatchInterval:         getDuration("ORDER_MATCH_INTERVAL", 20*time.Second),
 		DatabaseURL:                os.Getenv("DATABASE_URL"),
+		GeminiAPIKey:               os.Getenv("GEMINI_API_KEY"),
+		GeminiModel:                getenv("GEMINI_MODEL", "gemini-2.5-flash"),
 	}
 }
 

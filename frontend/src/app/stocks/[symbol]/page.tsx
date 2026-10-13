@@ -7,6 +7,7 @@ import {
   getOrderBook,
   getInsight,
   getRating,
+  getLukReview,
   getMarketRegime,
   getPortfolioSummaryByID,
   getWatchlist,
@@ -16,6 +17,7 @@ import {
   type PriceLevel,
   type Insight,
   type Rating,
+  type LukReview,
   type MarketRegime,
 } from "@/lib/api";
 import RailNav from "@/components/RailNav";
@@ -29,6 +31,7 @@ import BuySellPressurePanel from "@/components/BuySellPressurePanel";
 import FundamentalsGrid from "@/components/FundamentalsGrid";
 import AIInsightCard from "@/components/AIInsightCard";
 import RatingCard from "@/components/RatingCard";
+import LukReviewCard from "@/components/LukReviewCard";
 import CompactChart from "@/components/CompactChart";
 import MobileActionBar from "@/components/MobileActionBar";
 import WatchlistButton from "@/components/WatchlistButton";
@@ -118,10 +121,11 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
   }
 
   // Independent of each other; a failure in either just hides its card.
-  const [insight, rating, regime] = await Promise.all([
+  const [insight, rating, regime, lukReview] = await Promise.all([
     getInsight(symbol).catch((): Insight | null => null),
     getRating(symbol).catch((): Rating | null => null),
     getMarketRegime().catch((): MarketRegime | null => null),
+    getLukReview(symbol).catch((): LukReview | null => null),
   ]);
 
   const user = await getSessionUser();
@@ -305,6 +309,7 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
 
           <div className="flex w-full flex-col gap-4 lg:w-[344px] lg:shrink-0">
             {rating && <RatingCard rating={rating} />}
+            {lukReview && <LukReviewCard review={lukReview} />}
             {/* The mobile Mua/Bán buttons jump here, past the rating card. */}
             <div id="dat-lenh" className="scroll-mt-4">
               <OrderTicket

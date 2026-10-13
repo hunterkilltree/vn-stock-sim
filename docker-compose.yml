@@ -36,6 +36,10 @@ services:
       # Trợ lý Quant's "Máy chủ riêng" provider reach it in this demo (see
       # phase-quant-gemini-bridge.md). Leave unset on a shared/public host.
       QUANT_ALLOW_PRIVATE_ENDPOINTS: "true"
+      # Gemini commentary on the Martin Luk card (phase-luk-review.md);
+      # read from .env, empty hides the button.
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
     depends_on:
       db:
         condition: service_healthy
