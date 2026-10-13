@@ -104,6 +104,24 @@ they're "not hard rules".
 - Rendered the card in Chromium (dev server against the mock API).
 - Not verified: a real Gemini answer (no key in the sandbox).
 
+## Checking Gemini works (logs)
+
+Every line starts with `luk gemini:` or `luk ai review:`, so
+`grep luk` on the backend log (Render → Logs, `docker compose logs
+backend`) shows them. The key is never logged in full -- only its first
+and last 4 characters and its length, enough to spot a wrong key or one
+pasted with quotes/spaces.
+
+| When | Line | Meaning |
+|---|---|---|
+| Startup | `AI review DISABLED (button hidden)` | `GEMINI_API_KEY` is empty or missing. |
+| Startup | `AI review ENABLED (model=… key=AIza…1234 (39 chars))` | A key was read; a check follows. |
+| Startup | `setup check OK` | Key valid and `GEMINI_MODEL` exists (a free `GET models/{model}`, no tokens). |
+| Startup | `setup check FAILED …: Gemini 400: API key not valid` | Bad key. `404 … not found` = wrong model name; `403` = API not enabled / key restricted. |
+| Each click | `call OK model=… took=… finish=STOP promptTokens=… outputTokens=…` | Gemini answered; token counts are what the call cost. |
+| Each click | `call FAILED … Gemini 429: …` | Quota/rate limit. `no text (finish=MAX_TOKENS/SAFETY)` = Gemini answered empty. |
+| Each click | `luk ai review: symbol=FPT OK verdict=watch` / `FAILED` / `served from cache` | Per-stock outcome; a cache hit makes no Gemini call. |
+
 ## Future work
 
 - A screener preset "Luk setups today" over the whole universe.

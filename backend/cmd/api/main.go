@@ -113,6 +113,14 @@ func main() {
 	var lukReviewer luk.Reviewer
 	if g := luk.NewGeminiReviewer(cfg.GeminiAPIKey, cfg.GeminiModel); g != nil {
 		lukReviewer = g
+		log.Printf("luk gemini: AI review ENABLED (model=%s key=%s); checking the key...", cfg.GeminiModel, g.MaskedKey())
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+			defer cancel()
+			g.LogStartupCheck(ctx)
+		}()
+	} else {
+		log.Printf("luk gemini: GEMINI_API_KEY not set -- AI review DISABLED (button hidden)")
 	}
 	lukSvc := luk.NewService(symbolSvc, marketSvc, lukReviewer)
 	regimeSvc := regime.NewService(symbolSvc, marketSvc)
