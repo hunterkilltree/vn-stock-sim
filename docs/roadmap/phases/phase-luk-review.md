@@ -11,7 +11,7 @@ reads the checklist and explains it in plain Vietnamese.
   threshold a named constant), `service.go`, `gemini.go` (the only vendor
   code, behind the `Reviewer` interface), `handler.go`.
 - API: `GET /api/v1/symbols/:symbol/luk-review` (public, like `/rating`);
-  `POST /api/v1/symbols/:symbol/luk-review/ai` (signed-in; 503
+  `POST /api/v1/symbols/:symbol/luk-review/ai` (public too; 503
   `ai_disabled` without a key, 502 `ai_failed` on a Gemini error).
 - Frontend: `LukReviewCard.tsx`, `LukAIReview.tsx` (client button),
   `lib/lukActions.ts` (server action), `getLukReview` in `lib/api.ts`.
@@ -87,8 +87,11 @@ they're "not hard rules".
 6. **Gemini, server key.** Unlike Trợ lý Quant (BYOK per user, phase-h.md),
    this uses the operator's `GEMINI_API_KEY`, sent as the
    `x-goog-api-key` header (never in a URL that could be logged). The AI
-   endpoint requires sign-in because it spends that quota, and a review
-   is cached per symbol + checklist for 15 minutes. Crypto is not
+   endpoint was first signed-in only; it is now public so visitors can use
+   it without an account. What bounds the quota is the cache: a review is
+   kept per symbol + checklist for 15 minutes, so repeat clicks on a stock
+   cost nothing. (No per-IP rate limit yet -- add one if the quota is
+   abused.) Crypto is not
    reviewed (404).
 
 ## Verification
@@ -99,7 +102,7 @@ they're "not hard rules".
   header key, systemInstruction) and error propagation against an
   `httptest` server.
 - Ran the API on mock data: HPG/VCB/FPT return full checklists; the AI
-  endpoint returns 401 signed out, and with a dummy key reaches the real
+  endpoint (then signed-in only) returned 401 signed out, and with a dummy key reaches the real
   Gemini API and maps its "API key not valid" to 502 `ai_failed`.
 - Rendered the card in Chromium (dev server against the mock API).
 - Not verified: a real Gemini answer (no key in the sandbox).
