@@ -21,6 +21,9 @@ type Fundamentals struct {
 	AvgHistPE float64 // e.g. 5-year average P/E
 	StdHistPE float64 // standard deviation of that P/E
 	HighYield float64 // historical high cash dividend yield (0.06 = 6%)
+	// RecentLoss: a loss in one of the last 3 fiscal years on record.
+	// Needs history; false when there is none.
+	RecentLoss bool
 }
 
 type Method string
@@ -43,32 +46,29 @@ var Methods = []Method{GrahamNumber, GrahamFormula, LynchFair, Rule1Sticker, Wei
 type Params struct {
 	MarginOfSafety map[Method]float64
 	BaseYieldPct   float64 // Graham's 4.4 (AAA yield, 1962)
-	BondYieldPct   float64 // VN 10-year government yield today
+	BondYieldPct   float64 // VN 10-year government yield, as of BondYieldAsOf
+	BondYieldAsOf  string  // YYYY-MM-DD of that observation
 	MARR           float64 // Rule #1 minimum acceptable return, 0.15
 	Years          int     // Rule #1 horizon, 10
 	MaxGrowthPct   float64 // cap g so one boom year can't explode the value
 }
 
-// BondYieldPct: VN 10-year government bond yield, as of BondYieldAsOf.
-// Taken from the user's research note (State Treasury auction); not
-// independently verified -- a backtest needs a time series instead.
-const (
-	BondYieldPct  = 4.43
-	BondYieldAsOf = "2026-09-09"
-)
-
+// DefaultParams uses the latest bond yield in bondyield.csv. A backtest
+// sets BondYieldPct/BondYieldAsOf from BondYieldOn(bar date) instead.
 func DefaultParams() Params {
+	y := LatestBondYield()
 	return Params{
 		MarginOfSafety: map[Method]float64{
 			GrahamNumber:  0.25,
 			GrahamFormula: 0.25,
 			Rule1Sticker:  0.5,
 		},
-		BaseYieldPct: 4.4,
-		BondYieldPct: BondYieldPct,
-		MARR:         0.15,
-		Years:        10,
-		MaxGrowthPct: 25,
+		BaseYieldPct:  4.4,
+		BondYieldPct:  y.YieldPct,
+		BondYieldAsOf: y.Date,
+		MARR:          0.15,
+		Years:         10,
+		MaxGrowthPct:  25,
 	}
 }
 
@@ -173,7 +173,10 @@ type Quality struct {
 	Reason string `json:"reason,omitempty"`
 }
 
-const minROE = 10.0
+const (
+	minROE             = 10.0
+	minProfitableYears = 3
+)
 
 func CheckQuality(f Fundamentals) Quality {
 	switch {
@@ -181,6 +184,8 @@ func CheckQuality(f Fundamentals) Quality {
 		return Quality{Reason: "Doanh nghiệp đang lỗ"}
 	case f.ROE > 0 && f.ROE < minROE:
 		return Quality{Reason: "ROE dưới 10%"}
+	case f.RecentLoss:
+		return Quality{Reason: "Có năm lỗ trong 3 năm gần nhất"}
 	}
 	return Quality{Passed: true}
 }
@@ -204,7 +209,7 @@ type Summary struct {
 // exchange's price grid with roundDown (symbol.FloorToTick in
 // production; passed in so this package stays dependency-free).
 func Summarize(f Fundamentals, p Params, roundDown func(float64) float64) Summary {
-	s := Summary{Price: f.Price, Quality: CheckQuality(f), BondYieldPct: p.BondYieldPct, BondYieldAt: BondYieldAsOf}
+	s := Summary{Price: f.Price, Quality: CheckQuality(f), BondYieldPct: p.BondYieldPct, BondYieldAt: p.BondYieldAsOf}
 	for _, m := range Methods {
 		v := Evaluate(m, f, p)
 		if v.Applicable {

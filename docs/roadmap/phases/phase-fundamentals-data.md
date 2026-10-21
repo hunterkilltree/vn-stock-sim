@@ -1,6 +1,8 @@
 # Phase: Real fundamentals data for valuation and the rating card
 
-Status: **planned, not built (2026-10-21).** Expands slice 2 of
+Status: **steps 2 and 3 built offline (2026-10-21, branch
+`claude/fundamentals-history-port`); steps 0, 1 and the wiring wait on
+VCI access.** Expands slice 2 of
 phase-valuation-backtest.md ("point-in-time fundamentals") into a
 concrete fetch plan, and answers its open question 1 with option (a),
 VCI's company-financials endpoints.
@@ -142,6 +144,37 @@ phase-valuation-backtest.md slice 2 already names.
    slice 3, unchanged.
 
 Step 1 depends on step 0. Step 3 is independent.
+
+## Built so far (branch `claude/fundamentals-history-port`)
+
+Everything that doesn't need a live response:
+
+- `valuation/asof.go`: `Period`, `Dividend`, `Close`, `FilingDeadline`
+  and `AsOf(periods, dividends, closes, t, opts) Snapshot`, implementing
+  design item 4 and the share-basis rule in item 6. **Changed from the
+  design:** the data types live in `valuation`, not `symbol`, so the
+  pure package stays dependency-free and the port in `symbol` returns
+  `valuation` types. P/E and yield history are sampled at month-end
+  closes, not daily (enough for a 5-year band). The quality gate's
+  "EPS > 0 for 3 years" became `Fundamentals.RecentLoss` (a loss in the
+  last 3 fiscal years), so a short history doesn't fail the gate.
+- `symbol/financials.go`: the `FinancialsProvider` port and
+  `Financials` type. Nothing implements it yet.
+- `valuation/bondyield.csv` + `BondYieldOn(t)` (step 3). It holds only
+  the one row we have (4.43% on 2026-09-09, unverified), so behaviour
+  today is unchanged. Before its first row, `BondYieldOn` reports the
+  yield as unknown rather than borrowing a later one. **Needs more
+  rows**, with sources, before any backtest before 2026-09 can use
+  Graham 1974.
+- Tests (`asof_test.go`): an unpublished quarter is invisible;
+  quarterly-to-annual fallback; growth restated across a bonus issue;
+  growth undefined after a loss year; ROE σ; the P/E band needs 3 years
+  of points; trailing cash yield and its 5-year high; flat P/E across a
+  1:1 bonus issue on both adjusted and unadjusted closes.
+
+Not wired yet: `rating/service.go` still feeds `valuation` from the
+seeded snapshot. Wiring comes with the adapter (step 1), so the card
+doesn't change until there is real data behind it.
 
 ## Verification
 
