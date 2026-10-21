@@ -21,6 +21,8 @@ function ruleSummary(run: BacktestRun): string {
 }
 
 const date = (t: number) => new Date(t * 1000).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" });
+// Fees run from a few thousand đồng to millions; capital is millions.
+const money = (v: number) => (v >= 1_000_000 ? `${formatVN(v / 1_000_000, 1)} tr ₫` : `${formatVN(v / 1_000, 0)} k ₫`);
 const years = (run: BacktestRun) => Math.max(1, Math.round((Date.parse(run.to) - Date.parse(run.from)) / (365.25 * 24 * 3600 * 1000)));
 
 // "Kiểm thử lịch sử" (phase-k.md decision 14): no design exists, so this
@@ -55,6 +57,27 @@ export default async function BacktestPage({ searchParams }: PageProps<"/backtes
         { k: "Số lệnh", v: String(run.totalTrades), c: "var(--app-text)", note: run.totalTrades ? `Thắng ${formatVN(run.winRate, 1)}%` : "Chưa có lệnh đóng" },
         { k: "Sụt giảm tối đa", v: run.maxDrawdownPercent ? `−${formatVN(run.maxDrawdownPercent, 2)}%` : "0%", c: run.maxDrawdownPercent ? "#FF5C5C" : "var(--app-text)", note: "Từ đỉnh vốn" },
         { k: "Hệ số lợi nhuận", v: run.profitFactor ? formatVN(run.profitFactor, 2) : "—", c: "var(--app-text)", note: "Lãi gộp / lỗ gộp" },
+        ...(run.timeInCashPercent !== undefined
+          ? [
+              {
+                k: "Thời gian giữ tiền mặt",
+                v: `${formatVN(run.timeInCashPercent, 1)}%`,
+                c: "var(--app-text)",
+                note: run.daysToFirstFill == null ? "Chưa mua lần nào" : `Lệnh mua đầu sau ${run.daysToFirstFill} ngày`,
+              },
+            ]
+          : []),
+      ]
+    : [];
+
+  // Phase-valuation-backtest.md slice 1: a rule that sat in cash through
+  // a rally must look bad, because it was.
+  const cashDrag = run?.timeInCashPercent !== undefined && run.timeInCashPercent >= 50 && run.benchmarkReturnPercent > 0;
+  const baselines = run?.lumpSum && run.dca
+    ? [
+        { name: "Quy tắc", r: { finalCapital: run.finalCapital, returnPercent: run.returnPercent, maxDrawdownPercent: run.maxDrawdownPercent, feesPaid: run.feesPaid ?? 0 }, cash: run.timeInCashPercent },
+        { name: "Mua một lần ngày đầu", r: run.lumpSum, cash: undefined },
+        { name: "Mua đều hằng tháng", r: run.dca, cash: undefined },
       ]
     : [];
 
@@ -132,15 +155,22 @@ export default async function BacktestPage({ searchParams }: PageProps<"/backtes
                       </span>
                     </div>
                     <span className="text-[11.5px] text-app-text-muted">
-                      {run.from} → {run.to} · nến ngày · chưa tính phí giao dịch
+                      {run.from} → {run.to} · nến ngày ·{" "}
+                      {run.lumpSum ? "phí 0,15% mỗi chiều · lô 100 cổ phiếu" : "chưa tính phí giao dịch (lần chạy cũ)"}
                     </span>
                   </section>
 
-                  <div className="grid grid-cols-2 gap-[9px] lg:grid-cols-5 lg:gap-[14px]">
+                  {cashDrag && (
+                    <p className="m-0 rounded-xl border border-app-warn-border bg-app-warn-surface p-4 text-[12.5px] leading-[1.55] text-app-warn-text">
+                      Quy tắc giữ tiền mặt {formatVN(run.timeInCashPercent ?? 0, 0)}% thời gian trong khi mua và giữ lãi {signVN(run.benchmarkReturnPercent, 2)}%. Chờ điểm vào thường thua đầu tư ngay — hãy so với hai đường còn lại.
+                    </p>
+                  )}
+
+                  <div className={`grid grid-cols-2 gap-[9px] lg:gap-[14px] ${kpis.length > 5 ? "lg:grid-cols-3" : "lg:grid-cols-5"}`}>
                     {kpis.map((k, i) => (
                       <section
                         key={k.k}
-                        className={`flex min-w-0 flex-col gap-2 rounded-[14px] border border-app-border bg-app-surface p-[12px_14px] lg:p-[15px_17px] ${i === 0 ? "col-span-2 lg:col-span-1" : ""}`}
+                        className={`flex min-w-0 flex-col gap-2 rounded-[14px] border border-app-border bg-app-surface p-[12px_14px] lg:p-[15px_17px] ${i === 0 && kpis.length % 2 === 1 ? "col-span-2 lg:col-span-1" : ""}`}
                       >
                         <span className="text-[10px] uppercase tracking-[0.06em] text-app-text-muted lg:text-[10.5px]">{k.k}</span>
                         <span className="font-plex-mono text-[18px] font-semibold" style={{ color: k.c }}>
@@ -155,6 +185,40 @@ export default async function BacktestPage({ searchParams }: PageProps<"/backtes
                     <h2 className="m-0 text-[15px] font-semibold">Đường vốn</h2>
                     <BacktestEquityChart run={run} />
                   </section>
+
+                  {baselines.length > 0 && (
+                    <section className="flex flex-col gap-3 rounded-2xl border border-app-border bg-app-surface p-[18px]">
+                      <h2 className="m-0 text-[15px] font-semibold">So với không dùng quy tắc</h2>
+                      <div className="-mx-[18px] overflow-x-auto px-[18px]">
+                        <table className="w-full min-w-[600px] border-collapse whitespace-nowrap text-[12.5px]">
+                          <thead>
+                            <tr className="text-[10.5px] uppercase tracking-[0.07em] text-app-text-muted">
+                              <th scope="col" className="pb-2 text-left font-medium">Cách đầu tư</th>
+                              <th scope="col" className="pb-2 pl-3 text-right font-medium">Lợi nhuận</th>
+                              <th scope="col" className="pb-2 pl-3 text-right font-medium">Vốn cuối kỳ</th>
+                              <th scope="col" className="pb-2 pl-3 text-right font-medium">Sụt giảm tối đa</th>
+                              <th scope="col" className="pb-2 pl-3 text-right font-medium">Phí</th>
+                              <th scope="col" className="pb-2 pl-3 text-right font-medium">Giữ tiền mặt</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {baselines.map((b) => (
+                              <tr key={b.name} className="border-t border-app-hairline">
+                                <td className="py-2">{b.name}</td>
+                                <td className="py-2 pl-3 text-right font-plex-mono font-semibold" style={{ color: tone(b.r.returnPercent) }}>
+                                  {signVN(b.r.returnPercent, 2)}%
+                                </td>
+                                <td className="py-2 pl-3 text-right font-plex-mono">{money(b.r.finalCapital)}</td>
+                                <td className="py-2 pl-3 text-right font-plex-mono">{b.r.maxDrawdownPercent ? `−${formatVN(b.r.maxDrawdownPercent, 2)}%` : "0%"}</td>
+                                <td className="py-2 pl-3 text-right font-plex-mono">{money(b.r.feesPaid)}</td>
+                                <td className="py-2 pl-3 text-right font-plex-mono text-app-text-muted">{b.cash === undefined ? "—" : `${formatVN(b.cash, 1)}%`}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </section>
+                  )}
 
                   <section className="flex flex-col gap-3 rounded-2xl border border-app-border bg-app-surface p-[18px]">
                     <div className="flex items-center justify-between">

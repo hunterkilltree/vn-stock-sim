@@ -52,7 +52,9 @@ Its slice 2 (where the fundamentals come from: VCI's company-financials
 endpoints, publication-date rule, caching) is planned in detail in
 phase-fundamentals-data.md; its point-in-time math (`valuation.AsOf`)
 and bond-yield series are built, while step 0 (capturing real VCI
-responses) needs a machine that can reach VCI.
+responses) needs a machine that can reach VCI. Slice 1 (backtests in
+100-share lots with the 0.15% fee, lump-sum and monthly-DCA baselines,
+time in cash) is built.
 
 Planned feature: 12 risk-management rules (trade plan, risk sizing,
 6% monthly lock, T+2/floor/tax, R-multiple journal, process-based
@@ -76,8 +78,9 @@ phase-m.md. Then Phase L (FULL-APP-PLAN.md's stretch list).
 - The TradingView **Charting Library** (self-hosted, licensed) isn't
   integrated -- needs TradingView's GitHub-gated approval; the public
   embed widget (phase-0-mvp.md) is a placeholder, not that integration.
-- Queued buy orders don't reserve cash; backtests ignore fees; a second
-  backend process could double-fill a matched order (see phase-k.md /
+- Queued buy orders don't reserve cash; backtests charge the fee but not
+  the 0.1% sell tax or T+2 (phase-risk-rules.md); a second backend
+  process could double-fill a matched order (see phase-k.md /
   phase-persistence.md; Phase M fixes the first and last).
 - No CI, no rate limiting, cookies never `Secure`, and the default
   `JWT_SECRET` is accepted silently (Phase M).
@@ -99,5 +102,4 @@ phase-m.md. Then Phase L (FULL-APP-PLAN.md's stretch list).
      Settings sections; English localization; crypto Portfolio page,
      backtests and Quant; Quant-Chart.
 4. **Later (V3):** strategy optimisation (parameter sweeps over the
-   backtest engine), AI stock analysis. Fees in backtests (phase-k.md)
-   fits any phase that touches `internal/backtest`.
+   backtest engine), AI stock analysis.

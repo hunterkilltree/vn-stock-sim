@@ -722,6 +722,14 @@ export function getWatchlist(token: string): Promise<{ data: WatchlistItem[] }> 
 
 export type BacktestRule = "ema_crossover" | "rsi_reversion";
 
+// A no-rule comparison on the same bars, capital, fees and lots.
+export type BacktestBaseline = {
+  finalCapital: number;
+  returnPercent: number;
+  maxDrawdownPercent: number;
+  feesPaid: number;
+};
+
 export type BacktestRun = {
   id: string;
   symbol: string;
@@ -739,8 +747,15 @@ export type BacktestRun = {
   winRate: number;
   maxDrawdownPercent: number;
   profitFactor: number;
-  // Only on the single-backtest endpoint.
-  equity?: { time: number; equity: number; benchmark: number }[];
+  // phase-valuation-backtest.md slice 1; runs stored before it lack
+  // these, and their benchmark ignores fees and lots.
+  feesPaid?: number;
+  timeInCashPercent?: number;
+  daysToFirstFill?: number | null;
+  lumpSum?: BacktestBaseline;
+  dca?: BacktestBaseline;
+  // Only on the single-backtest endpoint. dca is missing on older runs.
+  equity?: { time: number; equity: number; benchmark: number; dca?: number }[];
   trades?: { entryTime: number; entryPrice: number; exitTime: number; exitPrice: number; returnPercent: number; open?: boolean }[];
 };
 

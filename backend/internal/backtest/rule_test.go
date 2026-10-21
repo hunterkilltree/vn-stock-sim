@@ -6,6 +6,9 @@ import (
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/market"
 )
 
+// capital buys whole 100-share lots at these test prices (~10-150).
+const capital = 1_000_000
+
 func barsFromCloses(closes []float64) []market.Bar {
 	out := make([]market.Bar, len(closes))
 	for i, c := range closes {
@@ -27,11 +30,11 @@ func TestRSIReversionRoundTrip(t *testing.T) {
 		p += 1.5
 		closes = append(closes, p)
 	}
-	r := runRSIReversion(barsFromCloses(closes), rsiReversionParams{period: 14, entry: 35, exit: 70}, 1000)
+	r := runRSIReversion(barsFromCloses(closes), rsiReversionParams{period: 14, entry: 35, exit: 70}, capital)
 	if r.totalTrades != 1 {
 		t.Fatalf("want 1 closed trade, got %d", r.totalTrades)
 	}
-	if r.winRate != 100 || r.finalCapital <= 1000 {
+	if r.winRate != 100 || r.finalCapital <= capital {
 		t.Fatalf("want a winning trade, got winRate=%v final=%v", r.winRate, r.finalCapital)
 	}
 	if r.profitFactor != 0 {
@@ -56,11 +59,11 @@ func TestRSIReversionStopLoss(t *testing.T) {
 		p -= 3
 		closes = append(closes, p)
 	}
-	r := runRSIReversion(barsFromCloses(closes), rsiReversionParams{period: 14, entry: 35, exit: 70, stopLossPercent: 7}, 1000)
+	r := runRSIReversion(barsFromCloses(closes), rsiReversionParams{period: 14, entry: 35, exit: 70, stopLossPercent: 7}, capital)
 	if r.totalTrades != 1 || r.winRate != 0 {
 		t.Fatalf("want exactly one losing trade, got trades=%d winRate=%v", r.totalTrades, r.winRate)
 	}
-	if r.finalCapital >= 1000 || r.maxDrawdownPercent <= 0 {
+	if r.finalCapital >= capital || r.maxDrawdownPercent <= 0 {
 		t.Fatalf("want a loss and a drawdown, got final=%v dd=%v", r.finalCapital, r.maxDrawdownPercent)
 	}
 }
@@ -78,8 +81,8 @@ func TestTrendFilterBlocksEntryBelowSMA(t *testing.T) {
 	}
 	// When RSI crosses 35 (early in the rebound) SMA(40) has no value yet,
 	// and the filter requires price > SMA, so no entry is allowed.
-	r := runRSIReversion(barsFromCloses(closes), rsiReversionParams{period: 14, entry: 35, exit: 70, trendSMA: 40}, 1000)
-	if r.totalTrades != 0 || r.finalCapital != 1000 {
+	r := runRSIReversion(barsFromCloses(closes), rsiReversionParams{period: 14, entry: 35, exit: 70, trendSMA: 40}, capital)
+	if r.totalTrades != 0 || r.finalCapital != capital {
 		t.Fatalf("trend filter should block entry, got trades=%d final=%v", r.totalTrades, r.finalCapital)
 	}
 }
@@ -99,24 +102,27 @@ func TestResultCarriesEquityTradesAndBenchmark(t *testing.T) {
 		closes = append(closes, p)
 	}
 	bars := barsFromCloses(closes)
-	r := runRSIReversion(bars, rsiReversionParams{period: 14, entry: 35, exit: 70}, 1000)
+	r := runRSIReversion(bars, rsiReversionParams{period: 14, entry: 35, exit: 70}, capital)
 	if len(r.equity) != len(bars)-1 {
 		t.Fatalf("want one equity point per bar after the first, got %d", len(r.equity))
 	}
 	if len(r.trades) != r.totalTrades || r.trades[0].Open || r.trades[0].ExitPrice <= r.trades[0].EntryPrice {
 		t.Fatalf("closed trades should be listed as winning round trips: %+v", r.trades)
 	}
+	// Buy-and-hold = lump sum on the first marked bar, in lots, with fees.
 	first, last := closes[1], closes[len(closes)-1]
-	if want := (last - first) / first * 100; r.benchmarkReturnPercent != want {
-		t.Fatalf("buy-and-hold: want %v, got %v", want, r.benchmarkReturnPercent)
+	qty := lotsFor(capital, first)
+	wantFinal := capital - qty*first*(1+0.0015) + qty*last
+	if b := r.equity[len(r.equity)-1].Benchmark; b != round2(wantFinal) {
+		t.Fatalf("benchmark curve ends at %v, want %v", b, round2(wantFinal))
 	}
-	if b := r.equity[len(r.equity)-1].Benchmark; b != round2(1000*last/first) {
-		t.Fatalf("benchmark curve ends at %v, want %v", b, round2(1000*last/first))
+	if want := round2((wantFinal - capital) / capital * 100); r.benchmarkReturnPercent != want {
+		t.Fatalf("buy-and-hold: want %v, got %v", want, r.benchmarkReturnPercent)
 	}
 
 	// Stop the series right after the buy: the trade is open.
 	entry := int(r.trades[0].EntryTime / 86400)
-	open := runRSIReversion(bars[:entry+2], rsiReversionParams{period: 14, entry: 35, exit: 70}, 1000)
+	open := runRSIReversion(bars[:entry+2], rsiReversionParams{period: 14, entry: 35, exit: 70}, capital)
 	if open.totalTrades != 0 || len(open.trades) != 1 || !open.trades[0].Open {
 		t.Fatalf("a position held at the end is one open trade: %+v", open.trades)
 	}

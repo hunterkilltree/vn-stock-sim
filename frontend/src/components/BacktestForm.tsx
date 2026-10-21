@@ -198,7 +198,7 @@ export default function BacktestForm({ defaults }: { defaults: BacktestDefaults 
         {pending ? "Đang kiểm thử…" : "Chạy kiểm thử"}
       </button>
       <p className="m-0 text-[11px] leading-[1.5] text-app-text-faint">
-        Nến ngày, mua/bán toàn bộ vốn ở giá đóng cửa, chưa tính phí giao dịch. Quá khứ không bảo đảm tương lai.
+        Nến ngày, mua/bán toàn bộ vốn theo lô 100 cổ phiếu ở giá đóng cửa, phí 0,15% mỗi chiều; luôn so với mua một lần và mua đều hằng tháng. Quá khứ không bảo đảm tương lai.
       </p>
     </form>
   );
