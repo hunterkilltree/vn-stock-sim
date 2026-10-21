@@ -1,6 +1,7 @@
 # Phase: Stage 2 — fundamentals history, valuation backtests, H2 factors
 
-Status: **planned, not built.** Follows stage 1 (phase-holding-horizon.md
+Status: **slice 1 built (2026-10-21, `claude/backtest-fees-lots-dca`); the
+rest planned.** Follows stage 1 (phase-holding-horizon.md
 H1 + phase-valuation.md V-1, built 2026-10-09). This doc is the plan for
 what those two docs left open: H2 (growth/debt factors) and V-2
 (backtesting the buy-price rules against lump sum and DCA), plus the
@@ -122,6 +123,39 @@ The data foundation for slices 3 and 4.
   the buy price down, from the rating response's `valuation`. A
   checkbox in the indicator chips turns it on or off.
 - Independent of slices 2–4; can go any time.
+
+## Built: slice 1 (`claude/backtest-fees-lots-dca`)
+
+- `backtest/rule.go`: the tracker buys in whole 100-share lots, sized
+  with the fee included, and charges `order.FeeRate` on both sides.
+  Leftover cash stays cash. A buy signal that can't afford one lot is
+  skipped. Trade returns and the win/loss split are after fees.
+- Every run carries `lumpSum` and `dca` (final capital, return, max
+  drawdown, fees), plus `feesPaid`, `timeInCashPercent` and
+  `daysToFirstFill` (null if the rule never bought). Each equity point
+  gains `dca`; `benchmark` (and `benchmarkReturnPercent`) is now the
+  fee/lot-aware lump sum. Runs stored before this keep their old shape
+  and the page labels them "chưa tính phí giao dịch (lần chạy cũ)".
+- DCA splits the capital evenly across the calendar months in the range
+  (Vietnam time), buys on each month's first session, and rolls over
+  what a lot can't absorb. Not-yet-invested instalments count as cash
+  in its equity.
+- `/backtest`: a third (blue, dotted) equity line, a "Thời gian giữ
+  tiền mặt" KPI, a "So với không dùng quy tắc" table, and a warning
+  callout when the rule sat in cash ≥ 50% of the time while lump sum
+  gained.
+- **Not done:** the 0.1% sell tax and T+2. phase-risk-rules.md routes
+  both through one shared cost model (`claude/risk-costs-settlement`)
+  so paper trading and backtests agree; that branch doesn't exist yet,
+  so this slice didn't wait for it.
+
+Verification: `go test ./internal/backtest` (the 23,450 VND
+hand-computed buy/sell to the đồng, a sub-lot buy skipped, a rule that
+never fires = 100% cash at its starting capital, DCA rollover when one
+instalment can't buy a lot, DCA beating lump sum into a falling
+market), frontend typecheck/eslint/build, and headless-Chromium
+screenshots of a mock-data run at 1440px and 390px (no horizontal page
+overflow).
 
 ## Order
 

@@ -37,18 +37,40 @@ type Backtest struct {
 	BenchmarkReturnPercent float64        `json:"benchmarkReturnPercent"`
 	Equity                 []EquityPoint  `json:"equity,omitempty"`
 	Trades                 []Trade        `json:"trades,omitempty"`
+
+	// phase-valuation-backtest.md slice 1. Runs stored before it have
+	// none of these (zero / null), and their benchmark ignores fees.
+	FeesPaid      float64 `json:"feesPaid"`
+	TimeInCashPct float64 `json:"timeInCashPercent"`
+	// DaysToFirstFill is calendar days from the first bar to the first
+	// buy; null when the rule never bought.
+	DaysToFirstFill *int      `json:"daysToFirstFill"`
+	LumpSum         *Baseline `json:"lumpSum,omitempty"`
+	DCA             *Baseline `json:"dca,omitempty"`
 }
 
-// EquityPoint is the strategy's equity after a bar, next to buy-and-hold
-// of the same starting capital.
+// Baseline is a no-rule comparison run on the same bars with the same
+// capital, fees and lots: lump sum on the first bar, or monthly DCA.
+type Baseline struct {
+	FinalCapital       float64 `json:"finalCapital"`
+	ReturnPercent      float64 `json:"returnPercent"`
+	MaxDrawdownPercent float64 `json:"maxDrawdownPercent"`
+	FeesPaid           float64 `json:"feesPaid"`
+}
+
+// EquityPoint is the strategy's equity after a bar, next to lump sum
+// (Benchmark: buy-and-hold from the first bar) and monthly DCA of the
+// same starting capital.
 type EquityPoint struct {
 	Time      int64   `json:"time"`
 	Equity    float64 `json:"equity"`
 	Benchmark float64 `json:"benchmark"`
+	DCA       float64 `json:"dca"`
 }
 
 // Trade is one round trip; Open means still held at the end of the range
 // (exit = the last close, not counted in totalTrades or the win rate).
+// ReturnPercent is after the fee on both sides.
 type Trade struct {
 	EntryTime     int64   `json:"entryTime"`
 	EntryPrice    float64 `json:"entryPrice"`

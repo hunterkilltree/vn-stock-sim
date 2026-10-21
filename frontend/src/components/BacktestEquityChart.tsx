@@ -4,8 +4,9 @@ import { formatVN, signVN } from "@/lib/format";
 const W = 1000;
 const H = 220;
 
-// Strategy equity vs buy-and-hold of the same capital (phase-k.md
-// decision 14). The lines stretch to any width (preserveAspectRatio
+// Strategy equity vs lump sum and monthly DCA of the same capital
+// (phase-k.md decision 14; DCA from phase-valuation-backtest.md slice 1,
+// absent on older runs). The lines stretch to any width (preserveAspectRatio
 // none, non-scaling strokes); the labels are HTML, so they stay legible
 // on a phone instead of shrinking with the drawing.
 export default function BacktestEquityChart({ run }: { run: BacktestRun }) {
@@ -16,12 +17,13 @@ export default function BacktestEquityChart({ run }: { run: BacktestRun }) {
   // At most ~400 points: plenty for the width, light for the DOM.
   const stride = Math.max(1, Math.ceil(pts.length / 400));
   const sample = pts.filter((_, i) => i % stride === 0 || i === pts.length - 1);
-  const values = sample.flatMap((p) => [p.equity, p.benchmark]);
+  const hasDCA = sample.every((p) => typeof p.dca === "number");
+  const values = sample.flatMap((p) => (hasDCA ? [p.equity, p.benchmark, p.dca as number] : [p.equity, p.benchmark]));
   const hi = Math.max(...values);
   const lo = Math.min(...values);
   const x = (i: number) => (i / (sample.length - 1)) * W;
   const y = (v: number) => 6 + ((hi - v) / (hi - lo || 1)) * (H - 12);
-  const line = (key: "equity" | "benchmark") => sample.map((p, i) => `${x(i).toFixed(1)},${y(p[key]).toFixed(1)}`).join(" ");
+  const line = (key: "equity" | "benchmark" | "dca") => sample.map((p, i) => `${x(i).toFixed(1)},${y(p[key] ?? 0).toFixed(1)}`).join(" ");
   const up = run.returnPercent >= 0;
   const color = up ? "#35C77F" : "#FF5C5C";
   const date = (t: number) => new Date(t * 1000).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric", timeZone: "UTC" });
@@ -38,6 +40,12 @@ export default function BacktestEquityChart({ run }: { run: BacktestRun }) {
           <span className="h-[2.5px] w-[14px] rounded bg-[#6F6C63]" />
           Mua và giữ {signVN(run.benchmarkReturnPercent, 2)}%
         </span>
+        {hasDCA && run.dca && (
+          <span className="flex items-center gap-[6px] font-plex-mono text-[#7FA2FF]">
+            <span className="h-[2.5px] w-[14px] rounded bg-[#7FA2FF]" />
+            Mua đều hằng tháng {signVN(run.dca.returnPercent, 2)}%
+          </span>
+        )}
       </div>
       <div className="flex gap-2">
         <div className="flex flex-col justify-between py-[2px] text-right font-plex-mono text-[10.5px] text-app-text-muted" style={{ height: H }}>
@@ -51,11 +59,12 @@ export default function BacktestEquityChart({ run }: { run: BacktestRun }) {
           height={H}
           fill="none"
           role="img"
-          aria-label={`Đường vốn chiến lược ${signVN(run.returnPercent, 2)}% so với mua và giữ ${signVN(run.benchmarkReturnPercent, 2)}%`}
+          aria-label={`Đường vốn chiến lược ${signVN(run.returnPercent, 2)}% so với mua và giữ ${signVN(run.benchmarkReturnPercent, 2)}%${hasDCA && run.dca ? ` và mua đều hằng tháng ${signVN(run.dca.returnPercent, 2)}%` : ""}`}
           className="min-w-0 flex-1"
         >
           <line x1="0" y1={y(run.startingCapital)} x2={W} y2={y(run.startingCapital)} stroke="#2C2C28" strokeWidth="1" strokeDasharray="4 3" vectorEffect="non-scaling-stroke" />
           <polyline points={line("benchmark")} stroke="#6F6C63" strokeWidth="1.4" strokeDasharray="4 3" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+          {hasDCA && <polyline points={line("dca")} stroke="#7FA2FF" strokeWidth="1.4" strokeDasharray="2 3" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />}
           <polyline points={line("equity")} stroke={color} strokeWidth="2" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
         </svg>
       </div>

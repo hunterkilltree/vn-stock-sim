@@ -69,6 +69,13 @@ func (s *Service) Create(userID string, req createRequest) (Backtest, error) {
 		BenchmarkReturnPercent: round2(result.benchmarkReturnPercent),
 		Equity:                 result.equity,
 		Trades:                 result.trades,
+
+		FeesPaid:        round2(result.feesPaid),
+		TimeInCashPct:   round2(result.timeInCashPct),
+		DaysToFirstFill: result.daysToFirstFill,
+	}
+	if len(result.equity) > 0 {
+		bt.LumpSum, bt.DCA = &result.lumpSum, &result.dca
 	}
 	return s.store.Append(userID, bt), nil
 }
