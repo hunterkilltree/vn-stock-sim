@@ -39,6 +39,10 @@ export async function placeOrderAction(_prevState: OrderFormState, formData: For
     // OrderTicket.tsx's hidden "price" field) -- the backend ignores it
     // for "market", which always fills at the live quote instead.
     price: Number(formData.get("price") ?? 0),
+    // The buy's trade plan (phase-risk-rules.md slice 1); 0/"" = not set.
+    stopLoss: Number(formData.get("stopLoss") ?? 0),
+    target: Number(formData.get("target") ?? 0),
+    setup: String(formData.get("setup") ?? "").slice(0, 200),
   };
 
   if (!body.symbol || body.quantity <= 0) {
@@ -59,6 +63,11 @@ export async function placeOrderAction(_prevState: OrderFormState, formData: For
 
   const payload = await res.json().catch(() => null);
   if (!res.ok) {
+    // A strict-mode refusal lists each rule's reason.
+    if (payload?.code === "rule_violation" && Array.isArray(payload.fields)) {
+      const reasons = payload.fields.map((f: { reason: string }) => f.reason).join(" ");
+      return { error: `Lệnh bị chặn theo quy tắc rủi ro: ${reasons}`, success: null };
+    }
     return { error: payload?.message ?? "Đặt lệnh thất bại. Vui lòng thử lại.", success: null };
   }
 

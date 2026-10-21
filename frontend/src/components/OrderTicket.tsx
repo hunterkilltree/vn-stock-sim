@@ -1,8 +1,10 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { placeOrderAction, type OrderFormState } from "@/lib/orderActions";
+import { checkOrderAction } from "@/lib/riskActions";
+import type { RiskAssessment, RiskSettings } from "@/lib/api";
 import { exposureAfter, exposurePct, maxSharesUnderCap, type Exposure } from "@/lib/exposure";
 import { formatVN } from "@/lib/format";
 
@@ -16,6 +18,9 @@ type Props = {
   // Stock exposure vs the market regime's cap (phase-market-risk.md slice
   // 2); omitted for guests or when the regime is unavailable.
   exposure?: Exposure | null;
+  // The active portfolio's risk rules (phase-risk-rules.md slice 1);
+  // null for guests or when they couldn't be loaded.
+  riskSettings?: RiskSettings | null;
 };
 
 const ORDER_TYPES: { label: string; value: "limit" | "market" | "atc" | "stop" }[] = [
@@ -35,7 +40,10 @@ const LOT_SIZE = 100;
 // the submit area with a sign-in prompt instead of a modal -- see
 // phase-d.md decision 5 (a modal over the order ticket is explicitly
 // listed as NOT YET DESIGNED in design/SCREENS.md).
-export default function OrderTicket({ symbol, lastPrice, buyingPower, portfolioName, initialSide = "buy", exposure = null }: Props) {
+// Thousands of đồng as typed ("46,5") → raw VND; 0 when empty or invalid.
+const kToVnd = (k: string) => (Number(k.replace(",", ".")) || 0) * 1000;
+
+export default function OrderTicket({ symbol, lastPrice, buyingPower, portfolioName, initialSide = "buy", exposure = null, riskSettings = null }: Props) {
   const initialState: OrderFormState = { error: null, success: null };
   const [state, formAction, pending] = useActionState(placeOrderAction, initialState);
 
@@ -43,6 +51,11 @@ export default function OrderTicket({ symbol, lastPrice, buyingPower, portfolioN
   const [type, setType] = useState<(typeof ORDER_TYPES)[number]["value"]>("limit");
   const [priceK, setPriceK] = useState((lastPrice / 1000).toFixed(2));
   const [quantity, setQuantity] = useState(LOT_SIZE);
+  // The buy's trade plan (rules 1-3): stop and target in thousands, as typed.
+  const [stopK, setStopK] = useState("");
+  const [targetK, setTargetK] = useState("");
+  const [setupText, setSetupText] = useState("");
+  const [assessment, setAssessment] = useState<RiskAssessment | null>(null);
 
   const priceVnd = (Number(priceK.replace(",", ".")) || 0) * 1000;
   const orderValue = priceVnd * quantity;
@@ -53,6 +66,25 @@ export default function OrderTicket({ symbol, lastPrice, buyingPower, portfolioN
   const exposureNext = exposure ? exposureAfter(exposure, side, orderValue, fee) : 0;
   const overCap = exposure !== null && side === "buy" && exposureNext > exposure.capPct;
   const capShares = exposure ? maxSharesUnderCap(exposure, priceVnd, FEE_RATE) : 0;
+
+  const stopVnd = kToVnd(stopK);
+  const targetVnd = kToVnd(targetK);
+  const planned = side === "buy" && buyingPower !== null && riskSettings !== null;
+
+  // The server's dry run, debounced: the same rules POST /orders applies.
+  useEffect(() => {
+    if (!planned) return;
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      const a = await checkOrderAction({ symbol, type, quantity, price: type === "market" ? 0 : priceVnd, stopLoss: stopVnd, target: targetVnd });
+      if (!cancelled) setAssessment(a);
+    }, 350);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [planned, symbol, type, quantity, priceVnd, stopVnd, targetVnd]);
+  const shownAssessment = planned ? assessment : null;
 
   const maxShares = useMemo(() => {
     if (buyingPower === null || priceVnd <= 0) return 0;
@@ -191,6 +223,99 @@ export default function OrderTicket({ symbol, lastPrice, buyingPower, portfolioN
         )}
       </div>
 
+      {planned && riskSettings && (
+        <div className="flex flex-col gap-[10px]">
+          <div className="flex items-center justify-between">
+            <span className="text-[12.5px] font-semibold">Kế hoạch giao dịch</span>
+            <Link
+              href="/settings/paper-account"
+              className="rounded-md border border-app-border px-2 py-[2px] text-[10.5px] text-app-text-muted"
+              title="Đổi trong Cài đặt → Tài khoản giấy"
+            >
+              {riskSettings.mode === "strict" ? "Nghiêm ngặt" : "Huấn luyện"} · rủi ro {formatVN(riskSettings.riskPercent, 1)}%
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 gap-[10px]">
+            <div className="flex flex-col gap-[6px]">
+              <label htmlFor="stop-loss" className="text-[11px] text-app-text-muted">Cắt lỗ (nghìn ₫)</label>
+              <input
+                id="stop-loss"
+                type="text"
+                inputMode="decimal"
+                placeholder="Bắt buộc"
+                value={stopK}
+                onChange={(e) => setStopK(e.target.value)}
+                className="box-border h-11 rounded-[10px] border border-app-border bg-app-surface-2 px-3 font-plex-mono text-sm text-app-text outline-none placeholder:text-app-text-muted"
+              />
+            </div>
+            <div className="flex flex-col gap-[6px]">
+              <label htmlFor="target" className="text-[11px] text-app-text-muted">Mục tiêu (nghìn ₫)</label>
+              <input
+                id="target"
+                type="text"
+                inputMode="decimal"
+                value={targetK}
+                onChange={(e) => setTargetK(e.target.value)}
+                className="box-border h-11 rounded-[10px] border border-app-border bg-app-surface-2 px-3 font-plex-mono text-sm text-app-text outline-none"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-[6px]">
+            <label htmlFor="setup" className="text-[11px] text-app-text-muted">Lý do vào lệnh</label>
+            <input
+              id="setup"
+              type="text"
+              maxLength={200}
+              placeholder="VD: Pullback về MA20, breakout nền giá"
+              value={setupText}
+              onChange={(e) => setSetupText(e.target.value)}
+              className="box-border h-11 rounded-[10px] border border-app-border bg-app-surface-2 px-3 text-[13px] text-app-text outline-none placeholder:text-app-text-muted"
+            />
+          </div>
+          {shownAssessment && shownAssessment.riskAmount > 0 && (
+            <div className="flex flex-col gap-[6px] text-[12.5px]">
+              <div className="flex justify-between gap-3">
+                <span className="text-app-text-muted">Nếu chạm cắt lỗ</span>
+                <span className="font-plex-mono text-price-down">
+                  −{formatVN(shownAssessment.riskAmount, 0)} ₫ ({formatVN(shownAssessment.riskPercent, 2)}% vốn)
+                </span>
+              </div>
+              {shownAssessment.rewardRisk > 0 && (
+                <div className="flex justify-between gap-3">
+                  <span className="text-app-text-muted">Tỷ lệ lời/lỗ</span>
+                  <span className="font-plex-mono">1 : {formatVN(shownAssessment.rewardRisk, 1)}</span>
+                </div>
+              )}
+              {shownAssessment.suggestedQuantity > 0 && shownAssessment.suggestedQuantity !== quantity && (
+                <button
+                  type="button"
+                  onClick={() => setQuantity(shownAssessment.suggestedQuantity)}
+                  className="self-start font-semibold text-app-accent underline underline-offset-2"
+                >
+                  Đặt {formatVN(shownAssessment.suggestedQuantity, 0)} cổ phiếu (rủi ro {formatVN(riskSettings.riskPercent, 1)}% vốn)
+                </button>
+              )}
+            </div>
+          )}
+          {shownAssessment && shownAssessment.findings.length > 0 && (
+            <ul className="m-0 flex list-none flex-col gap-1 p-0">
+              {shownAssessment.findings.map((f) => (
+                <li
+                  key={f.code}
+                  className={`rounded-[10px] border px-3 py-[7px] text-[11.5px] leading-[1.45] ${
+                    f.severity === "warn"
+                      ? "border-app-warn-border bg-app-warn-surface text-app-warn-text"
+                      : "border-[rgba(255,92,92,0.45)] bg-[rgba(255,92,92,0.1)] text-price-down"
+                  }`}
+                >
+                  {f.message}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
       {overCap && exposure && (
         <div className="flex flex-col gap-1 rounded-[10px] border border-app-warn-border bg-app-warn-surface px-3 py-[9px] text-[11.5px] leading-[1.45] text-app-warn-text">
           <span>
@@ -222,6 +347,13 @@ export default function OrderTicket({ symbol, lastPrice, buyingPower, portfolioN
           <input type="hidden" name="type" value={type} />
           <input type="hidden" name="quantity" value={quantity} />
           <input type="hidden" name="price" value={priceVnd} />
+          {side === "buy" && (
+            <>
+              <input type="hidden" name="stopLoss" value={stopVnd} />
+              <input type="hidden" name="target" value={targetVnd} />
+              <input type="hidden" name="setup" value={setupText} />
+            </>
+          )}
           {state.error && (
             <p className="rounded-lg border border-app-warn-border bg-app-warn-surface px-3 py-2 text-xs text-app-warn-text">{state.error}</p>
           )}
@@ -234,7 +366,7 @@ export default function OrderTicket({ symbol, lastPrice, buyingPower, portfolioN
           )}
           <button
             type="submit"
-            disabled={pending || quantity <= 0}
+            disabled={pending || quantity <= 0 || (shownAssessment?.blocked ?? false)}
             className="h-12 rounded-[11px] border-0 text-[14.5px] font-semibold disabled:cursor-not-allowed disabled:opacity-60"
             style={{
               background: side === "buy" ? "#35C77F" : "#FF5C5C",

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/hunterkilltree/vn-stock-sim/backend/internal/riskrules"
 )
 
 var ErrInsufficientCash = errors.New("insufficient virtual cash")
@@ -39,6 +41,10 @@ type Store interface {
 	Positions(portfolioID string) map[string]position
 	AppendEquitySnapshot(portfolioID string, nav float64)
 	EquityHistory(portfolioID string) []EquityPoint
+	// RiskSettings is false when the portfolio has never saved any
+	// (Service falls back to riskrules.Defaults()).
+	RiskSettings(portfolioID string) (riskrules.Settings, bool)
+	SetRiskSettings(portfolioID string, rs riskrules.Settings)
 }
 
 // MemoryStore is the in-memory paper-trading ledger. Reworked in Phase B
@@ -59,6 +65,7 @@ type MemoryStore struct {
 	// equity indexes each portfolio's EquityPoint history -- see
 	// AppendEquitySnapshot and phase-e.md item 1.
 	equity map[string][]EquityPoint
+	risk   map[string]riskrules.Settings
 	nextID int
 }
 
@@ -69,7 +76,21 @@ func NewMemoryStore() *MemoryStore {
 		byUser:        make(map[string][]string),
 		byUserDefault: make(map[string]string),
 		equity:        make(map[string][]EquityPoint),
+		risk:          make(map[string]riskrules.Settings),
 	}
+}
+
+func (s *MemoryStore) RiskSettings(portfolioID string) (riskrules.Settings, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	rs, ok := s.risk[portfolioID]
+	return rs, ok
+}
+
+func (s *MemoryStore) SetRiskSettings(portfolioID string, rs riskrules.Settings) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.risk[portfolioID] = rs
 }
 
 func (s *MemoryStore) nextPortfolioID() string {

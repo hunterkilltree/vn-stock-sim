@@ -1,6 +1,7 @@
 # Phase: Risk-management rules (12 trading rules, coach / strict modes)
 
-Status: **planned, not built.** Spec supplied by the user (2026-10-09):
+Status: **slice 1 built (2026-10-21, `claude/risk-trade-plan-sizing`);
+slices 2-7 planned.** Spec supplied by the user (2026-10-09):
 12 widely used risk-management practices. Each has a default the user
 can change per portfolio. This doc maps them onto the existing code and
 splits the work into slices, one clearly named branch each (the
@@ -137,6 +138,66 @@ time, but slice 2's cost model should land before it **and** before
 stage-2 slice 1 (`claude/backtest-fees-lots-dca`), so backtests get
 the tax once. Slices 1–2 are where most of the work is; the later ones
 build on the trade plan.
+
+## Built: slice 1 (`claude/risk-trade-plan-sizing`)
+
+- `internal/riskrules`: pure `Check(Intent, equity, Settings)
+  Assessment` for rules 1-3, and `SizeFor`. Findings have a severity:
+  `warn` (never stops an order), `block` (stops it in strict mode, a
+  warning in coach), and `invalid` (a stop at or above the entry, or a
+  target at or below it: refused in both modes). The assessment also
+  carries the loss if stopped, its % of equity, R:R and the risk-sized
+  quantity.
+- Per-portfolio `RiskSettings` in `portfolio` (memory + Postgres,
+  migration `002_risk_trade_plans.sql`, contract test), served at
+  `GET`/`PUT /portfolios/:id/risk-settings`. Defaults when never saved:
+  coach, 1%, 2%, R:R 2.
+- `order`: buys are whole 100-share lots (`ErrOddLot`; sells may be odd
+  so older positions can still close). `Create` and the new dry run
+  `POST /orders/check` share one `prepare`. Strict refusals are `422
+  { code: "rule_violation", fields: [{ field: <rule code>, reason }] }`
+  listing only the refusing findings; coach mode records every finding's
+  code on the order (`violations`).
+- `TradePlan` (`GET /trade-plans`): opened by the first filled buy with a
+  stop (immediately or when the matcher fills it), joined by later buys,
+  closed with exit price and R when a sell empties the position.
+  `InitialStop` is written once; neither store's `UpdatePlan` can change
+  it. Orders carry `stopLoss`, `target`, `setup`, `planId`.
+- Ticket: "Kế hoạch giao dịch" on the buy side (stop, target, setup),
+  the mode badge linking to Settings, "Nếu chạm cắt lỗ: −X ₫ (Y% vốn)",
+  R:R, a one-click risk-sized quantity, and the dry run's findings
+  (debounced); Buy is disabled when the dry run says blocked.
+- Settings → Tài khoản giấy: mode and the three thresholds for the
+  active portfolio.
+
+**Decisions taken without the open questions answered** (say if any is
+wrong):
+
+1. Open question 1 → coach is the default for every portfolio. That
+   made rule 1's "stop required in every mode" a warning in coach and a
+   block in strict; otherwise coach would refuse orders that work today.
+2. The risk amount and the sized quantity include the 0.15% fee on both
+   sides: (entry − stop) + fee × (entry + stop) per share. The spec's
+   formula leaves fees out; with them the sized position never loses
+   more than the stated %.
+3. Adding to an open plan without a stop uses the plan's current stop. A
+   new stop on an add replaces the current stop, lower or higher:
+   raise-only stops and the violation log are slice 4.
+4. Crypto (open question 5): rules 1-3 apply, with no lot rounding.
+5. Exit price and R record the sell that closes the position; averaging
+   partial exits is slice 5 (journal).
+
+Verification: `go test ./...` with `TEST_DATABASE_URL` set (the new
+contract tests ran on memory and Postgres); `riskrules` tests cover the
+spec's sizing example, fees in the risk amount, both modes for each
+rule, three 2% losses ≈ 6%, and settings validation; `order` tests cover
+odd lots, plan open → add → partial sell → close with R, coach
+violations vs a strict 422, the dry run's sized quantity, and a matcher
+fill opening the plan. Frontend typecheck/eslint/build; headless-Chromium
+screenshots of the ticket (coach with a plan, strict without a stop) and
+the settings page at 1440px and 390px with no horizontal overflow; and a
+real submit through the ticket that placed a 300-share risk-sized buy and
+opened its plan.
 
 ## Verification (per slice)
 

@@ -5,6 +5,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/hunterkilltree/vn-stock-sim/backend/internal/riskrules"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/symbol"
 )
 
@@ -375,4 +376,22 @@ func roundPrice(v float64) float64 {
 		return round2(v)
 	}
 	return math.Round(v*1e8) / 1e8
+}
+
+// RiskSettings are the portfolio's risk-rule thresholds, or the coach
+// defaults when it has never saved any (phase-risk-rules.md).
+func (s *Service) RiskSettings(portfolioID string) riskrules.Settings {
+	if rs, ok := s.store.RiskSettings(portfolioID); ok {
+		return rs
+	}
+	return riskrules.Defaults()
+}
+
+// SetRiskSettings validates and saves; the caller has checked ownership.
+func (s *Service) SetRiskSettings(portfolioID string, rs riskrules.Settings) error {
+	if err := rs.Validate(); err != nil {
+		return err
+	}
+	s.store.SetRiskSettings(portfolioID, rs)
+	return nil
 }

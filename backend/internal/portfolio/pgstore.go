@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/db"
+	"github.com/hunterkilltree/vn-stock-sim/backend/internal/riskrules"
 )
 
 // PGStore is the Postgres paper-trading ledger (phase-persistence.md):
@@ -241,4 +242,29 @@ func (s *PGStore) EquityHistory(portfolioID string) []EquityPoint {
 		out = append(out, e)
 	}
 	return out
+}
+
+func (s *PGStore) RiskSettings(portfolioID string) (riskrules.Settings, bool) {
+	var rs riskrules.Settings
+	err := s.pool.QueryRow(context.Background(),
+		`SELECT mode, risk_pct, max_risk_pct, min_reward_risk FROM portfolio_risk_settings WHERE portfolio_id = $1`, portfolioID,
+	).Scan(&rs.Mode, &rs.RiskPct, &rs.MaxRiskPct, &rs.MinRewardRisk)
+	if err != nil {
+		if !errors.Is(err, pgx.ErrNoRows) {
+			log.Printf("portfolio: risk settings: %v", err)
+		}
+		return riskrules.Settings{}, false
+	}
+	return rs, true
+}
+
+func (s *PGStore) SetRiskSettings(portfolioID string, rs riskrules.Settings) {
+	_, err := s.pool.Exec(context.Background(), `
+		INSERT INTO portfolio_risk_settings (portfolio_id, mode, risk_pct, max_risk_pct, min_reward_risk)
+		VALUES ($1, $2, $3, $4, $5)
+		ON CONFLICT (portfolio_id) DO UPDATE SET mode = $2, risk_pct = $3, max_risk_pct = $4, min_reward_risk = $5`,
+		portfolioID, rs.Mode, rs.RiskPct, rs.MaxRiskPct, rs.MinRewardRisk)
+	if err != nil {
+		log.Printf("portfolio: set risk settings: %v", err)
+	}
 }

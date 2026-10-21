@@ -59,6 +59,9 @@ time in cash) is built.
 Planned feature: 12 risk-management rules (trade plan, risk sizing,
 6% monthly lock, T+2/floor/tax, R-multiple journal, process-based
 Replay score, backtest holdout) in coach/strict modes -- phase-risk-rules.md.
+Slice 1 is built: a stop/target/setup trade plan on every buy, risk-based
+quantity, reward-to-risk, 100-share buy lots, coach/strict modes per
+portfolio (Settings → Tài khoản giấy). Slices 2-7 are next.
 
 Planned feature: market risk -- slice 1 (Nhiệt kế thị trường card) built;
 slice 2 partly (exposure-cap warning on the order ticket); slice 3
