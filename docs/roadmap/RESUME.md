@@ -50,7 +50,9 @@ valuation backtests vs lump sum/DCA, H2 factors, fair-value chart line,
 in five slices, one clearly named branch each -- phase-valuation-backtest.md.
 Its slice 2 (where the fundamentals come from: VCI's company-financials
 endpoints, publication-date rule, caching) is planned in detail in
-phase-fundamentals-data.md; step 0 needs a machine that can reach VCI.
+phase-fundamentals-data.md; its point-in-time math (`valuation.AsOf`)
+and bond-yield series are built, while step 0 (capturing real VCI
+responses) needs a machine that can reach VCI.
 
 Planned feature: 12 risk-management rules (trade plan, risk sizing,
 6% monthly lock, T+2/floor/tax, R-multiple journal, process-based
