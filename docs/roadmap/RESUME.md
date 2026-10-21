@@ -48,6 +48,9 @@ Vietnamese unless noted; English localization is deferred (Phase L).
 Planned feature: stage 2 of the rating card -- fundamentals history,
 valuation backtests vs lump sum/DCA, H2 factors, fair-value chart line,
 in five slices, one clearly named branch each -- phase-valuation-backtest.md.
+Its slice 2 (where the fundamentals come from: VCI's company-financials
+endpoints, publication-date rule, caching) is planned in detail in
+phase-fundamentals-data.md; step 0 needs a machine that can reach VCI.
 
 Planned feature: 12 risk-management rules (trade plan, risk sizing,
 6% monthly lock, T+2/floor/tax, R-multiple journal, process-based
