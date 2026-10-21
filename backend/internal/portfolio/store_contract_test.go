@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/db/dbtest"
+	"github.com/hunterkilltree/vn-stock-sim/backend/internal/riskrules"
 )
 
 // addUser creates the users row a Postgres portfolio references; the
@@ -136,6 +137,27 @@ func TestStoreContractConcurrentFills(t *testing.T) {
 		pos := s.Positions(p.ID)["BTCUSDT"]
 		if ok != 10 || math.Abs(s.Cash(p.ID)) > 1e-6 || math.Abs(pos.quantity-0.1) > 1e-9 {
 			t.Fatalf("want 10 fills, 0 cash, 0.1 BTC; got %d fills, cash %v, %+v", ok, s.Cash(p.ID), pos)
+		}
+	})
+}
+
+func TestStoreContractRiskSettings(t *testing.T) {
+	eachStore(t, func(t *testing.T, c storeCase) {
+		s := c.s
+		c.addUser("u1")
+		p := s.Create("u1", "Danh mục chính", "stock", 1e8, "VND", KindTrading)
+		if _, ok := s.RiskSettings(p.ID); ok {
+			t.Fatal("a new portfolio has no saved settings")
+		}
+		want := riskrules.Settings{Mode: riskrules.Strict, RiskPct: 0.5, MaxRiskPct: 1.5, MinRewardRisk: 3}
+		s.SetRiskSettings(p.ID, want)
+		if got, ok := s.RiskSettings(p.ID); !ok || got != want {
+			t.Fatalf("round trip: %+v %v", got, ok)
+		}
+		want.Mode = riskrules.Coach
+		s.SetRiskSettings(p.ID, want)
+		if got, _ := s.RiskSettings(p.ID); got != want {
+			t.Fatalf("overwrite: %+v", got)
 		}
 	})
 }

@@ -2,6 +2,7 @@ package order
 
 import (
 	"os"
+	"reflect"
 	"testing"
 
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/db/dbtest"
@@ -33,7 +34,7 @@ func TestStoreContract(t *testing.T) {
 		q.Status, q.FilledPrice, q.Fee, q.FilledAt, q.TriggeredBy = "filled", 53000, 1.3, "2026-09-25T02:05:00Z", "stop"
 		s.Replace("u1", q)
 		got, ok := s.ByID("u1", q.ID)
-		if !ok || got != q {
+		if !ok || !reflect.DeepEqual(got, q) {
 			t.Fatalf("replace round trip: %+v", got)
 		}
 		if _, ok := s.ByID("u2", q.ID); ok {
@@ -41,6 +42,52 @@ func TestStoreContract(t *testing.T) {
 		}
 		if len(s.Queued()) != 1 {
 			t.Fatal("a filled order leaves the queue")
+		}
+
+		// A buy with its plan and coach-mode violations round-trips.
+		withPlan := s.Append("u1", Order{PortfolioID: "pf_1", Symbol: "HPG", Side: "buy", Type: "limit", Quantity: 200, Status: "queued",
+			Price: 27000, StopLoss: 25500, Target: 30500, Setup: "Breakout nền giá", Violations: []string{"risk_over_target"},
+			CreatedAt: "2026-09-25T03:00:00Z"})
+		withPlan.Status, withPlan.PlanID = "filled", "tp_1"
+		s.Replace("u1", withPlan)
+		if got, _ := s.ByID("u1", withPlan.ID); !reflect.DeepEqual(got, withPlan) {
+			t.Fatalf("plan fields round trip: %+v", got)
+		}
+	})
+}
+
+func TestStoreContractTradePlans(t *testing.T) {
+	eachStore(t, func(t *testing.T, s Store) {
+		if _, ok := s.OpenPlan("pf_1", "FPT"); ok {
+			t.Fatal("no plans yet")
+		}
+		p := s.AppendPlan("u1", TradePlan{PortfolioID: "pf_1", Symbol: "FPT", Setup: "Pullback", PlannedEntry: 100_000,
+			InitialStop: 94_000, CurrentStop: 94_000, Target: 112_000, OpenedAt: "2026-09-25T01:00:00Z"})
+		other := s.AppendPlan("u2", TradePlan{PortfolioID: "pf_2", Symbol: "FPT", PlannedEntry: 1, InitialStop: 0.5, CurrentStop: 0.5, OpenedAt: "x"})
+		if p.ID == other.ID || p.ID[:3] != "tp_" {
+			t.Fatalf("ids: %q %q", p.ID, other.ID)
+		}
+		got, ok := s.OpenPlan("pf_1", "FPT")
+		if !ok || got != p {
+			t.Fatalf("open plan: %+v", got)
+		}
+
+		// The initial stop is immutable: an update can't move it.
+		p.CurrentStop, p.InitialStop = 97_000, 1
+		s.UpdatePlan(p)
+		got, _ = s.OpenPlan("pf_1", "FPT")
+		if got.InitialStop != 94_000 || got.CurrentStop != 97_000 {
+			t.Fatalf("after update: %+v", got)
+		}
+
+		got.ClosedAt, got.ExitPrice, got.RMultiple = "2026-10-01T02:00:00Z", 112_000, 2
+		s.UpdatePlan(got)
+		if _, ok := s.OpenPlan("pf_1", "FPT"); ok {
+			t.Fatal("a closed plan is not open")
+		}
+		plans := s.Plans("u1")
+		if len(plans) != 1 || plans[0] != got {
+			t.Fatalf("u1's plans: %+v", plans)
 		}
 	})
 }

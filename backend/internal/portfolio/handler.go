@@ -8,6 +8,7 @@ import (
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/authtoken"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/httpx"
 	"github.com/hunterkilltree/vn-stock-sim/backend/internal/middleware"
+	"github.com/hunterkilltree/vn-stock-sim/backend/internal/riskrules"
 )
 
 type createPortfolioRequest struct {
@@ -36,6 +37,42 @@ func RegisterRoutes(v1 *gin.RouterGroup, svc *Service, tokens *authtoken.Issuer)
 	portfolios.GET("/:id/equity-history", portfolioEquityHistoryHandler(svc))
 	portfolios.GET("/:id/allocation", portfolioAllocationHandler(svc))
 	portfolios.GET("/:id/stats", portfolioStatsHandler(svc))
+	portfolios.GET("/:id/risk-settings", riskSettingsHandler(svc))
+	portfolios.PUT("/:id/risk-settings", putRiskSettingsHandler(svc))
+}
+
+// Settings → Tài khoản giấy (phase-risk-rules.md slice 1).
+func riskSettingsHandler(svc *Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID := c.GetString(middleware.ContextUserIDKey)
+		p, ok := svc.GetPortfolio(userID, c.Param("id"))
+		if !ok {
+			httpx.Error(c, http.StatusNotFound, "not_found", "portfolio not found")
+			return
+		}
+		httpx.Item(c, http.StatusOK, svc.RiskSettings(p.ID))
+	}
+}
+
+func putRiskSettingsHandler(svc *Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID := c.GetString(middleware.ContextUserIDKey)
+		p, ok := svc.GetPortfolio(userID, c.Param("id"))
+		if !ok {
+			httpx.Error(c, http.StatusNotFound, "not_found", "portfolio not found")
+			return
+		}
+		var rs riskrules.Settings
+		if err := c.ShouldBindJSON(&rs); err != nil {
+			httpx.ValidationError(c, "invalid risk settings", nil)
+			return
+		}
+		if err := svc.SetRiskSettings(p.ID, rs); err != nil {
+			httpx.ValidationError(c, err.Error(), nil)
+			return
+		}
+		httpx.Item(c, http.StatusOK, rs)
+	}
 }
 
 func portfolioSummaryHandler(svc *Service) gin.HandlerFunc {

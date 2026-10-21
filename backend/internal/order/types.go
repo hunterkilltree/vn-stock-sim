@@ -30,6 +30,38 @@ type Order struct {
 	// RejectReason is set when a triggered order could not be booked
 	// (status "rejected": not enough cash or shares at that moment).
 	RejectReason string `json:"rejectReason,omitempty"`
+
+	// The buy's trade plan (phase-risk-rules.md rule 1): protective stop,
+	// target and setup. StopLoss is not StopPrice, which is an OCO leg.
+	StopLoss float64 `json:"stopLoss,omitempty"`
+	Target   float64 `json:"target,omitempty"`
+	Setup    string  `json:"setup,omitempty"`
+	// PlanID is the TradePlan this fill opened or added to.
+	PlanID string `json:"planId,omitempty"`
+	// Violations are the rule findings a coach-mode portfolio let through
+	// (riskrules finding codes).
+	Violations []string `json:"violations,omitempty"`
+}
+
+// TradePlan is one position's plan, opened by the first filled buy that
+// carries a stop and closed when the position returns to zero
+// (phase-risk-rules.md design item 2). InitialStop never changes after
+// creation: R is measured against it, whatever happens to CurrentStop.
+type TradePlan struct {
+	ID           string  `json:"id"`
+	PortfolioID  string  `json:"portfolioId"`
+	Symbol       string  `json:"symbol"`
+	Setup        string  `json:"setup,omitempty"`
+	PlannedEntry float64 `json:"plannedEntry"`
+	InitialStop  float64 `json:"initialStop"`
+	CurrentStop  float64 `json:"currentStop"`
+	Target       float64 `json:"target,omitempty"`
+	OpenedAt     string  `json:"openedAt"`
+	ClosedAt     string  `json:"closedAt,omitempty"`
+	ExitPrice    float64 `json:"exitPrice,omitempty"`
+	// RMultiple = (exit − planned entry) ÷ (planned entry − initial stop),
+	// set when the plan closes.
+	RMultiple float64 `json:"rMultiple,omitempty"`
 }
 
 // FeeRate is the simulated paper-trading fee (Detail.dc.html shows
@@ -57,6 +89,11 @@ type createRequest struct {
 	// StopPrice is OCO's second leg (Crypto-Detail's order types): the
 	// order carries both a limit price and a stop price.
 	StopPrice float64 `json:"stopPrice"`
+	// A buy's trade plan (phase-risk-rules.md slice 1). Adding to an open
+	// plan may omit StopLoss: the plan's current stop applies.
+	StopLoss float64 `json:"stopLoss" binding:"gte=0"`
+	Target   float64 `json:"target" binding:"gte=0"`
+	Setup    string  `json:"setup" binding:"max=200"`
 }
 
 func formatTime(t time.Time) string {

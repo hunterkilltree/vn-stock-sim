@@ -10,6 +10,7 @@ import {
   getLukReview,
   getMarketRegime,
   getPortfolioSummaryByID,
+  getRiskSettings,
   getWatchlist,
   type Bar,
   type IndicatorPoint,
@@ -19,6 +20,7 @@ import {
   type Rating,
   type LukReview,
   type MarketRegime,
+  type RiskSettings,
 } from "@/lib/api";
 import RailNav from "@/components/RailNav";
 import AccountMenuButton from "@/components/AccountMenuButton";
@@ -132,6 +134,7 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
   let buyingPower: number | null = null;
   let exposure: Exposure | null = null;
   let activePortfolioName: string | null = null;
+  let riskSettings: RiskSettings | null = null;
   let watched = false;
   if (user) {
     try {
@@ -141,6 +144,7 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
         const { active } = await getActivePortfolio(token);
         if (active) {
           activePortfolioName = active.name;
+          riskSettings = await getRiskSettings(active.id, token).catch((): RiskSettings | null => null);
           const summary = await getPortfolioSummaryByID(active.id, token);
           buyingPower = summary.cashBalance;
           if (regime) exposure = exposureFor(regime, summary.marketValue, summary.totalEquity);
@@ -320,6 +324,7 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
                 portfolioName={activePortfolioName}
                 initialSide={initialSide}
                 exposure={exposure}
+                riskSettings={riskSettings}
               />
             </div>
             <OrderBookPanel bids={orderBook.bids} asks={orderBook.asks} />

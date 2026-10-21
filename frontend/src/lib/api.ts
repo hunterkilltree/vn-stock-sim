@@ -490,6 +490,38 @@ export function getPortfolioSummaryByID(id: string, token: string): Promise<Port
   return apiFetch<PortfolioSummary>(`/api/v1/portfolios/${encodeURIComponent(id)}/summary`, { token });
 }
 
+// -- Risk rules (phase-risk-rules.md slice 1) --
+
+export type RiskMode = "coach" | "strict";
+
+export type RiskSettings = {
+  mode: RiskMode;
+  riskPercent: number;
+  maxRiskPercent: number;
+  minRewardRisk: number;
+};
+
+export type RiskFinding = {
+  rule: number;
+  code: string;
+  severity: "warn" | "block" | "invalid";
+  message: string;
+};
+
+// POST /orders/check: what the server will apply to this buy.
+export type RiskAssessment = {
+  findings: RiskFinding[];
+  riskAmount: number;
+  riskPercent: number;
+  rewardRisk: number;
+  suggestedQuantity: number;
+  blocked: boolean;
+};
+
+export function getRiskSettings(portfolioId: string, token: string): Promise<RiskSettings> {
+  return apiFetch<RiskSettings>(`/api/v1/portfolios/${encodeURIComponent(portfolioId)}/risk-settings`, { token });
+}
+
 export function getPortfolioPositionsByID(id: string, token: string): Promise<{ data: Position[] }> {
   return apiFetch<{ data: Position[] }>(`/api/v1/portfolios/${encodeURIComponent(id)}/positions`, { token });
 }
@@ -550,6 +582,13 @@ export type Order = {
   // couldn't be booked (status "rejected").
   triggeredBy?: "limit" | "stop";
   rejectReason?: string;
+  // A buy's trade plan and the coach-mode findings it was placed with
+  // (phase-risk-rules.md slice 1).
+  stopLoss?: number;
+  target?: number;
+  setup?: string;
+  planId?: string;
+  violations?: string[];
 };
 
 // The latest limit/stop/ATC/OCO orders the matcher has finished with

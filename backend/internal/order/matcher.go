@@ -125,6 +125,7 @@ func (s *Service) book(userID string, o *Order, detail symbol.Detail, price floa
 	o.Fee = fee
 	o.FilledAt = formatTime(at)
 	o.TriggeredBy = leg
+	s.trackPlan(userID, o)
 	s.store.Replace(userID, *o)
 }
 
